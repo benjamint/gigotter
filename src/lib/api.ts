@@ -21,7 +21,7 @@ interface DemoDB {
   requests: ClientRequest[]
   files: Record<string, string>
 }
-const KEY_DB = 'wemove-demo-v1'
+const KEY_DB = 'gigotter-demo-v1'
 const uid = () => crypto.randomUUID()
 const now = () => new Date().toISOString()
 const listeners = new Set<() => void>()
@@ -33,9 +33,9 @@ function load(): DemoDB {
   } catch { /* storage blocked */ }
   const adminId = uid()
   const db: DemoDB = {
-    users: [{ id: adminId, email: 'admin@wemove.app', password: 'wemoveadmin' }],
+    users: [{ id: adminId, email: 'admin@gigotter.com', password: 'gigotteradmin' }],
     session: null,
-    profiles: [blankProfile(adminId, 'admin@wemove.app', 'WeMove Admin', 'admin')],
+    profiles: [blankProfile(adminId, 'admin@gigotter.com', 'Gigotter Admin', 'admin')],
     listings: seedListings(),
     claims: [], submissions: [], requests: [], files: {},
   }

@@ -1,4 +1,4 @@
-# WeMove
+# Gigotter
 
 A student gig marketplace. Businesses (starting with Glowy) post work; verified students join paid gigs (onboarding businesses, focus groups, field research, surveys), submit proof of work, and get paid to mobile money. An admin portal runs verification, gigs, reviews, and payouts.
 
@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-With no `.env`, the app runs in **demo mode**: data is stored in your browser and the demo admin login is `admin@wemove.app` / `wemoveadmin`.
+With no `.env`, the app runs in **demo mode**: data is stored in your browser and the demo admin login is `admin@gigotter.com` / `gigotteradmin`.
 
 ## Photos
 
@@ -25,7 +25,7 @@ The design uses real photography. Drop images into `public/images/` using the na
    ```sql
    update public.profiles set role = 'admin' where email = 'you@example.com';
    ```
-4. Under Auth → URL configuration, add your site URL (e.g. `https://wemove.app`) and `/verify` as a redirect.
+4. Under Auth → URL configuration, add your site URL (e.g. `https://gigotter.com`) and `/verify` as a redirect.
 
 Deploy on Vercel as a static Vite app. `vercel.json` already handles SPA routing.
 

@@ -2,7 +2,7 @@ import type { Listing } from './types'
 
 const days = (n: number) => new Date(Date.now() + n * 864e5).toISOString()
 const base = {
-  description: null, is_remote: false, total_budget: null, status: 'live' as const, client_name: 'WeMove', cover_url: null,
+  description: null, is_remote: false, total_budget: null, status: 'live' as const, client_name: 'Gigotter', cover_url: null,
   proof_fields: ['business_name', 'owner_name', 'owner_phone', 'location'],
 }
 

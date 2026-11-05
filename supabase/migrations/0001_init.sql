@@ -1,4 +1,4 @@
--- WeMove — initial schema
+-- Gigotter — initial schema
 -- Run in Supabase SQL editor (or `supabase db push`). Then promote yourself:
 --   update public.profiles set role = 'admin' where email = 'you@example.com';
 

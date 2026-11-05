@@ -37,7 +37,7 @@ export default function Landing() {
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.7, ease: EASE }}
             className="mt-6 max-w-[30rem] text-lg leading-relaxed text-ink-muted">
-            WeMove connects verified students with companies that need people on the ground — signing up customers, running focus groups and gathering research. Pick a gig, do the work, get paid to mobile money.
+            Gigotter connects verified students with companies that need people on the ground — signing up customers, running focus groups and gathering research. Pick a gig, do the work, get paid to mobile money.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap gap-3">
             <Link to={cta} className="btn-primary px-7 py-3.5">Start earning <ArrowRight className="h-4 w-4" /></Link>
@@ -118,7 +118,7 @@ export default function Landing() {
       <section className="container-x grid gap-14 py-28 md:grid-cols-[.9fr_1.1fr]">
         <Reveal>
           <SectionHead eyebrow="The work" title={<>Flexible work that <span className="em">builds</span> real experience.</>}
-            body="Every gig is paid, clearly scoped and done on your own schedule — between lectures, on weekends or from home. And it all goes on your WeMove record." />
+            body="Every gig is paid, clearly scoped and done on your own schedule — between lectures, on weekends or from home. And it all goes on your Gigotter record." />
           <Link to={cta} className="btn-primary mt-8">Create your profile <ArrowRight className="h-4 w-4" /></Link>
         </Reveal>
         <div className="grid gap-px overflow-hidden rounded-3xl border border-line bg-line sm:grid-cols-2">
@@ -145,7 +145,7 @@ export default function Landing() {
           <div className="grid overflow-hidden rounded-4xl bg-brand-900 text-white md:grid-cols-2">
             <div className="flex flex-col justify-center p-10 md:p-16">
               <div className="eyebrow text-brand-200">For businesses</div>
-              <h2 className="mt-4 text-3xl font-semibold leading-[1.1] tracking-tightest text-white md:text-[2.6rem]">Need people on the ground? <span className="em text-brand-200">We move.</span></h2>
+              <h2 className="mt-4 text-3xl font-semibold leading-[1.1] tracking-tightest text-white md:text-[2.6rem]">Need people on the ground? <span className="em text-brand-200">Send in the otters.</span></h2>
               <p className="mt-5 max-w-md leading-relaxed text-white/65">Tell us what you need — customer sign-ups, market research, product sampling. We scope it, match verified students and you only pay for approved results.</p>
               <div className="mt-8"><Link to="/brief" className="btn bg-white px-7 py-3.5 text-ink hover:bg-brand-50">Post a brief <ArrowRight className="h-4 w-4" /></Link></div>
             </div>
@@ -209,7 +209,7 @@ function FAQ() {
   const [o, setO] = useState<number | null>(0)
   return (
     <section className="container-x grid gap-12 pb-28 md:grid-cols-[.8fr_1.2fr]">
-      <Reveal><SectionHead eyebrow="FAQ" title="Questions, answered." body="Can’t find what you need? Email hello@wemove.app." /></Reveal>
+      <Reveal><SectionHead eyebrow="FAQ" title="Questions, answered." body="Can’t find what you need? Email hello@gigotter.com." /></Reveal>
       <div className="border-t border-line">
         {QA.map(([q, a], i) => (
           <div key={q} className="border-b border-line">

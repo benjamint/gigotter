@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowUpRight, LogOut, Menu, X } from 'lucide-react'
+import { LogOut, Menu, Waves, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { DEMO, auth, resetDemo } from '../lib/api'
@@ -7,11 +7,11 @@ import { useSession } from '../lib/session'
 
 export function Logo({ className = '', light = false }: { className?: string; light?: boolean }) {
   return (
-    <Link to="/" className={`flex items-center gap-2.5 ${className}`} aria-label="WeMove home">
+    <Link to="/" className={`flex items-center gap-2.5 ${className}`} aria-label="Gigotter home">
       <span className={`grid h-8 w-8 place-items-center rounded-[10px] ${light ? 'bg-white text-brand-900' : 'bg-brand-700 text-white'}`}>
-        <ArrowUpRight className="h-[18px] w-[18px]" strokeWidth={2.5} />
+        <Waves className="h-[18px] w-[18px]" strokeWidth={2.25} />
       </span>
-      <span className={`font-display text-[19px] font-semibold tracking-tight ${light ? 'text-white' : 'text-ink'}`}>WeMove</span>
+      <span className={`font-display text-[19px] font-semibold tracking-tight ${light ? 'text-white' : 'text-ink'}`}>Gigotter</span>
     </Link>
   )
 }
@@ -37,7 +37,7 @@ export default function Layout() {
     <div className="flex min-h-screen flex-col">
       {DEMO && (
         <div className="bg-brand-900 px-4 py-2 text-center text-xs text-white/70">
-          Preview mode · data stays in this browser · admin: <span className="font-medium text-white">admin@wemove.app / wemoveadmin</span>
+          Preview mode · data stays in this browser · admin: <span className="font-medium text-white">admin@gigotter.com / gigotteradmin</span>
           <button onClick={resetDemo} className="ml-2 underline underline-offset-2 hover:text-white">Reset</button>
         </div>
       )}
@@ -106,7 +106,7 @@ export default function Layout() {
           </div>
         </div>
         <div className="container-x flex flex-col gap-2 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:justify-between">
-          <span>© {new Date().getFullYear()} WeMove. Accra, Ghana.</span>
+          <span>© {new Date().getFullYear()} Gigotter. Accra, Ghana.</span>
           <span>ID documents are stored privately and used only for verification.</span>
         </div>
       </footer>

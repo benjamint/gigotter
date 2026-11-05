@@ -274,7 +274,7 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
       e.amount += s.amount ?? 0; e.n++; by.set(k, e)
     })
     const csv = ['name,momo_provider,momo_number,momo_account_name,currency,units,amount', ...[...by.values()].map((e) => [e.name, e.provider, e.number, e.acct, e.cur, e.n, e.amount].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n')
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `wemove-payouts-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `gigotter-payouts-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
   }
   return (
     <div>

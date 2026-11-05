@@ -51,6 +51,7 @@ export interface Listing {
   accent: Accent
   emoji: string
   client_name: string | null
+  cover_url: string | null
   created_at: string
   // joined stats
   taken?: number
@@ -100,12 +101,12 @@ export interface ClientRequest {
 }
 
 export const GIG_TYPES: Record<GigType, { label: string; emoji: string }> = {
-  onboarding: { label: 'Onboarding', emoji: '🤝' },
-  focus_group: { label: 'Focus group', emoji: '🗣️' },
-  research: { label: 'Field research', emoji: '🔎' },
-  survey: { label: 'Survey', emoji: '📋' },
-  content: { label: 'Content', emoji: '🎬' },
-  other: { label: 'Other', emoji: '✨' },
+  onboarding: { label: 'Onboarding', emoji: '' },
+  focus_group: { label: 'Focus group', emoji: '' },
+  research: { label: 'Field research', emoji: '' },
+  survey: { label: 'Survey', emoji: '' },
+  content: { label: 'Content', emoji: '' },
+  other: { label: 'Other', emoji: '' },
 }
 
 export const PROOF_FIELDS: Record<string, { label: string; placeholder: string; type?: string }> = {

@@ -18,26 +18,26 @@ export default function Brief() {
   return (
     <div className="mx-auto grid max-w-6xl gap-12 px-4 py-12 lg:grid-cols-2">
       <div>
-        <div className="chip bg-grape-300/50 text-grape-700">For businesses & founders</div>
-        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-4 text-5xl font-extrabold leading-[0.95] md:text-6xl">
-          Need boots on the ground? <span className="text-gradient">We’ve got students.</span>
+        <div className="chip bg-brand-50 text-brand-700">For businesses & founders</div>
+        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-4 text-5xl font-semibold tracking-tightest leading-[0.95] md:text-6xl">
+          Need boots on the ground? <span className="text-brand-600">We’ve got students.</span>
         </motion.h1>
-        <p className="mt-5 text-lg text-ink/70">Customer sign-ups, market research, focus groups, product sampling. Tell us what you need — we scope it, post it, and verified students get it done.</p>
+        <p className="mt-5 text-lg text-ink-soft">Customer sign-ups, market research, focus groups, product sampling. Tell us what you need — we scope it, post it, and verified students get it done.</p>
         <div className="mt-8 space-y-3">
           {['Every student is ID + selfie verified', 'Pay per result, not per hour', 'Proof for every unit delivered', 'You only pay for approved work'].map((t, i) => (
-            <Reveal key={t} delay={i * 0.06}><div className="flex items-center gap-3 font-semibold"><span className="grid h-7 w-7 place-items-center rounded-full bg-lime-300"><Check className="h-4 w-4" /></span>{t}</div></Reveal>
+            <Reveal key={t} delay={i * 0.06}><div className="flex items-center gap-3 font-semibold"><span className="grid h-7 w-7 place-items-center rounded-full bg-brand-50"><Check className="h-4 w-4" /></span>{t}</div></Reveal>
           ))}
         </div>
       </div>
       <div className="card p-6 md:p-8">
         {done ? (
           <div className="grid min-h-[24rem] place-items-center text-center">
-            <div><motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring' }} className="text-6xl">📬</motion.div>
-              <h2 className="mt-4 text-3xl font-extrabold">Brief received</h2><p className="mt-2 text-ink/60">We’ll reply within 1 business day with a plan and quote.</p></div>
+            <div><div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600"><Check className="h-5 w-5" /></div>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tightest">Brief received</h2><p className="mt-2 text-ink-muted">We’ll reply within 1 business day with a plan and quote.</p></div>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-4">
-            <h2 className="text-2xl font-bold">Post a brief</h2>
+            <h2 className="text-2xl font-semibold">Post a brief</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               <div><label className="label">Your name</label><input className="input" required value={f.name} onChange={set('name')} /></div>
               <div><label className="label">Email</label><input className="input" type="email" required value={f.email} onChange={set('email')} /></div>
@@ -48,7 +48,7 @@ export default function Brief() {
               <div><label className="label">Budget</label><input className="input" value={f.budget} onChange={set('budget')} placeholder="₵2,000" /></div>
               <div><label className="label">Deadline</label><input className="input" value={f.deadline} onChange={set('deadline')} placeholder="End of month" /></div>
             </div>
-            <button className="btn-glow w-full" disabled={busy}>{busy ? <Spinner /> : <>Send brief <ArrowRight className="h-4 w-4" /></>}</button>
+            <button className="btn-brand w-full" disabled={busy}>{busy ? <Spinner /> : <>Send brief <ArrowRight className="h-4 w-4" /></>}</button>
           </form>
         )}
       </div>

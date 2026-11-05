@@ -108,6 +108,7 @@ create table if not exists public.listings (
   accent text not null default 'glow',
   emoji text not null default '✨',
   client_name text,                                -- for the future agency model
+  cover_url text,
   created_by uuid references public.profiles(id),
   created_at timestamptz not null default now()
 );
@@ -167,7 +168,7 @@ declare l public.listings; p public.profiles; taken int; c public.claims;
 begin
   select * into p from public.profiles where id = auth.uid();
   if p.id is null then raise exception 'Sign in first'; end if;
-  if p.kyc_status <> 'verified' then raise exception 'Get verified before joining gigs'; end if;
+  if p.kyc_status <> 'verified' then raise exception 'Complete verification before joining gigs'; end if;
   select * into l from public.listings where id = p_listing for update;
   if l.id is null or l.status <> 'live' then raise exception 'This gig is not open'; end if;
   if l.expires_at < now() then raise exception 'This gig has expired'; end if;
@@ -189,7 +190,7 @@ begin
   select * into l from public.listings where id = c.listing_id;
   if l.expires_at < now() then raise exception 'This gig has expired'; end if;
   select count(*) into mine from public.submissions where claim_id = c.id and status <> 'rejected';
-  if l.units_per_student is not null and mine >= l.units_per_student then raise exception 'You hit your quota — legend.'; end if;
+  if l.units_per_student is not null and mine >= l.units_per_student then raise exception 'You have reached the limit for this gig'; end if;
   amt := case when l.pay_model = 'per_unit' then l.rate
               else round(l.rate / greatest(coalesce(l.units_per_student,1),1), 2) end;
   select coalesce(sum(amount),0) into spent from public.submissions where listing_id = l.id and status <> 'rejected';
@@ -198,7 +199,7 @@ begin
   insert into public.submissions(claim_id, listing_id, student_id, data, proof_path, amount, dedupe_key)
     values (c.id, l.id, auth.uid(), p_data, p_proof, amt, k) returning * into s;
   return s;
-exception when unique_violation then raise exception 'Someone already submitted this one (same contact)';
+exception when unique_violation then raise exception 'This business has already been submitted (same contact)';
 end $$;
 
 -- ───────────────────────── RLS ─────────────────────────
@@ -238,6 +239,11 @@ create policy "briefs admin update" on public.client_requests for update using (
 -- ───────────────────────── Storage (private buckets) ─────────────────────────
 insert into storage.buckets (id, name, public) values ('kyc','kyc',false) on conflict (id) do nothing;
 insert into storage.buckets (id, name, public) values ('proofs','proofs',false) on conflict (id) do nothing;
+insert into storage.buckets (id, name, public) values ('covers','covers',true) on conflict (id) do nothing;
+
+drop policy if exists "covers admin write" on storage.objects;
+create policy "covers admin write" on storage.objects for insert to authenticated
+  with check (bucket_id = 'covers' and public.is_admin());
 
 drop policy if exists "kyc own upload" on storage.objects;
 create policy "kyc own upload" on storage.objects for insert to authenticated

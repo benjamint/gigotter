@@ -33,7 +33,7 @@ export default function App() {
           <Route path="me/gig/:claimId" element={<Page><MyGig /></Page>} />
           <Route path="brief" element={<Page><Brief /></Page>} />
           <Route path="admin" element={<Page><Admin /></Page>} />
-          <Route path="*" element={<div className="mx-auto max-w-lg px-4 py-24"><Empty emoji="🛸" title="Page not found" action={<Link to="/" className="btn-primary">Go home</Link>} /></div>} />
+          <Route path="*" element={<div className="mx-auto max-w-lg px-4 py-24"><Empty title="Page not found" body="The page you’re looking for doesn’t exist or has moved." action={<Link to="/" className="btn-primary">Go home</Link>} /></div>} />
         </Route>
       </Routes>
     </AnimatePresence>

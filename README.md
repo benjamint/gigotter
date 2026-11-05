@@ -13,6 +13,10 @@ npm run dev
 
 With no `.env`, the app runs in **demo mode**: data is stored in your browser and the demo admin login is `admin@wemove.app` / `wemoveadmin`.
 
+## Photos
+
+The design uses real photography. Drop images into `public/images/` using the names listed in [`public/images/README.md`](public/images/README.md). Until a file exists, a neutral placeholder shows in its place. Admins can also upload a cover photo for each gig.
+
 ## Connect Supabase
 
 1. Create a Supabase project and run `supabase/migrations/0001_init.sql` in the SQL editor.

@@ -147,6 +147,14 @@ export async function uploadFile(bucket: Bucket, file: File, name: string): Prom
   fail(error)
   return path
 }
+/** Public cover image for a gig (admin only). Returns a URL usable in <img>. */
+export async function uploadCover(file: File): Promise<string> {
+  if (DEMO) return toDataUrl(file, 1600)
+  const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${(file.name.split('.').pop() || 'jpg').toLowerCase()}`
+  const { error } = await sb!.storage.from('covers').upload(path, file, { contentType: file.type })
+  fail(error)
+  return sb!.storage.from('covers').getPublicUrl(path).data.publicUrl
+}
 export async function fileUrl(bucket: Bucket, path: string | null): Promise<string | null> {
   if (!path) return null
   if (DEMO) return db().files[`${bucket}/${path}`] ?? null
@@ -224,7 +232,7 @@ export async function claimListing(listingId: string): Promise<Claim> {
     const u = must(demoUser(), 'Sign in first')
     const d = db()
     const p = d.profiles.find((x) => x.id === u.id)!
-    if (p.kyc_status !== 'verified') throw new Error('Get verified before joining gigs')
+    if (p.kyc_status !== 'verified') throw new Error('Complete verification before joining gigs')
     const l = withStats(must(d.listings.find((x) => x.id === listingId), 'Gig not found'))
     if (l.status !== 'live') throw new Error('This gig is not open')
     if (new Date(l.expires_at) < new Date()) throw new Error('This gig has expired')
@@ -272,14 +280,14 @@ export async function submitWork(claimId: string, data: Record<string, string>, 
     const l = must(d.listings.find((x) => x.id === c.listing_id), 'Gig gone')
     if (new Date(l.expires_at) < new Date()) throw new Error('This gig has expired')
     const mine = d.submissions.filter((s) => s.claim_id === c.id && s.status !== 'rejected')
-    if (l.units_per_student && mine.length >= l.units_per_student) throw new Error('You hit your quota — legend.')
+    if (l.units_per_student && mine.length >= l.units_per_student) throw new Error('You’ve reached the limit for this gig')
     const amount = l.pay_model === 'per_unit' ? l.rate : Math.round((l.rate / Math.max(l.units_per_student ?? 1, 1)) * 100) / 100
     const spent = d.submissions.filter((s) => s.listing_id === l.id && s.status !== 'rejected').reduce((a, s) => a + (s.amount ?? 0), 0)
     if (l.total_budget && spent + amount > l.total_budget) throw new Error('Budget for this gig is used up')
     const key = (data.owner_phone || data.phone || data.email || '').toLowerCase().replace(/[^a-z0-9@]/g, '')
     if (key && d.submissions.some((s) => s.listing_id === l.id && s.status !== 'rejected' &&
       (s.data.owner_phone || s.data.phone || s.data.email || '').toLowerCase().replace(/[^a-z0-9@]/g, '') === key)) {
-      throw new Error('Someone already submitted this one (same contact)')
+      throw new Error('This business has already been submitted (same contact)')
     }
     const s: Submission = {
       id: uid(), claim_id: c.id, listing_id: l.id, student_id: u.id, data, proof_path: proofPath, status: 'pending',

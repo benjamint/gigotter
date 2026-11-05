@@ -1,4 +1,3 @@
-import confetti from 'canvas-confetti'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Check, Clock, IdCard, Lock, ShieldCheck, Smartphone, User, GraduationCap, Camera } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -61,7 +60,6 @@ export default function Verify() {
       patch.kyc_status = 'pending'
       patch.kyc_submitted_at = new Date().toISOString()
       await updateMyProfile(patch)
-      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 }, colors: ['#FF5C39', '#FF3CAC', '#7B5CFF', '#C8F542'] })
       setRedo(false)
       await refresh()
     } catch (e: any) { toast(e.message, 'err') } finally { setBusy(false) }
@@ -69,20 +67,21 @@ export default function Verify() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <div className="flex items-center gap-2 text-sm font-semibold text-ink/50"><Lock className="h-4 w-4" />Private & encrypted. Only the WeMove team sees this.</div>
-      <h1 className="mt-3 text-4xl font-extrabold md:text-5xl">Get verified</h1>
+      <div className="eyebrow">Verification</div>
+      <h1 className="mt-3 text-4xl font-semibold tracking-tightest md:text-5xl">Verify your identity</h1>
+      <p className="mt-3 flex items-center gap-2 text-sm text-ink-muted"><Lock className="h-4 w-4" />Your documents are encrypted and seen only by the WeMove verification team.</p>
       {profile.kyc_status === 'rejected' && profile.kyc_note && (
-        <div className="mt-4 rounded-2xl border-2 border-red-200 bg-red-50 p-4 text-sm text-red-800"><b>We need a fix:</b> {profile.kyc_note}</div>
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><b className="font-medium">Please update your details:</b> {profile.kyc_note}</div>
       )}
 
       {/* stepper */}
       <div className="mt-8 flex items-center gap-1.5">
         {STEPS.map((s, i) => (
           <button key={s.key} onClick={() => { if (i <= step || valid.slice(0, i).every(Boolean)) { setDir(i > step ? 1 : -1); setStep(i) } }} className="group flex-1" aria-label={s.label}>
-            <div className="h-2 overflow-hidden rounded-full bg-ink/10">
-              <motion.div className="h-full bg-[linear-gradient(90deg,#FF5C39,#FF3CAC,#7B5CFF)]" animate={{ width: i < step ? '100%' : i === step ? '50%' : '0%' }} transition={{ duration: 0.5 }} />
+            <div className="h-1 overflow-hidden rounded-full bg-line">
+              <motion.div className="h-full bg-brand-500" animate={{ width: i < step ? '100%' : i === step ? '50%' : '0%' }} transition={{ duration: 0.5 }} />
             </div>
-            <div className={`mt-2 hidden text-xs font-semibold sm:block ${i === step ? 'text-ink' : 'text-ink/40'}`}>{s.label}</div>
+            <div className={`mt-2.5 hidden text-xs font-medium sm:block ${i === step ? 'text-ink' : 'text-ink-muted'}`}>{s.label}</div>
           </button>
         ))}
       </div>
@@ -130,7 +129,7 @@ export default function Verify() {
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {MOMO_PROVIDERS.map((p) => (
                     <button type="button" key={p} onClick={() => setF({ ...f, momo_provider: p })}
-                      className={`rounded-2xl border-2 px-3 py-3 text-sm font-semibold transition ${f.momo_provider === p ? 'border-ink bg-lime-300 shadow-brutal' : 'border-ink/15 bg-white hover:border-ink'}`}>{p}</button>
+                      className={`rounded-2xl border px-3 py-3 text-sm font-medium transition ${f.momo_provider === p ? 'border-ink bg-brand-50 shadow-soft' : 'border-line bg-white hover:border-ink'}`}>{p}</button>
                   ))}
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -149,7 +148,7 @@ export default function Verify() {
           <button onClick={() => go(-1)} disabled={step === 0} className="btn-ghost btn-sm"><ArrowLeft className="h-4 w-4" />Back</button>
           {step < STEPS.length - 1
             ? <button onClick={() => go(1)} disabled={!valid[step]} className="btn-primary">Next <ArrowRight className="h-4 w-4" /></button>
-            : <button onClick={submit} disabled={!valid.every(Boolean) || busy} className="btn-glow">{busy ? <Spinner /> : <>Submit for review <Check className="h-4 w-4" /></>}</button>}
+            : <button onClick={submit} disabled={!valid.every(Boolean) || busy} className="btn-brand">{busy ? <Spinner /> : <>Submit for review <Check className="h-4 w-4" /></>}</button>}
         </div>
       </div>
     </div>
@@ -160,14 +159,14 @@ export default function Verify() {
     return (
       <div className="mx-auto grid min-h-[70vh] max-w-lg place-items-center px-4 text-center">
         <div>
-          <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', damping: 12 }}
-            className={`mx-auto grid h-24 w-24 place-items-center rounded-[2rem] border-2 border-ink shadow-brutal-lg ${ok ? 'bg-lime-300' : 'bg-amber-100'}`}>
-            {ok ? <ShieldCheck className="h-12 w-12" /> : <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}><Clock className="h-12 w-12" /></motion.div>}
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
+            className={`mx-auto grid h-16 w-16 place-items-center rounded-full ${ok ? 'bg-brand-50 text-brand-600' : 'bg-amber-50 text-amber-700'}`}>
+            {ok ? <ShieldCheck className="h-7 w-7" strokeWidth={1.5} /> : <Clock className="h-7 w-7" strokeWidth={1.5} />}
           </motion.div>
-          <h1 className="mt-8 text-4xl font-extrabold">{ok ? 'You’re verified ✨' : 'We’re checking you out 👀'}</h1>
-          <p className="mt-3 text-ink/60">{ok ? 'All gigs are unlocked. Go get it.' : 'Usually takes under 24 hours. We’ll unlock gigs the moment you’re approved. Browse in the meantime.'}</p>
+          <h1 className="mt-8 text-3xl font-semibold tracking-tightest md:text-4xl">{ok ? 'You’re verified' : 'We’re reviewing your details'}</h1>
+          <p className="mt-3 text-ink-muted">{ok ? 'You can now join any open gig.' : 'This usually takes less than 24 hours. Browse gigs in the meantime and join as soon as you’re approved.'}</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link to="/gigs" className="btn-glow">Browse gigs <ArrowRight className="h-4 w-4" /></Link>
+            <Link to="/gigs" className="btn-brand">Browse gigs <ArrowRight className="h-4 w-4" /></Link>
             {!ok && <button onClick={() => setRedo(true)} className="btn-ghost">Edit my details</button>}
           </div>
         </div>
@@ -177,7 +176,7 @@ export default function Verify() {
 }
 
 const StepHead = ({ n, t, d }: { n: number; t: string; d: string }) => (
-  <div className="mb-6"><div className="text-xs font-bold uppercase tracking-widest text-pop-600">Step {n} of 5</div><h2 className="mt-1 text-2xl font-bold">{t}</h2><p className="mt-1 text-sm text-ink/60">{d}</p></div>
+  <div className="mb-6"><div className="eyebrow">Step {n} of 5</div><h2 className="mt-1 text-2xl font-semibold">{t}</h2><p className="mt-1 text-sm text-ink-muted">{d}</p></div>
 )
 const Field = ({ label, children, className = '' }: { label: string; children: React.ReactNode; className?: string }) => (
   <div className={className}><label className="label">{label}</label>{children}</div>

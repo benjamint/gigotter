@@ -1,4 +1,7 @@
+import { GIG_COVERS } from './images'
 import { CURRENCIES, type Listing } from './types'
+
+export const coverFor = (l: Pick<Listing, 'cover_url' | 'type'>) => l.cover_url || GIG_COVERS[l.type]
 
 export const money = (n: number | null | undefined, cur = 'GHS') =>
   `${CURRENCIES[cur] ?? cur + ' '}${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`

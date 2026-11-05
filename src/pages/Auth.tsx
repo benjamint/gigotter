@@ -3,6 +3,8 @@ import { ArrowRight, Eye, EyeOff, MailCheck } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Logo } from '../components/Layout'
+import Photo from '../components/Photo'
+import { IMG } from '../lib/images'
 import { Spinner, useToast } from '../components/ui'
 import { DEMO, auth } from '../lib/api'
 import { useSession } from '../lib/session'
@@ -41,19 +43,19 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
 
   if (check) return (
     <Shell>
-      <motion.div initial={{ scale: 0.6 }} animate={{ scale: 1 }} className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-lime-300"><MailCheck className="h-8 w-8" /></motion.div>
-      <h1 className="mt-6 text-center text-3xl font-extrabold">Check your inbox</h1>
-      <p className="mt-2 text-center text-ink/60">We sent a link to <b>{f.email}</b>. Tap it to confirm and continue to verification.</p>
+      <div className="grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600"><MailCheck className="h-5 w-5" /></div>
+      <h1 className="mt-6 text-3xl font-semibold tracking-tightest">Check your inbox</h1>
+      <p className="mt-2 text-ink-muted">We sent a link to <b>{f.email}</b>. Tap it to confirm and continue to verification.</p>
     </Shell>
   )
 
   return (
     <Shell>
-      <h1 className="text-4xl font-extrabold">{signup ? 'Let’s get you paid.' : 'Welcome back.'}</h1>
-      <p className="mt-2 text-ink/60">{signup ? 'Make an account. Verification is next.' : 'Log in to check your gigs and earnings.'}</p>
+      <h1 className="text-3xl font-semibold tracking-tightest md:text-4xl">{signup ? 'Create your account' : 'Welcome back'}</h1>
+      <p className="mt-2 text-ink-muted">{signup ? 'Start earning from real work. Verification comes next.' : 'Log in to see your gigs and earnings.'}</p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         {signup && (
-          <div><label className="label">Full name <span className="font-normal text-ink/40">(as on your ID)</span></label>
+          <div><label className="label">Full name <span className="font-normal text-ink-muted">(as on your ID)</span></label>
             <input className="input" required value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Abena Owusu" autoComplete="name" /></div>
         )}
         <div><label className="label">Email</label>
@@ -61,31 +63,38 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
         <div><label className="label">Password</label>
           <div className="relative">
             <input className="input pr-12" type={show ? 'text' : 'password'} required minLength={8} value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} placeholder="8+ characters" autoComplete={signup ? 'new-password' : 'current-password'} />
-            <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink/50" aria-label="Toggle password">{show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+            <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink-muted" aria-label="Toggle password">{show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
           </div>
         </div>
-        <button className="btn-glow w-full text-base" disabled={busy}>{busy ? <Spinner /> : <>{signup ? 'Create account' : 'Log in'}<ArrowRight className="h-5 w-5" /></>}</button>
+        <button className="btn-primary w-full py-3.5" disabled={busy}>{busy ? <Spinner /> : <>{signup ? 'Create account' : 'Log in'}<ArrowRight className="h-4 w-4" /></>}</button>
       </form>
       {!signup && !DEMO && (
-        <button onClick={async () => { if (!f.email) return toast('Type your email first', 'err'); await auth.resetPassword(f.email); toast('Reset link sent') }} className="mt-3 w-full text-center text-sm text-ink/50 hover:text-ink">Forgot password?</button>
+        <button onClick={async () => { if (!f.email) return toast('Type your email first', 'err'); await auth.resetPassword(f.email); toast('Reset link sent') }} className="mt-4 w-full text-center text-sm text-ink-muted hover:text-ink">Forgot password?</button>
       )}
-      <p className="mt-6 text-center text-sm text-ink/60">
-        {signup ? <>Already have an account? <Link to={`/login${next ? `?next=${next}` : ''}`} className="font-bold text-ink underline">Log in</Link></>
-          : <>New here? <Link to={`/signup${next ? `?next=${next}` : ''}`} className="font-bold text-ink underline">Start earning</Link></>}
+      <p className="mt-8 text-center text-sm text-ink-muted">
+        {signup ? <>Already have an account? <Link to={`/login${next ? `?next=${next}` : ''}`} className="font-medium text-ink underline underline-offset-2">Log in</Link></>
+          : <>New here? <Link to={`/signup${next ? `?next=${next}` : ''}`} className="font-medium text-ink underline underline-offset-2">Start earning</Link></>}
       </p>
-      {signup && <p className="mt-4 text-center text-xs text-ink/40">By signing up you agree we can verify you’re a student and store your docs privately for that purpose.</p>}
+      {signup && <p className="mt-4 text-center text-xs leading-relaxed text-ink-muted">By signing up you agree we can verify you’re a student and store your docs privately for that purpose.</p>}
     </Shell>
   )
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative grid min-h-[80vh] place-items-center overflow-hidden px-4 py-12">
-      <div className="pointer-events-none absolute left-1/4 top-10 h-72 w-72 animate-blob rounded-full bg-pop-300 opacity-40 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-10 right-1/4 h-72 w-72 animate-blob rounded-full bg-glow-300 opacity-40 blur-3xl [animation-delay:-6s]" />
-      <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.6 }} className="card relative w-full max-w-md p-8">
-        <Logo className="mb-8" />
-        {children}
+    <div className="container-x grid min-h-[calc(100vh-4rem)] gap-10 py-10 lg:grid-cols-2 lg:items-stretch">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ease: [0.22, 1, 0.36, 1], duration: 0.7 }} className="flex items-center justify-center">
+        <div className="w-full max-w-sm">
+          <Logo className="mb-10" />
+          {children}
+        </div>
+      </motion.div>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="relative hidden overflow-hidden rounded-4xl lg:block">
+        <Photo src={IMG.auth} alt="Students on campus" label="auth.jpg" tone="dark" className="absolute inset-0" />
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-10 text-white">
+          <p className="font-serif text-4xl italic leading-tight">Real work. Real businesses.<br />Paid to your mobile money.</p>
+          <p className="mt-4 text-sm text-white/70">Verified students across Ghana and Nigeria</p>
+        </div>
       </motion.div>
     </div>
   )

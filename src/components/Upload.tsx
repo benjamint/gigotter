@@ -13,19 +13,19 @@ export function FileDrop({ label, hint, file, onFile, previewUrl, capture }: {
     <label
       onDragOver={(e) => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) onFile(f) }}
-      className={`relative flex min-h-[11rem] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed p-4 text-center transition ${drag ? 'border-pop-500 bg-pop-300/20' : shown ? 'border-ink bg-white' : 'border-ink/25 bg-white hover:border-ink'}`}>
+      className={`relative flex min-h-[11rem] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border border-dashed p-4 text-center transition ${drag ? 'border-brand-600 bg-brand-50' : shown ? 'border-ink bg-white' : 'border-line bg-white hover:border-ink'}`}>
       <input type="file" accept="image/*" capture={capture} className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
       {shown ? (
         <>
           <img src={shown} alt={label} className="max-h-48 rounded-2xl object-contain" />
-          <span className="chip absolute right-3 top-3 bg-lime-300"><Check className="h-3 w-3" />Added</span>
-          <span className="mt-2 text-xs text-ink/50">Tap to replace</span>
+          <span className="chip absolute right-3 top-3 bg-brand-50"><Check className="h-3 w-3" />Added</span>
+          <span className="mt-2 text-xs text-ink-muted">Tap to replace</span>
         </>
       ) : (
         <>
-          <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="grid h-12 w-12 place-items-center rounded-2xl bg-ink/5"><ImageUp /></motion.div>
+          <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="grid h-12 w-12 place-items-center rounded-2xl bg-sand"><ImageUp /></motion.div>
           <div className="mt-3 font-semibold">{label}</div>
-          {hint && <div className="mt-0.5 text-xs text-ink/50">{hint}</div>}
+          {hint && <div className="mt-0.5 text-xs text-ink-muted">{hint}</div>}
         </>
       )}
     </label>
@@ -67,16 +67,16 @@ export function SelfieCam({ file, onFile, previewUrl }: { file: File | null; onF
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative aspect-square w-64 max-w-full overflow-hidden rounded-full border-4 border-ink bg-ink/5 shadow-brutal-lg">
+      <div className="relative aspect-square w-64 max-w-full overflow-hidden rounded-full border border-line bg-sand shadow-soft">
         {stream ? <video ref={video} playsInline muted className="h-full w-full -scale-x-100 object-cover" />
           : shown ? <img src={shown} alt="Your selfie" className="h-full w-full object-cover" />
-          : <div className="grid h-full place-items-center text-6xl">🤳</div>}
-        {stream && <motion.div className="pointer-events-none absolute inset-6 rounded-full border-2 border-dashed border-white/80" animate={{ scale: [1, 1.03, 1] }} transition={{ repeat: Infinity, duration: 1.6 }} />}
+          : <div className="grid h-full place-items-center text-ink-muted"><Camera className="h-10 w-10" strokeWidth={1.25} /></div>}
+        {stream && <motion.div className="pointer-events-none absolute inset-6 rounded-full border border-dashed border-white/80" animate={{ scale: [1, 1.03, 1] }} transition={{ repeat: Infinity, duration: 1.6 }} />}
         <AnimatePresence>{flash && <motion.div className="absolute inset-0 bg-white" initial={{ opacity: 1 }} animate={{ opacity: 0 }} exit={{ opacity: 0 }} />}</AnimatePresence>
       </div>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         {stream ? (
-          <button type="button" onClick={snap} className="btn-glow"><Camera className="h-5 w-5" />Snap it</button>
+          <button type="button" onClick={snap} className="btn-brand"><Camera className="h-5 w-5" />Snap it</button>
         ) : (
           <button type="button" onClick={start} className="btn-primary">{shown ? <><RefreshCcw className="h-4 w-4" />Retake</> : <><Camera className="h-4 w-4" />Open camera</>}</button>
         )}
@@ -86,7 +86,7 @@ export function SelfieCam({ file, onFile, previewUrl }: { file: File | null; onF
         </label>
       </div>
       {err && <p className="mt-3 text-sm text-red-600">{err}</p>}
-      <p className="mt-3 max-w-xs text-center text-xs text-ink/50">Good light, no sunglasses, face in the circle. We match it to your ID.</p>
+      <p className="mt-3 max-w-xs text-center text-xs text-ink-muted">Good light, no sunglasses, face in the circle. We match it to your ID.</p>
     </div>
   )
 }

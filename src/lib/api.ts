@@ -128,7 +128,13 @@ export const auth = {
   },
   async resetPassword(email: string) {
     if (DEMO) return
-    const { error } = await sb!.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}/login` })
+    const { error } = await sb!.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${location.origin}/reset-password` })
+    fail(error)
+  },
+  /** Set a new password for the signed-in user (after opening a reset link). */
+  async updatePassword(password: string) {
+    if (DEMO) return
+    const { error } = await sb!.auth.updateUser({ password })
     fail(error)
   },
   async signOut() {

@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
 import Admin from './pages/admin/Admin'
 import AuthPage from './pages/Auth'
+import ResetPassword from './pages/ResetPassword'
 import Brief from './pages/Brief'
 import GigDetail from './pages/GigDetail'
 import Gigs from './pages/Gigs'
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="gigs/:id" element={<Page><GigDetail /></Page>} />
           <Route path="signup" element={<Page><AuthPage mode="signup" /></Page>} />
           <Route path="login" element={<Page><AuthPage mode="login" /></Page>} />
+          <Route path="reset-password" element={<Page><ResetPassword /></Page>} />
           <Route path="verify" element={<Page><Verify /></Page>} />
           <Route path="me" element={<Page><Me /></Page>} />
           <Route path="me/gig/:claimId" element={<Page><MyGig /></Page>} />

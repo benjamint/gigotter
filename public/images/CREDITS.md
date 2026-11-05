@@ -5,7 +5,6 @@ Photos from [Unsplash](https://unsplash.com/license) and [Pexels](https://www.pe
 | File | Source |
 |---|---|
 | hero.jpg | [Unsplash — Leiada Krozjhen](https://unsplash.com/photos/rqaAWQgy05U) |
-| hero-2.jpg | [Pexels #8492468 — Orione Conceição](https://www.pexels.com/photo/8492468/) |
 | step-verify.jpg | [Pexels #6000068 — Ono Kosuki](https://www.pexels.com/photo/6000068/) |
 | step-field.jpg | [Pexels #6720592 — Gustavo Fring](https://www.pexels.com/photo/6720592/) |
 | step-paid.jpg | [Pexels #10375889 — RDNE Stock project](https://www.pexels.com/photo/10375889/) |

@@ -6,7 +6,6 @@ import type { GigType } from './types'
  */
 export const IMG = {
   hero: '/images/hero.jpg',             // student in the city, phone in hand, natural light
-  heroAlt: '/images/hero-2.jpg',        // business owner in her shop / salon
   step1: '/images/step-verify.jpg',     // student holding ID / taking selfie
   step2: '/images/step-field.jpg',      // student talking to a shop owner
   step3: '/images/step-paid.jpg',       // phone showing mobile money / smiling student

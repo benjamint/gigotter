@@ -6,7 +6,6 @@ Until a file exists, the site shows a neutral placeholder in its place.
 | File | Where it shows | What to shoot / find |
 |---|---|---|
 | hero.jpg | Landing hero (large, portrait 4:5) | A student in the city, phone in hand, natural light |
-| hero-2.jpg | Landing hero (small inset) | A woman founder in her shop or salon |
 | step-verify.jpg | How it works — step 1 | Student holding their ID / taking a selfie |
 | step-field.jpg | How it works — step 2 | Student chatting with a shop owner |
 | step-paid.jpg | How it works — step 3 | Phone with a mobile money alert, or a happy student |

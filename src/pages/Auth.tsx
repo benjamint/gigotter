@@ -75,7 +75,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
         {signup ? <>Already have an account? <Link to={`/login${next ? `?next=${next}` : ''}`} className="font-medium text-ink underline underline-offset-2">Log in</Link></>
           : <>New here? <Link to={`/signup${next ? `?next=${next}` : ''}`} className="font-medium text-ink underline underline-offset-2">Start earning</Link></>}
       </p>
-      {signup && <p className="mt-4 text-center text-xs leading-relaxed text-ink-muted">By signing up you agree we can verify you’re a student and store your docs privately for that purpose.</p>}
+      {signup && <p className="mt-4 text-center text-xs leading-relaxed text-ink-muted">By signing up you agree to our <Link to="/terms" className="underline underline-offset-2 hover:text-ink">Terms</Link> and <Link to="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy Policy</Link>, including verifying you’re a student.</p>}
     </Shell>
   )
 }

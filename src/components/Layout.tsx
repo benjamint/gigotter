@@ -107,7 +107,7 @@ export default function Layout() {
         </div>
         <div className="container-x flex flex-col gap-2 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} Gigotter. Accra, Ghana.</span>
-          <span>ID documents are stored privately and used only for verification.</span>
+          <span className="flex gap-5"><Link to="/privacy" className="hover:text-white">Privacy</Link><Link to="/terms" className="hover:text-white">Terms</Link><span className="hidden sm:inline">ID documents are stored privately and used only for verification.</span></span>
         </div>
       </footer>
     </div>

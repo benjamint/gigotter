@@ -10,6 +10,7 @@ import Landing from './pages/Landing'
 import Me from './pages/Me'
 import MyGig from './pages/MyGig'
 import Verify from './pages/Verify'
+import { Privacy, Terms } from './pages/Legal'
 import { Empty } from './components/ui'
 import { Link } from 'react-router-dom'
 
@@ -33,6 +34,8 @@ export default function App() {
           <Route path="me/gig/:claimId" element={<Page><MyGig /></Page>} />
           <Route path="brief" element={<Page><Brief /></Page>} />
           <Route path="admin" element={<Page><Admin /></Page>} />
+          <Route path="privacy" element={<Page><Privacy /></Page>} />
+          <Route path="terms" element={<Page><Terms /></Page>} />
           <Route path="*" element={<div className="mx-auto max-w-lg px-4 py-24"><Empty title="Page not found" body="The page you’re looking for doesn’t exist or has moved." action={<Link to="/" className="btn-primary">Go home</Link>} /></div>} />
         </Route>
       </Routes>

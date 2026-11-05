@@ -5,3 +5,4 @@ All photos are used under the [Unsplash License](https://unsplash.com/license) u
 | File | Source |
 |---|---|
 | hero.jpg, auth.jpg | [Unsplash — "A group of smiling friends pose on some steps"](https://unsplash.com/photos/rqaAWQgy05U) |
+| step-verify.jpg | Supplied by the Gigotter team (add the original source link here) |

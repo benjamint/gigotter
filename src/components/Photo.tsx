@@ -2,11 +2,12 @@ import { ImageIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 /** Image with a graceful, on-brand fallback when the file isn't there yet. */
-export default function Photo({ src, alt, className = '', tone = 'sand', label }: {
-  src?: string | null; alt: string; className?: string; tone?: 'sand' | 'brand' | 'dark'; label?: string
+export default function Photo({ src, alt, className = '', tone = 'sand', label, hideIfMissing }: {
+  src?: string | null; alt: string; className?: string; tone?: 'sand' | 'brand' | 'dark'; label?: string; hideIfMissing?: boolean
 }) {
   const [ok, setOk] = useState<boolean | null>(src ? null : false)
   useEffect(() => { setOk(src ? null : false) }, [src])
+  if (hideIfMissing && ok === false) return null
   const bg = tone === 'brand' ? 'bg-brand-100' : tone === 'dark' ? 'bg-brand-900' : 'bg-sand'
   return (
     <div className={`${/\b(absolute|fixed)\b/.test(className) ? '' : 'relative'} overflow-hidden ${bg} ${className}`}>

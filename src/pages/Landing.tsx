@@ -63,8 +63,8 @@ export default function Landing() {
             <div className="mt-3 border-t border-line pt-3 text-xs text-ink-muted">9 salons onboarded · MTN MoMo</div>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.7, ease: EASE }}
-            className="absolute -right-3 top-10 hidden w-36 overflow-hidden rounded-2xl border-4 border-paper shadow-lift sm:block md:-right-8">
-            <Photo src={IMG.heroAlt} alt="Business owner in her shop" label="hero-2" className="aspect-square w-full" tone="brand" />
+            className="absolute -right-3 top-10 hidden w-36 overflow-hidden rounded-2xl shadow-lift empty:hidden sm:block md:-right-8 [&>div]:border-4 [&>div]:border-paper [&>div]:rounded-2xl">
+            <Photo src={IMG.heroAlt} alt="Business owner in her shop" hideIfMissing className="aspect-square w-full" tone="brand" />
           </motion.div>
         </motion.div>
       </section>

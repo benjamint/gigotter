@@ -61,7 +61,8 @@ create trigger on_auth_user_created after insert on auth.users
 create or replace function public.guard_profile_update() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if not public.is_admin() then
+  -- only guard app users; SQL editor / service role (no auth.uid) may change anything
+  if auth.uid() is not null and not public.is_admin() then
     new.role := old.role;
     new.kyc_note := old.kyc_note;
     new.referral_code := old.referral_code;

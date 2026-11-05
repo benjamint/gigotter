@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { LogOut, Menu, Waves, X } from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { DEMO, auth, resetDemo } from '../lib/api'
@@ -7,10 +7,8 @@ import { useSession } from '../lib/session'
 
 export function Logo({ className = '', light = false }: { className?: string; light?: boolean }) {
   return (
-    <Link to="/" className={`flex items-center gap-2.5 ${className}`} aria-label="Gigotter home">
-      <span className={`grid h-8 w-8 place-items-center rounded-[10px] ${light ? 'bg-white text-brand-900' : 'bg-brand-700 text-white'}`}>
-        <Waves className="h-[18px] w-[18px]" strokeWidth={2.25} />
-      </span>
+    <Link to="/" className={`flex items-center gap-2 ${className}`} aria-label="Gigotter home">
+      <img src="/logo-mark.png" alt="" width={40} height={40} className="h-10 w-10 shrink-0 transition-transform duration-300 hover:-rotate-6" />
       <span className={`font-display text-[19px] font-semibold tracking-tight ${light ? 'text-white' : 'text-ink'}`}>Gigotter</span>
     </Link>
   )

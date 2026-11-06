@@ -8,6 +8,7 @@ import { IMG } from '../lib/images'
 import { Spinner, useToast } from '../components/ui'
 import Captcha, { CAPTCHA_ON } from '../components/Captcha'
 import { DEMO, auth } from '../lib/api'
+import { scrollToEl } from '../lib/scroll'
 import { cooldownLeft, friendlyError, loginBackoff, passwordProblem, safeNext, startCooldown } from '../lib/security'
 import { useSession } from '../lib/session'
 
@@ -29,6 +30,8 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   const signup = mode === 'signup'
   const email = f.email.trim().toLowerCase()
 
+  // after a long form is replaced by a short message, don't leave mobile users staring at the footer
+  useEffect(() => { if (check || forgot) scrollToEl(null) }, [check, forgot])
   // re-render every second while any cooldown is running so the countdown updates
   useEffect(() => { const t = setInterval(() => tick((x) => x + 1), 1000); return () => clearInterval(t) }, [])
   useEffect(() => {

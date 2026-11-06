@@ -1,23 +1,26 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, Check, ImageUp, RefreshCcw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { checkImage } from '../lib/security'
+import { normalizePhoto } from '../lib/security'
 
 export function FileDrop({ label, hint, file, onFile: rawOnFile, previewUrl, capture }: {
   label: string; hint?: string; file: File | null; onFile: (f: File) => void; previewUrl?: string | null; capture?: 'user' | 'environment'
 }) {
   const [drag, setDrag] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const onFile = (f: File) => { const bad = checkImage(f); setErr(bad); if (!bad) rawOnFile(f) }
+  const [busy, setBusy] = useState(false)
+  const onFile = async (f: File) => { setErr(null); setBusy(true); try { rawOnFile(await normalizePhoto(f)) } catch (e: any) { setErr(e.message) } finally { setBusy(false) } }
   const [url, setUrl] = useState<string | null>(null)
   useEffect(() => { if (!file) return setUrl(null); const u = URL.createObjectURL(file); setUrl(u); return () => URL.revokeObjectURL(u) }, [file])
   const shown = url ?? previewUrl
   return (
+    <>
     <label
       onDragOver={(e) => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) onFile(f) }}
       className={`relative flex min-h-[11rem] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border border-dashed p-4 text-center transition ${drag ? 'border-brand-600 bg-brand-50' : shown ? 'border-ink bg-white' : 'border-line bg-white hover:border-ink'}`}>
-      <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture={capture} className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
+      <input type="file" accept="image/*" capture={capture} className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFile(f) }} />
+      {busy && <span className="absolute inset-0 z-10 grid place-items-center bg-white/70 text-sm font-medium">Preparing photo…</span>}
       {shown ? (
         <>
           <img src={shown} alt={label} className="max-h-48 rounded-2xl object-contain" />
@@ -29,10 +32,11 @@ export function FileDrop({ label, hint, file, onFile: rawOnFile, previewUrl, cap
           <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="grid h-12 w-12 place-items-center rounded-2xl bg-sand"><ImageUp /></motion.div>
           <div className="mt-3 font-semibold">{label}</div>
           {hint && <div className="mt-0.5 text-xs text-ink-muted">{hint}</div>}
-          {err && <div className="mt-2 text-xs font-medium text-red-600">{err}</div>}
         </>
       )}
     </label>
+    {err && <p className="mt-2 text-xs font-medium text-red-600">{err}</p>}
+    </>
   )
 }
 
@@ -43,7 +47,8 @@ export function SelfieCam({ file, onFile: rawOnFile, previewUrl }: { file: File 
   const [err, setErr] = useState<string | null>(null)
   const [flash, setFlash] = useState(false)
   const [shot, setShot] = useState<string | null>(null)
-  const onFile = (f: File) => { const bad = checkImage(f); setErr(bad); if (!bad) rawOnFile(f) }
+  const [ready, setReady] = useState(false)
+  const onFile = async (f: File) => { setErr(null); try { rawOnFile(await normalizePhoto(f)) } catch (e: any) { setErr(e.message) } }
 
   useEffect(() => { if (!file) return setShot(null); const u = URL.createObjectURL(file); setShot(u); return () => URL.revokeObjectURL(u) }, [file])
   useEffect(() => () => stream?.getTracks().forEach((t) => t.stop()), [stream])
@@ -52,12 +57,13 @@ export function SelfieCam({ file, onFile: rawOnFile, previewUrl }: { file: File 
     setErr(null)
     try {
       const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 720, height: 720 } })
-      setStream(s)
-      requestAnimationFrame(() => { if (video.current) { video.current.srcObject = s; video.current.play() } })
+      setReady(false); setStream(s)
+      requestAnimationFrame(() => { const v = video.current; if (v) { v.srcObject = s; v.onloadeddata = () => setReady(v.videoWidth > 0); v.play().catch(() => {}) } })
     } catch { setErr('Camera blocked — use the upload button instead.') }
   }
   const snap = () => {
-    const v = video.current!
+    const v = video.current
+    if (!v || !v.videoWidth) return setErr('Camera is still starting — try again in a second.')
     const c = document.createElement('canvas')
     c.width = v.videoWidth; c.height = v.videoHeight
     const ctx = c.getContext('2d')!
@@ -73,7 +79,7 @@ export function SelfieCam({ file, onFile: rawOnFile, previewUrl }: { file: File 
   return (
     <div className="flex flex-col items-center">
       <div className="relative aspect-square w-64 max-w-full overflow-hidden rounded-full border border-line bg-sand shadow-soft">
-        {stream ? <video ref={video} playsInline muted className="h-full w-full -scale-x-100 object-cover" />
+        {stream ? <video ref={video} autoPlay playsInline muted className="h-full w-full -scale-x-100 object-cover" />
           : shown ? <img src={shown} alt="Your selfie" className="h-full w-full object-cover" />
           : <div className="grid h-full place-items-center text-ink-muted"><Camera className="h-10 w-10" strokeWidth={1.25} /></div>}
         {stream && <motion.div className="pointer-events-none absolute inset-6 rounded-full border border-dashed border-white/80" animate={{ scale: [1, 1.03, 1] }} transition={{ repeat: Infinity, duration: 1.6 }} />}
@@ -81,13 +87,13 @@ export function SelfieCam({ file, onFile: rawOnFile, previewUrl }: { file: File 
       </div>
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         {stream ? (
-          <button type="button" onClick={snap} className="btn-brand"><Camera className="h-5 w-5" />Snap it</button>
+          <button type="button" onClick={snap} disabled={!ready} className="btn-brand"><Camera className="h-5 w-5" />{ready ? 'Snap it' : 'Starting camera…'}</button>
         ) : (
           <button type="button" onClick={start} className="btn-primary">{shown ? <><RefreshCcw className="h-4 w-4" />Retake</> : <><Camera className="h-4 w-4" />Open camera</>}</button>
         )}
         <label className="btn-ghost cursor-pointer">
           Upload instead
-          <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="user" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
+          <input type="file" accept="image/*" capture="user" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) onFile(f) }} />
         </label>
       </div>
       {err && <p className="mt-3 text-sm text-red-600">{err}</p>}

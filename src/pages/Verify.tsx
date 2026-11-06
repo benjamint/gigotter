@@ -6,7 +6,10 @@ import { FileDrop, SelfieCam } from '../components/Upload'
 import { PageLoader, Spinner, useToast } from '../components/ui'
 import { fileUrl, updateMyProfile, uploadFile } from '../lib/api'
 import { useSession } from '../lib/session'
+import { scrollToEl, useScrollIntoViewOn } from '../lib/scroll'
 import { MOMO_PROVIDERS } from '../lib/types'
+import PickOrOther from '../components/PickOrOther'
+import { PROGRAMMES, SCHOOLS } from '../lib/schools'
 
 const STEPS = [
   { key: 'about', label: 'About you', icon: User },
@@ -34,6 +37,9 @@ export default function Verify() {
       .then(([id, student, selfie]) => setPrev({ id, student, selfie }))
   }, [profile?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const topRef = useScrollIntoViewOn<HTMLDivElement>([step])
+  useEffect(() => { if (profile?.kyc_status === 'pending' || profile?.kyc_status === 'verified') scrollToEl(null) }, [profile?.kyc_status, redo])
+
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/signup?next=/verify" replace />
   if (!profile) return <PageLoader />
@@ -42,7 +48,7 @@ export default function Verify() {
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value })
   const valid = [
-    !!(f.full_name && f.phone && f.school && f.student_id_number),
+    !!(f.full_name.trim() && f.phone.trim() && f.school.trim() && f.programme.trim() && f.study_year && f.student_id_number.trim()),
     !!(files.id || prev.id),
     !!(files.student || prev.student),
     !!(files.selfie || prev.selfie),
@@ -66,7 +72,7 @@ export default function Verify() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
+    <div ref={topRef} className="mx-auto max-w-2xl px-4 py-10">
       <div className="eyebrow">Verification</div>
       <h1 className="mt-3 text-4xl font-semibold tracking-tightest md:text-5xl">Verify your <span className="em text-brand-600">identity</span></h1>
       <p className="mt-3 flex items-center gap-2 text-sm text-ink-muted"><Lock className="h-4 w-4" />Your documents are encrypted and seen only by the Gigotter verification team.</p>
@@ -97,9 +103,8 @@ export default function Verify() {
                   <Field label="Full legal name" className="sm:col-span-2"><input className="input" value={f.full_name} onChange={set('full_name')} placeholder="Abena Owusu" /></Field>
                   <Field label="Phone"><input className="input" type="tel" value={f.phone} onChange={set('phone')} placeholder="024 123 4567" /></Field>
                   <Field label="City"><input className="input" value={f.city} onChange={set('city')} placeholder="Accra" /></Field>
-                  <Field label="School" className="sm:col-span-2"><input className="input" value={f.school} onChange={set('school')} placeholder="University of Ghana" list="schools" />
-                    <datalist id="schools">{['University of Ghana', 'KNUST', 'University of Cape Coast', 'Ashesi University', 'GIMPA', 'UPSA', 'University of Lagos', 'Covenant University'].map((s) => <option key={s} value={s} />)}</datalist></Field>
-                  <Field label="Programme"><input className="input" value={f.programme} onChange={set('programme')} placeholder="BSc Marketing" /></Field>
+                  <Field label="School" className="sm:col-span-2"><PickOrOther groups={SCHOOLS} value={f.school} onChange={(v) => setF({ ...f, school: v })} placeholder="Choose your school" otherPlaceholder="Type your school’s full name" /></Field>
+                  <Field label="Programme"><PickOrOther options={PROGRAMMES} value={f.programme} onChange={(v) => setF({ ...f, programme: v })} placeholder="Choose your programme" otherPlaceholder="Type your programme" /></Field>
                   <Field label="Year"><select className="input" value={f.study_year} onChange={set('study_year')}><option value="">Pick one</option>{['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Postgrad'].map((y) => <option key={y}>{y}</option>)}</select></Field>
                   <Field label="Student ID number" className="sm:col-span-2"><input className="input" value={f.student_id_number} onChange={set('student_id_number')} placeholder="10987654" /></Field>
                 </div>

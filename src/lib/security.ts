@@ -38,6 +38,8 @@ export function loginBackoff(email: string, failed: boolean): number {
 // ─────────── uploads ───────────
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
 export const MAX_UPLOAD_MB = 5
+/** Photos straight from a phone can be bigger than this before we shrink them. */
+export const MAX_RAW_MB = 30
 /** Returns an error message, or null if the file is an acceptable photo. */
 export function checkImage(file: File, maxMb = MAX_UPLOAD_MB): string | null {
   const type = (file.type || '').toLowerCase()
@@ -78,4 +80,31 @@ export function passwordProblem(pw: string): string | null {
   if (!/[a-z]/i.test(pw) || !/\d/.test(pw)) return 'Use both letters and numbers.'
   if (pw.length > 72) return 'Keep it under 72 characters.'
   return null
+}
+
+/**
+ * Turn any phone photo into a standard JPEG (max 1600px, ~200–500 KB) so it previews everywhere,
+ * uploads quickly on mobile data and fits the storage limits. Fixes rotation from EXIF too.
+ */
+export async function normalizePhoto(file: File, max = 1600): Promise<File> {
+  const type = (file.type || '').toLowerCase()
+  if (file.size > MAX_RAW_MB * 1024 * 1024) throw new Error(`That photo is too large — keep it under ${MAX_RAW_MB} MB.`)
+  if (type && !type.startsWith('image/')) throw new Error('Please choose a photo (JPG, PNG or HEIC).')
+  let bmp: ImageBitmap
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' } as ImageBitmapOptions) }
+  catch {
+    const heic = type.includes('hei') || /\.(heic|heif)$/i.test(file.name)
+    throw new Error(heic
+      ? 'This phone saved the photo as HEIC, which this browser can’t open. Use “Open camera”, or on iPhone set Settings → Camera → Formats → Most Compatible.'
+      : 'We couldn’t read that photo — try taking a new one.')
+  }
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height))
+  const c = document.createElement('canvas')
+  c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale)
+  const ctx = c.getContext('2d')!
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height) // flatten transparent PNGs
+  ctx.drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.()
+  const blob: Blob | null = await new Promise((res) => c.toBlob(res, 'image/jpeg', 0.85))
+  if (!blob || blob.size < 1024) throw new Error('That photo came out empty — please try again.')
+  return new File([blob], (file.name.replace(/\.[^.]+$/, '') || 'photo') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() })
 }

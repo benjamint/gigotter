@@ -9,6 +9,7 @@ import { Empty, PageLoader, Progress, Spinner, SubPill, useToast } from '../comp
 import { myClaims, submitWork, withdrawClaim } from '../lib/api'
 import { ago, coverFor, money, payLine, timeLeft } from '../lib/format'
 import { friendlyError } from '../lib/security'
+import { useScrollIntoViewOn } from '../lib/scroll'
 import { useAsync, useSession } from '../lib/session'
 import { PROOF_FIELDS, fieldLabel, type Submission, type SubmissionStatus } from '../lib/types'
 
@@ -26,6 +27,7 @@ export default function MyGig() {
   const [proof, setProof] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [formKey, setFormKey] = useState(0)
+  const tabsRef = useScrollIntoViewOn<HTMLDivElement>([tab, formKey])
 
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login" replace />
@@ -105,7 +107,7 @@ export default function MyGig() {
       </motion.div>
 
       {/* ── tabs ── */}
-      <div className="mt-8 flex gap-1 overflow-x-auto border-b border-line">
+      <div ref={tabsRef} className="mt-8 flex gap-1 overflow-x-auto border-b border-line">
         {tabs.map((x) => (
           <button key={x.k} onClick={() => setTab(x.k)} className={`relative flex shrink-0 items-center gap-2 px-4 pb-3 pt-1 text-sm transition ${tab === x.k ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'}`}>
             <x.icon className="h-4 w-4" />{x.label}

@@ -3,6 +3,7 @@ import { ArrowRight, Check } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Reveal, Spinner, useToast } from '../components/ui'
 import { createRequest } from '../lib/api'
+import { useScrollIntoViewOn } from '../lib/scroll'
 import { cooldownLeft, friendlyError, startCooldown } from '../lib/security'
 
 export default function Brief() {
@@ -11,6 +12,7 @@ export default function Brief() {
   const [trap, setTrap] = useState('') // hidden field: real people never fill it in
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
+  const cardRef = useScrollIntoViewOn<HTMLDivElement>([done])
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value })
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -36,7 +38,7 @@ export default function Brief() {
           ))}
         </div>
       </div>
-      <div className="card p-6 md:p-8">
+      <div ref={cardRef} className="card p-6 md:p-8">
         {done ? (
           <div className="grid min-h-[24rem] place-items-center text-center">
             <div><div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600"><Check className="h-5 w-5" /></div>

@@ -3,13 +3,15 @@ import { Search, SearchX } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import GigCard from '../components/GigCard'
 import { Empty, PageLoader } from '../components/ui'
-import { listListings } from '../lib/api'
+import { PayoutFeed } from '../components/Feeds'
+import { listListings, payoutFeed } from '../lib/api'
 import { isOpen } from '../lib/format'
 import { useAsync } from '../lib/session'
 import { GIG_TYPES, type GigType } from '../lib/types'
 
 export default function Gigs() {
   const { data, loading } = useAsync(() => listListings(), [])
+  const paid = useAsync(() => payoutFeed(20), [])
   const [type, setType] = useState<GigType | 'all'>('all')
   const [q, setQ] = useState('')
   const [showClosed, setShowClosed] = useState(false)
@@ -25,9 +27,10 @@ export default function Gigs() {
     <div className="container-x py-14">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
         <div className="eyebrow">Find work</div>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tightest md:text-5xl">Open gigs</h1>
+        <h1 className="mt-3 text-4xl font-semibold tracking-tightest md:text-5xl">Open <span className="em text-brand-600">gigs</span></h1>
         <p className="mt-3 max-w-lg text-lg text-ink-muted">Paid, clearly scoped work from businesses that need people on the ground.</p>
       </motion.div>
+      {(paid.data?.length ?? 0) >= 3 && <div className="mt-10"><PayoutFeed items={paid.data!} /></div>}
       <div className="mt-10 flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-center md:justify-between">
         <div className="-mx-4 flex gap-1 overflow-x-auto px-4 md:mx-0 md:px-0">
           {types.map((t) => (

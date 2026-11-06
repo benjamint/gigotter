@@ -98,7 +98,7 @@ export default function GigDetail() {
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.7, ease: EASE }} className="card p-7">
             <div className="text-sm text-ink-muted">You can earn up to</div>
-            <div className="mt-1 font-display text-5xl font-semibold tracking-tightest">{money(maxEarn(l), l.currency)}</div>
+            <div className="figure mt-1 text-6xl leading-none">{money(maxEarn(l), l.currency)}</div>
             <div className="mt-1.5 text-sm text-ink-muted">{payLine(l)}{l.units_per_student ? ` · up to ${l.units_per_student} ${l.unit_label}s` : ''}</div>
             <div className="mt-7">
               <div className="mb-2 flex justify-between text-xs text-ink-muted"><span>{l.taken ?? 0} joined</span><span>{l.slots} spots</span></div>

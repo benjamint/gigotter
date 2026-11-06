@@ -22,6 +22,8 @@ export default {
       },
       borderRadius: { '4xl': '2rem' },
       letterSpacing: { tightest: '-0.035em' },
+      keyframes: { marquee: { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(calc(-50% - 0.5rem))' } } },
+      animation: { marquee: 'marquee var(--d, 40s) linear infinite' },
     },
   },
   plugins: [],

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { LogOut, Menu, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { BadgeCheck, ChevronDown, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-react'
+import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { DEMO, auth, resetDemo } from '../lib/api'
 import { useSession } from '../lib/session'
@@ -22,11 +22,15 @@ export default function Layout() {
   const nav = useNavigate()
   useEffect(() => { setOpen(false); window.scrollTo(0, 0) }, [loc.pathname])
   useEffect(() => { const f = () => setScrolled(window.scrollY > 8); f(); window.addEventListener('scroll', f, { passive: true }); return () => window.removeEventListener('scroll', f) }, [])
+  // the main website menu is the same for everyone; account pages live in the avatar menu
   const links = [
     { to: '/gigs', label: 'Find work' },
     { to: '/brief', label: 'For businesses' },
-    ...(user ? [{ to: '/me', label: 'Dashboard' }] : []),
-    ...(profile?.role === 'admin' ? [{ to: '/admin', label: 'Admin' }] : []),
+  ]
+  const isAdmin = profile?.role === 'admin'
+  const account = [
+    { to: '/me', label: 'Dashboard', icon: LayoutDashboard },
+    ...(isAdmin ? [{ to: '/admin', label: 'Admin', icon: ShieldCheck }] : [{ to: '/verify', label: 'Verification', icon: BadgeCheck }]),
   ]
   const out = async () => { await auth.signOut(); nav('/') }
   const initials = (profile?.full_name || profile?.email || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase()
@@ -52,11 +56,8 @@ export default function Layout() {
           <div className="hidden items-center gap-3 md:flex">
             {user ? (
               <>
-                <Link to="/me" className="flex items-center gap-2.5 rounded-full py-1 pl-1 pr-3 text-sm hover:bg-sand">
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{initials}</span>
-                  <span className="max-w-[9rem] truncate font-medium">{profile?.full_name?.split(' ')[0] || 'Account'}</span>
-                </Link>
-                <button onClick={out} className="grid h-9 w-9 place-items-center rounded-full text-ink-muted hover:bg-sand hover:text-ink" aria-label="Log out"><LogOut className="h-4 w-4" /></button>
+                <Link to={isAdmin ? '/admin' : '/me'} className="btn-primary btn-sm">{isAdmin ? 'Admin' : 'Dashboard'}</Link>
+                <AccountMenu initials={initials} name={profile?.full_name || profile?.email || 'Account'} email={profile?.email ?? ''} items={account} onLogout={out} />
               </>
             ) : (
               <>
@@ -71,9 +72,11 @@ export default function Layout() {
           {open && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-line bg-paper md:hidden">
               <div className="container-x flex flex-col py-4">
-                {links.map((l) => <NavLink key={l.to} to={l.to} className="border-b border-line py-4 text-lg font-medium last:border-0">{l.label}</NavLink>)}
+                {links.map((l) => <NavLink key={l.to} to={l.to} className="border-b border-line py-4 text-lg font-medium">{l.label}</NavLink>)}
+                {user && <div className="pt-4 text-xs font-medium uppercase tracking-wider text-ink-muted">Your account</div>}
+                {user && account.map((l) => <NavLink key={l.to} to={l.to} className="flex items-center gap-3 border-b border-line py-4 text-lg font-medium"><l.icon className="h-5 w-5 text-ink-muted" />{l.label}</NavLink>)}
                 {user
-                  ? <button onClick={out} className="btn-ghost mt-4">Log out</button>
+                  ? <button onClick={out} className="btn-ghost mt-4" aria-label="Log out">Log out</button>
                   : <div className="mt-4 grid grid-cols-2 gap-2"><Link to="/login" className="btn-ghost">Log in</Link><Link to="/signup" className="btn-primary">Get started</Link></div>}
               </div>
             </motion.div>
@@ -108,6 +111,43 @@ export default function Layout() {
           <span className="flex gap-5"><Link to="/privacy" className="hover:text-white">Privacy</Link><Link to="/terms" className="hover:text-white">Terms</Link><span className="hidden sm:inline">ID documents are stored privately and used only for verification.</span></span>
         </div>
       </footer>
+    </div>
+  )
+}
+
+function AccountMenu({ initials, name, email, items, onLogout }: {
+  initials: string; name: string; email: string; items: { to: string; label: string; icon: ComponentType<{ className?: string }> }[]; onLogout: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const loc = useLocation()
+  useEffect(() => setOpen(false), [loc.pathname])
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent | KeyboardEvent) => { if (e instanceof KeyboardEvent ? e.key === 'Escape' : !ref.current?.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', close); document.addEventListener('keydown', close)
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', close) }
+  }, [open])
+  return (
+    <div ref={ref} className="relative">
+      <button onClick={() => setOpen(!open)} aria-haspopup="menu" aria-expanded={open} aria-label="Account menu" className="flex items-center gap-1.5 rounded-full p-1 pr-2 outline-none hover:bg-sand focus-visible:ring-2 focus-visible:ring-brand-500">
+        <span className="grid h-8 w-8 place-items-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{initials}</span>
+        <ChevronDown className={`h-4 w-4 text-ink-muted transition ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div role="menu" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }} transition={{ duration: 0.15 }}
+            className="absolute right-0 top-12 z-50 w-64 origin-top-right overflow-hidden rounded-2xl border border-line bg-white p-1.5 shadow-lift">
+            <div className="px-3 py-2.5"><div className="truncate text-sm font-medium">{name}</div><div className="truncate text-xs text-ink-muted">{email}</div></div>
+            <div className="my-1 h-px bg-line" />
+            {items.map((it) => (
+              <Link key={it.to} to={it.to} role="menuitem" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm hover:bg-paper"><it.icon className="h-4 w-4 text-ink-muted" />{it.label}</Link>
+            ))}
+            <div className="my-1 h-px bg-line" />
+            <button role="menuitem" onClick={onLogout} aria-label="Log out" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-ink-soft hover:bg-paper hover:text-ink"><LogOut className="h-4 w-4" />Log out</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

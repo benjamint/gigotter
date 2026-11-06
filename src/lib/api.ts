@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Claim, ClientRequest, KycStatus, Listing, Profile, Submission, SubmissionStatus } from './types'
+import type { Claim, ClientRequest, KycStatus, Listing, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
 import { seedListings } from './seed'
 import { checkImage, safeExt } from './security'
 
@@ -23,6 +23,7 @@ interface DemoDB {
   claims: Claim[]
   submissions: Submission[]
   requests: ClientRequest[]
+  testimonials?: Testimonial[]
   files: Record<string, string>
 }
 const KEY_DB = 'gigotter-demo-v1'
@@ -377,3 +378,52 @@ export const admin = {
 }
 
 export function resetDemo() { try { localStorage.removeItem(KEY_DB) } catch { /* */ } memo = null; location.href = '/' }
+
+// ═══════════════════════════ public feed + testimonials ═══════════════════════════
+const shortName = (full?: string | null) => {
+  const parts = (full || '').trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return ''
+  const first = parts[0][0].toUpperCase() + parts[0].slice(1).toLowerCase()
+  return parts.length > 1 ? `${first} ${parts[parts.length - 1][0].toUpperCase()}.` : first
+}
+/** Real, recent payouts — anonymised to first name + last initial. Empty if the feed isn't set up yet. */
+export async function payoutFeed(limit = 20): Promise<PayoutItem[]> {
+  if (DEMO) {
+    const d = db(); const groups = new Map<string, PayoutItem>()
+    d.submissions.filter((s) => s.status === 'paid' && s.paid_at).forEach((s) => {
+      const p = d.profiles.find((x) => x.id === s.student_id); const l = d.listings.find((x) => x.id === s.listing_id)
+      if (!p || !l || p.show_in_feed === false) return
+      const k = `${p.id}|${l.id}|${s.paid_at!.slice(0, 10)}`
+      const g = groups.get(k) ?? { name: shortName(p.full_name), school: p.school, amount: 0, currency: l.currency, gig: l.title, units: 0, paid_at: s.paid_at! }
+      g.amount += s.amount ?? 0; g.units++; if (s.paid_at! > g.paid_at) g.paid_at = s.paid_at!; groups.set(k, g)
+    })
+    return [...groups.values()].sort((a, b) => b.paid_at.localeCompare(a.paid_at)).slice(0, limit)
+  }
+  const { data, error } = await sb!.rpc('payout_feed', { p_limit: limit })
+  if (error) return [] // feed not installed yet (migration 0006) — just hide it
+  return (data ?? []) as PayoutItem[]
+}
+export async function listTestimonials(all = false): Promise<Testimonial[]> {
+  if (DEMO) return (db().testimonials ?? []).filter((t) => all || t.published)
+  let q = sb!.from('testimonials').select('*').order('created_at', { ascending: false })
+  if (!all) q = q.eq('published', true)
+  const { data, error } = await q
+  if (error) return []
+  return data ?? []
+}
+export async function saveTestimonial(t: Partial<Testimonial>) {
+  const row = { name: t.name?.trim(), school: t.school?.trim() || null, quote: t.quote?.trim(), consent: !!t.consent, published: !!t.published && !!t.consent }
+  if (DEMO) {
+    const d = db(); d.testimonials ??= []
+    if (t.id) Object.assign(d.testimonials.find((x) => x.id === t.id) ?? {}, row)
+    else d.testimonials.unshift({ ...(row as any), id: uid(), created_at: now() })
+    return save()
+  }
+  const { error } = t.id ? await sb!.from('testimonials').update(row).eq('id', t.id) : await sb!.from('testimonials').insert(row)
+  fail(error)
+}
+export async function deleteTestimonial(id: string) {
+  if (DEMO) { const d = db(); d.testimonials = (d.testimonials ?? []).filter((x) => x.id !== id); return save() }
+  const { error } = await sb!.from('testimonials').delete().eq('id', id)
+  fail(error)
+}

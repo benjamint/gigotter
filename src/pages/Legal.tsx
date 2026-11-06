@@ -81,6 +81,7 @@ export function Privacy() {
             <><b className="font-medium text-ink">To pay you</b> to the mobile money account you give us, and to keep records of those payments.</>,
             <><b className="font-medium text-ink">To check submitted work</b> — for example, confirming a business really signed up — before approving payment.</>,
             <><b className="font-medium text-ink">To deliver work to our clients:</b> businesses receive the results of the gigs they pay for (see section 4).</>,
+            <><b className="font-medium text-ink">To show recent payouts</b> in the public “Recently paid” feed — only your first name, last initial, school, the amount and the gig, never your phone number. You can switch this off on your dashboard at any time.</>,
             <><b className="font-medium text-ink">To contact you</b> about your account, gigs, verification and payouts.</>,
             <><b className="font-medium text-ink">To meet legal obligations</b>, such as keeping financial records or responding to lawful requests.</>,
           ]} />,

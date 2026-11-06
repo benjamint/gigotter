@@ -20,6 +20,8 @@
   .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium; }
   .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.14em] text-brand-600; }
   .em { @apply font-serif italic font-normal tracking-normal; }
+  /* elegant figures for money and stats (Instrument Serif has one weight — never fake-bold it) */
+  .figure { @apply font-serif font-normal tracking-normal; font-variant-numeric: lining-nums tabular-nums; }
   .container-x { @apply mx-auto max-w-6xl px-4 sm:px-6; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }

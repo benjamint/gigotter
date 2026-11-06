@@ -42,7 +42,7 @@ export default function ResetPassword() {
         ) : (
           <>
             <div className="grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600"><KeyRound className="h-5 w-5" /></div>
-            <h1 className="mt-6 text-3xl font-semibold tracking-tightest">Choose a new password</h1>
+            <h1 className="mt-6 text-3xl font-semibold tracking-tightest">Choose a new <span className="em text-brand-600">password</span></h1>
             <p className="mt-2 text-ink-muted">For {user.email}</p>
             <form onSubmit={submit} className="mt-8 space-y-4">
               <div><label className="label">New password</label>

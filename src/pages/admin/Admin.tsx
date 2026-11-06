@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Plus, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Plus, Quote, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
-import { CountUp, Empty, KycPill, Modal, PageLoader, SubPill, useToast } from '../../components/ui'
-import { admin, deleteListing, fileUrl, listListings } from '../../lib/api'
+import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
+import { admin, deleteListing, deleteTestimonial, fileUrl, listListings, listTestimonials, saveTestimonial } from '../../lib/api'
 import Photo from '../../components/Photo'
 import { ago, coverFor, money, payLine, spotsLeft, timeLeft } from '../../lib/format'
 import { useAsync, useSession } from '../../lib/session'
@@ -17,6 +17,7 @@ const TABS = [
   { k: 'gigs', l: 'Gigs', i: Briefcase },
   { k: 'work', l: 'Work & payouts', i: Wallet },
   { k: 'briefs', l: 'Briefs', i: Inbox },
+  { k: 'testimonials', l: 'Testimonials', i: Quote },
 ] as const
 type Tab = (typeof TABS)[number]['k']
 
@@ -41,7 +42,7 @@ export default function Admin() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><div className="eyebrow">Admin</div><h1 className="mt-2 text-4xl font-semibold tracking-tightest">Control room</h1></div>
+        <div><div className="eyebrow">Admin</div><h1 className="mt-2 text-4xl font-semibold tracking-tightest">Control <span className="em text-brand-600">room</span></h1></div>
       </div>
       <div className="-mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-2">
         {TABS.map((t) => (
@@ -60,6 +61,7 @@ export default function Admin() {
             {tab === 'gigs' && <Gigs listings={d.listings} subs={d.subs} reload={data.reload} />}
             {tab === 'work' && <Work subs={d.subs} reload={data.reload} />}
             {tab === 'briefs' && <Briefs reqs={d.requests} reload={data.reload} />}
+            {tab === 'testimonials' && <Testimonials />}
           </motion.div>
         )}
       </div>
@@ -97,7 +99,7 @@ function Overview({ d, go }: { d: any; go: (t: Tab) => void }) {
         {tiles.map((x, i) => (
           <motion.button key={x.k} onClick={() => go(x.t)} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className={`card p-5 text-left transition hover:-translate-y-1 ${x.bg ?? ''}`}>
             <div className="text-sm font-medium text-ink-muted">{x.k}</div>
-            <div className="mt-1 font-display text-5xl font-semibold tracking-tightest"><CountUp to={x.v} /></div>
+            <div className="figure mt-1 text-5xl leading-none"><CountUp to={x.v} /></div>
             <div className="mt-1 text-xs text-ink-muted">{x.sub}</div>
           </motion.button>
         ))}
@@ -348,6 +350,51 @@ function Briefs({ reqs, reload }: { reqs: any[]; reload: () => void }) {
           <div className="mt-3 flex gap-2 text-xs">{r.budget && <span className="chip bg-brand-50 text-brand-700">Budget: {r.budget}</span>}{r.deadline && <span className="chip bg-sand">Due: {r.deadline}</span>}</div>
         </div>
       ))}
+    </div>
+  )
+}
+
+// ═════════════ testimonials ═════════════
+function Testimonials() {
+  const toast = useToast()
+  const list = useAsync(() => listTestimonials(true), [])
+  const blank = { name: '', school: '', quote: '', consent: false, published: true }
+  const [f, setF] = useState(blank)
+  const [busy, setBusy] = useState(false)
+  const add = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!f.consent) return toast('Tick the permission box first', 'err')
+    setBusy(true)
+    try { await saveTestimonial(f); setF(blank); toast(f.published ? 'Published' : 'Saved as draft'); list.reload() }
+    catch (err: any) { toast(err.message, 'err') } finally { setBusy(false) }
+  }
+  return (
+    <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+      <form onSubmit={add} className="card space-y-4 self-start p-6">
+        <div><h3 className="font-semibold">Add a testimonial</h3><p className="mt-1 text-sm text-ink-muted">Real words from a real student. The landing page shows these once there are at least two.</p></div>
+        <div><label className="label">Student name</label><input className="input" required maxLength={80} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Abena O." /><p className="mt-1 text-xs text-ink-muted">First name and last initial is usually best.</p></div>
+        <div><label className="label">School <span className="font-normal text-ink-muted">(optional)</span></label><input className="input" maxLength={120} value={f.school} onChange={(e) => setF({ ...f, school: e.target.value })} placeholder="University of Ghana" /></div>
+        <div><label className="label">Quote</label><textarea className="input min-h-[110px]" required minLength={10} maxLength={400} value={f.quote} onChange={(e) => setF({ ...f, quote: e.target.value })} placeholder="What they told you, in their words" /><p className="mt-1 text-right text-xs text-ink-muted">{f.quote.length}/400</p></div>
+        <label className="flex items-start gap-3 rounded-xl bg-paper p-3 text-sm"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-brand-600" checked={f.consent} onChange={(e) => setF({ ...f, consent: e.target.checked })} /><span>I have this student’s permission to publish their name and quote on Gigotter.</span></label>
+        <label className="flex items-center gap-3 text-sm"><input type="checkbox" className="h-4 w-4 accent-brand-600" checked={f.published} onChange={(e) => setF({ ...f, published: e.target.checked })} />Publish now</label>
+        <button className="btn-brand w-full" disabled={busy}>{busy ? <Spinner /> : 'Save testimonial'}</button>
+      </form>
+      <div className="space-y-3">
+        {(list.data ?? []).map((t) => (
+          <div key={t.id} className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-start">
+            <div className="min-w-0 flex-1">
+              <p className="font-serif text-lg italic leading-snug">“{t.quote}”</p>
+              <p className="mt-2 text-sm"><b className="font-medium">{t.name}</b>{t.school && <span className="text-ink-muted"> · {t.school}</span>}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button onClick={async () => { try { await saveTestimonial({ ...t, published: !t.published }); list.reload() } catch (e: any) { toast(e.message, 'err') } }}
+                className={`chip px-3 py-1.5 ${t.published ? 'bg-brand-50 text-brand-700' : 'bg-sand text-ink-soft'}`}>{t.published ? 'Published' : 'Draft'}</button>
+              <button onClick={async () => { if (confirm('Delete this testimonial?')) { await deleteTestimonial(t.id); list.reload() } }} className="grid h-9 w-9 place-items-center rounded-full text-red-600 hover:bg-red-50" aria-label="Delete"><Trash2 className="h-4 w-4" /></button>
+            </div>
+          </div>
+        ))}
+        {!list.loading && !(list.data ?? []).length && <Empty icon={<Quote className="h-5 w-5" />} title="No testimonials yet" body="Ask a few students who’ve been paid how it went — add their words here with their permission." />}
+      </div>
     </div>
   )
 }

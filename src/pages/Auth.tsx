@@ -107,7 +107,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   if (forgot) return (
     <Shell>
       <div className="grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600"><KeyRound className="h-5 w-5" /></div>
-      <h1 className="mt-6 text-3xl font-semibold tracking-tightest">Reset your password</h1>
+      <h1 className="mt-6 text-3xl font-semibold tracking-tightest">Reset your <span className="em text-brand-600">password</span></h1>
       <p className="mt-2 text-ink-muted">Enter your email and we’ll send you a link to choose a new password.</p>
       <form onSubmit={sendReset} className="mt-8 space-y-4">
         <div><label className="label">Email</label>
@@ -123,7 +123,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
 
   return (
     <Shell>
-      <h1 className="text-3xl font-semibold tracking-tightest md:text-4xl">{signup ? 'Create your account' : 'Welcome back'}</h1>
+      <h1 className="text-3xl font-semibold tracking-tightest md:text-4xl">{signup ? <>Create your <span className="em text-brand-600">account</span></> : <>Welcome <span className="em text-brand-600">back</span></>}</h1>
       <p className="mt-2 text-ink-muted">{signup ? 'Start earning from real work. Verification comes next.' : 'Log in to see your gigs and earnings.'}</p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         {signup && (

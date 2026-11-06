@@ -101,7 +101,7 @@ export default function GigResponses() {
           ['Paid', count('paid')],
           ['Budget used', `${money(used, l.currency)} / ${money(budget, l.currency)}`],
         ].map(([k, v]) => (
-          <div key={k as string} className="bg-white px-4 py-4"><div className="text-xs text-ink-muted">{k}</div><div className="mt-1 font-display text-lg font-semibold">{v}</div></div>
+          <div key={k as string} className="bg-white px-4 py-4"><div className="text-xs text-ink-muted">{k}</div><div className="figure mt-1 text-2xl leading-tight">{v}</div></div>
         ))}
       </div>
 

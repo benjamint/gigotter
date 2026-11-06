@@ -2,13 +2,13 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Copy, ShieldAlert, Sparkles } from 'lucide-react'
 import { Link, Navigate } from 'react-router-dom'
 import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from '../components/ui'
-import { myClaims } from '../lib/api'
+import { myClaims, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'
 import { ago, coverFor, money, timeLeft } from '../lib/format'
 import { useAsync, useSession } from '../lib/session'
 
 export default function Me() {
-  const { user, profile, loading } = useSession()
+  const { user, profile, loading, refresh } = useSession()
   const toast = useToast()
   const { data, loading: l2 } = useAsync(() => (user ? myClaims() : Promise.resolve([])), [user?.id])
   if (loading) return <PageLoader />
@@ -27,7 +27,7 @@ export default function Me() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-semibold tracking-tightest md:text-5xl">Welcome back, {first}</motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-semibold tracking-tightest md:text-5xl">Welcome back, <span className="em text-brand-600">{first}</span></motion.h1>
           <div className="mt-2 flex items-center gap-2"><KycPill s={profile.kyc_status} />{profile.school && <span className="text-sm text-ink-muted">{profile.school}</span>}</div>
         </div>
         {profile.referral_code && (
@@ -55,13 +55,13 @@ export default function Me() {
         ].map(([k, v, bg], i) => (
           <motion.div key={k as string} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className={`card p-6 ${bg}`}>
             <div className="text-sm font-medium text-ink-muted">{k}</div>
-            <div className="mt-2 font-display text-4xl font-semibold tracking-tightest"><CountUp to={v as number} prefix={money(0, cur).replace(/0$/, '')} /></div>
+            <div className="figure mt-2 text-5xl leading-none"><CountUp to={v as number} prefix={money(0, cur).replace(/0$/, '')} /></div>
           </motion.div>
         ))}
       </div>
 
       <div className="mt-12 flex items-end justify-between">
-        <h2 className="text-3xl font-semibold tracking-tightest">Your gigs</h2>
+        <h2 className="text-3xl font-semibold tracking-tightest">Your <span className="em">gigs</span></h2>
         <Link to="/gigs" className="btn-ghost btn-sm">Find more <ArrowRight className="h-4 w-4" /></Link>
       </div>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -87,7 +87,7 @@ export default function Me() {
 
       {subs.length > 0 && (
         <>
-          <h2 className="mt-12 text-3xl font-semibold tracking-tightest">Activity</h2>
+          <h2 className="mt-12 text-3xl font-semibold tracking-tightest">Recent <span className="em">activity</span></h2>
           <div className="card mt-5 divide-y divide-line overflow-hidden">
             {subs.slice(0, 12).map((s) => (
               <div key={s.id} className="flex items-center gap-4 p-4">
@@ -99,6 +99,17 @@ export default function Me() {
           </div>
         </>
       )}
+      <div className="card mt-12 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="font-medium">Show me in “Recently paid”</div>
+          <p className="mt-0.5 text-sm text-ink-muted">When you’re paid, we can show your first name, last initial and school (never your phone or full name) in the live feed on Gigotter.</p>
+        </div>
+        <button role="switch" aria-checked={profile.show_in_feed !== false}
+          onClick={async () => { try { await updateMyProfile({ show_in_feed: profile.show_in_feed === false }); await refresh(); toast('Saved') } catch (e: any) { toast('Couldn’t save that just now — try again later', 'err') } }}
+          className={`relative h-7 w-12 shrink-0 rounded-full transition ${profile.show_in_feed !== false ? 'bg-brand-600' : 'bg-line'}`}>
+          <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${profile.show_in_feed !== false ? 'left-6' : 'left-1'}`} />
+        </button>
+      </div>
     </div>
   )
 }

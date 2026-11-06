@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom'
 import GigCard from '../components/GigCard'
 import Photo from '../components/Photo'
 import { CountUp, Reveal, SectionHead } from '../components/ui'
-import { listListings } from '../lib/api'
+import { PayoutFeed, TestimonialStrip } from '../components/Feeds'
+import { listListings, listTestimonials, payoutFeed } from '../lib/api'
 import { isOpen } from '../lib/format'
 import { IMG } from '../lib/images'
 import { useAsync, useSession } from '../lib/session'
@@ -16,6 +17,8 @@ export default function Landing() {
   const { user } = useSession()
   const gigs = useAsync(() => listListings(), [])
   const live = (gigs.data ?? []).filter(isOpen)
+  const paid = useAsync(() => payoutFeed(20), [])
+  const quotes = useAsync(() => listTestimonials(), [])
   const cta = user ? '/gigs' : '/signup'
   const hero = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: hero, offset: ['start start', 'end start'] })
@@ -77,6 +80,10 @@ export default function Landing() {
         </div>
       </section>
 
+      {(paid.data?.length ?? 0) >= 3 && (
+        <section className="container-x pt-12"><PayoutFeed items={paid.data!} /></section>
+      )}
+
       {/* ───────── HOW ───────── */}
       <section className="container-x py-28">
         <Reveal><SectionHead eyebrow="How it works" title={<>Three steps between you<br className="hidden md:block" /> and your <span className="em">first payout.</span></>} /></Reveal>
@@ -132,6 +139,13 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
+      {(quotes.data?.length ?? 0) >= 2 && (
+        <section className="py-24">
+          <Reveal className="container-x"><SectionHead eyebrow="From students" title={<>In their <span className="em">own words.</span></>} /></Reveal>
+          <div className="mt-10"><TestimonialStrip items={quotes.data!} /></div>
+        </section>
+      )}
 
       <Calculator />
 

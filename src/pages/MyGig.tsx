@@ -84,12 +84,12 @@ export default function MyGig() {
         <div className="grid gap-px border-t border-line bg-line sm:grid-cols-3">
           <div className="bg-white px-5 py-4 sm:px-6">
             <div className="text-xs text-ink-muted">Progress</div>
-            <div className="mt-1 font-display text-xl font-semibold">{done}{goal ? <span className="text-ink-muted"> / {goal}</span> : ''} <span className="text-sm font-normal text-ink-muted">{unit}s</span></div>
+            <div className="figure mt-1 text-3xl leading-tight">{done}{goal ? <span className="text-ink-muted"> / {goal}</span> : ''} <span className="font-sans text-sm text-ink-muted">{unit}s</span></div>
             <Progress value={done} max={goal ?? Math.max(done, 1)} className="mt-2" />
           </div>
           <div className="bg-white px-5 py-4 sm:px-6">
             <div className="text-xs text-ink-muted">Approved earnings</div>
-            <div className="mt-1 font-display text-xl font-semibold">{money(earned, l.currency)}</div>
+            <div className="figure mt-1 text-3xl leading-tight">{money(earned, l.currency)}</div>
             <div className="text-xs text-ink-muted">{pending ? `${money(pending, l.currency)} in review` : 'Paid weekly to your MoMo'}</div>
           </div>
           <div className="bg-white px-5 py-4 sm:px-6">

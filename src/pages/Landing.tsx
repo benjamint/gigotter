@@ -1,4 +1,4 @@
-import { AnimatePresence, animate, motion, useMotionValue, useScroll, useTransform } from 'framer-motion'
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, BadgeCheck, ClipboardList, Handshake, MessagesSquare, Plus, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -228,9 +228,10 @@ function FAQ() {
 
 /** Number that rolls to its new value (₵ formatted). */
 function Ticker({ to, duration = 1.2, delay = 0, decimals = 0 }: { to: number; duration?: number; delay?: number; decimals?: number }) {
-  const v = useMotionValue(0)
+  const reduce = useReducedMotion()
+  const v = useMotionValue(reduce ? to : 0)
   const txt = useTransform(v, (x) => `₵${x.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`)
-  useEffect(() => { const c = animate(v, to, { duration, delay, ease: EASE }); return c.stop }, [to, duration, delay, v])
+  useEffect(() => { if (reduce) { v.set(to); return } const c = animate(v, to, { duration, delay, ease: EASE }); return c.stop }, [to, duration, delay, v, reduce])
   return <motion.span className="tabular-nums">{txt}</motion.span>
 }
 

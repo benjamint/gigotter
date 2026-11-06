@@ -1,4 +1,4 @@
-import { AnimatePresence, animate, motion, useInView, useMotionValue, useTransform } from 'framer-motion'
+import { AnimatePresence, animate, motion, useInView, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
 import { Loader2, X } from 'lucide-react'
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -18,9 +18,10 @@ export function Reveal({ children, delay = 0, className = '', y = 16 }: { childr
 export function CountUp({ to, prefix = '', suffix = '', className = '' }: { to: number; prefix?: string; suffix?: string; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true })
-  const v = useMotionValue(0)
+  const reduce = useReducedMotion()
+  const v = useMotionValue(reduce ? to : 0)
   const txt = useTransform(v, (x) => `${prefix}${Math.round(x).toLocaleString()}${suffix}`)
-  useEffect(() => { if (inView) { const c = animate(v, to, { duration: 1.2, ease: EASE }); return c.stop } }, [inView, to, v])
+  useEffect(() => { if (reduce) { v.set(to); return } if (inView) { const c = animate(v, to, { duration: 1.2, ease: EASE }); return c.stop } }, [inView, to, v, reduce])
   return <motion.span ref={ref} className={`tabular-nums ${className}`}>{txt}</motion.span>
 }
 

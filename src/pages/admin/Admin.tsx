@@ -186,7 +186,7 @@ function KycReview({ p, onClose, onDone }: { p: Profile | null; onClose: () => v
   const act = async (s: KycStatus) => {
     if (s === 'rejected' && !note.trim()) return toast('Add a note so they know what to fix', 'err')
     await admin.setKyc(p.id, s, s === 'rejected' ? note : null)
-    toast(s === 'verified' ? `${p.full_name} verified` : 'Sent back for fixes')
+    toast(s === 'verified' ? `${p.full_name} verified — we’ve emailed them` : 'Sent back for fixes — we’ve emailed them the note')
     onDone()
   }
   const nameMismatch = p.momo_name && p.full_name && p.momo_name.trim().toLowerCase() !== p.full_name.trim().toLowerCase()

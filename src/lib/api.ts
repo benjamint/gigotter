@@ -218,8 +218,12 @@ export async function listListings(opts: { all?: boolean } = {}): Promise<Listin
 export async function getListing(id: string): Promise<Listing | null> {
   return (await listListings({ all: true })).find((l) => l.id === id) ?? null
 }
+/** Columns that actually exist on the listings table — anything else (e.g. joined stats) is dropped before saving. */
+const LISTING_COLUMNS = ['id', 'title', 'type', 'summary', 'description', 'requirements', 'location', 'is_remote', 'pay_model', 'rate',
+  'unit_label', 'units_per_student', 'total_budget', 'currency', 'slots', 'proof_fields', 'expires_at', 'status', 'accent', 'emoji',
+  'client_name', 'cover_url'] as const
 export async function saveListing(l: Partial<Listing>): Promise<Listing> {
-  const { taken, approved_units, committed, ...row } = l
+  const row = Object.fromEntries(LISTING_COLUMNS.filter((k) => k in l).map((k) => [k, (l as any)[k]])) as Partial<Listing>
   if (DEMO) {
     const d = db()
     if (row.id) {

@@ -133,6 +133,19 @@ export interface FormField {
 }
 export type PhotoRule = 'required' | 'optional' | 'none'
 
+/** A document attached to a gig (manual, brochure, script…). */
+export interface ListingFile {
+  id: string
+  listing_id: string
+  name: string
+  path: string
+  size_bytes: number
+  mime: string
+  /** public = anyone viewing the gig; joined = only students who joined it */
+  visibility: 'public' | 'joined'
+  created_at: string
+}
+
 export interface ProofField { label: string; placeholder: string; type?: string; hint?: string; multiline?: boolean; optional?: boolean }
 export const PROOF_FIELDS: Record<string, ProofField> = {
   business_name: { label: 'Business name', placeholder: 'Ama’s Glam Studio', hint: 'As it appears on the signboard.' },

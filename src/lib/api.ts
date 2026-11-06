@@ -1,8 +1,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Claim, ClientRequest, KycStatus, Listing, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
+import type { Claim, ClientRequest, KycStatus, Listing, ListingFile, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
-import { checkImage, safeExt } from './security'
+import { checkDoc, checkImage, safeExt } from './security'
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
@@ -26,6 +26,7 @@ interface DemoDB {
   requests: ClientRequest[]
   testimonials?: Testimonial[]
   files: Record<string, string>
+  listingFiles?: ListingFile[]
 }
 const KEY_DB = 'gigotter-demo-v2'
 const uid = () => crypto.randomUUID()
@@ -179,6 +180,56 @@ export async function fileUrl(bucket: Bucket, path: string | null): Promise<stri
   if (DEMO) return db().files[`${bucket}/${path}`] ?? null
   const { data } = await sb!.storage.from(bucket).createSignedUrl(path, 60 * 10)
   return data?.signedUrl ?? null
+}
+
+// ═══════════════════════════ gig attachments ═══════════════════════════
+/** Files on a gig that the current viewer is allowed to see (the database decides). */
+export async function listingFiles(listingId: string): Promise<ListingFile[]> {
+  if (DEMO) {
+    const d = db(), u = demoUser(), me = u && d.profiles.find((p) => p.id === u.id)
+    const joined = !!u && d.claims.some((c) => c.listing_id === listingId && c.student_id === u.id && c.status !== 'withdrawn' && c.status !== 'removed')
+    return (d.listingFiles ?? []).filter((f) => f.listing_id === listingId && (f.visibility === 'public' || joined || me?.role === 'admin'))
+  }
+  const { data, error } = await sb!.from('listing_files').select('*').eq('listing_id', listingId).order('created_at')
+  fail(error)
+  return data ?? []
+}
+export async function uploadListingFile(listingId: string, file: File, visibility: ListingFile['visibility']): Promise<ListingFile> {
+  const [ext, mime] = checkDoc(file, DEMO ? 2 : undefined)
+  const path = `${listingId}/${uid()}.${ext}`
+  const name = file.name.slice(0, 120)
+  if (DEMO) {
+    const d = db(); d.files[`gig-files/${path}`] = await new Promise<string>((res) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(file) })
+    const f: ListingFile = { id: uid(), listing_id: listingId, name, path, size_bytes: file.size, mime, visibility, created_at: now() }
+    ;(d.listingFiles ??= []).push(f); save(); return f
+  }
+  const up = await sb!.storage.from('gig-files').upload(path, file, { upsert: false, contentType: mime })
+  fail(up.error)
+  const { data, error } = await sb!.from('listing_files').insert({ listing_id: listingId, name, path, size_bytes: file.size, mime, visibility }).select().single()
+  if (error) { await sb!.storage.from('gig-files').remove([path]); fail(error) }
+  return data!
+}
+export async function setListingFileVisibility(id: string, visibility: ListingFile['visibility']) {
+  if (DEMO) { const f = (db().listingFiles ?? []).find((x) => x.id === id); if (f) f.visibility = visibility; return save() }
+  const { error } = await sb!.from('listing_files').update({ visibility }).eq('id', id)
+  fail(error)
+}
+export async function deleteListingFile(f: ListingFile) {
+  if (DEMO) { const d = db(); d.listingFiles = (d.listingFiles ?? []).filter((x) => x.id !== f.id); delete d.files[`gig-files/${f.path}`]; return save() }
+  const { error } = await sb!.from('listing_files').delete().eq('id', f.id)
+  fail(error)
+  await sb!.storage.from('gig-files').remove([f.path])
+}
+/** Opens (PDF, images) or downloads (Office files) an attachment through a 10-minute signed link. */
+export async function openListingFile(f: ListingFile) {
+  const inline = f.mime === 'application/pdf' || f.mime.startsWith('image/')
+  if (DEMO) {
+    const a = document.createElement('a'); a.href = db().files[`gig-files/${f.path}`] ?? ''; a.download = f.name; a.click(); return
+  }
+  const tab = inline ? window.open('', '_blank') : null // open synchronously so phones don't block it as a pop-up
+  const { data, error } = await sb!.storage.from('gig-files').createSignedUrl(f.path, 600, inline ? undefined : { download: f.name })
+  if (error || !data) { tab?.close(); fail(error ?? new Error('Could not open this file')) }
+  if (tab) { tab.opener = null; tab.location.href = data!.signedUrl } else window.location.assign(data!.signedUrl)
 }
 
 // ═══════════════════════════ profile ═══════════════════════════

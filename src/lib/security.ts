@@ -50,6 +50,26 @@ export function checkImage(file: File, maxMb = MAX_UPLOAD_MB): string | null {
   if (file.size < 1024) return 'That file looks empty — try another photo.'
   return null
 }
+// ─────────── gig attachments (admin uploads) ───────────
+export const DOC_TYPES: Record<string, string> = {
+  pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  txt: 'text/plain', csv: 'text/csv',
+}
+export const MAX_DOC_MB = 25
+/** Returns [extension, mime] for an allowed document, or throws a friendly error. */
+export function checkDoc(file: File, maxMb = MAX_DOC_MB): [string, string] {
+  const ext = (file.name.split('.').pop() || '').toLowerCase()
+  const mime = DOC_TYPES[ext]
+  if (!mime) throw new Error(`“${file.name}” isn’t a supported file. Use PDF, Word, PowerPoint, Excel, or an image.`)
+  if (file.size > maxMb * 1024 * 1024) throw new Error(`“${file.name}” is over ${maxMb} MB. Compress it or share a smaller version.`)
+  if (file.size < 1) throw new Error(`“${file.name}” is empty.`)
+  return [ext, mime]
+}
+export const fileSize = (b: number) => b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`
+
 export const safeExt = (file: File) => {
   const t = (file.type || '').toLowerCase()
   return t === 'image/png' ? 'png' : t === 'image/webp' ? 'webp' : t.startsWith('image/hei') ? 'heic' : 'jpg'

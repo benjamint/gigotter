@@ -5,7 +5,7 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
 import { admin, deleteListing, deleteTestimonial, fileUrl, listListings, listTestimonials, saveTestimonial } from '../../lib/api'
 import Photo from '../../components/Photo'
-import { ago, coverFor, money, payLine, spotsLeft, timeLeft } from '../../lib/format'
+import { ago, coverFor, money, payLine, spotsLeft, timeLeft, plural } from '../../lib/format'
 import { useAsync, useSession } from '../../lib/session'
 import type { KycStatus, Listing, Profile, Submission } from '../../lib/types'
 import ListingForm from './ListingForm'
@@ -245,7 +245,7 @@ function Gigs({ listings, subs, reload }: { listings: Listing[]; subs: Submissio
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-center text-sm">
                 <div className="rounded-xl bg-sand p-2"><div className="font-semibold">{l.taken ?? 0}/{l.slots}</div><div className="text-xs text-ink-muted">students</div></div>
-                <div className="rounded-xl bg-sand p-2"><div className="font-semibold">{l.approved_units ?? 0}</div><div className="text-xs text-ink-muted">{l.unit_label}s approved</div></div>
+                <div className="rounded-xl bg-sand p-2"><div className="font-semibold">{l.approved_units ?? 0}</div><div className="text-xs text-ink-muted">{plural(l.unit_label)} approved</div></div>
                 <div className="rounded-xl bg-sand p-2"><div className="font-semibold">{money(l.committed, l.currency)}</div><div className="text-xs text-ink-muted">of {money(budget, l.currency)}</div></div>
               </div>
               {spotsLeft(l) === 0 && <p className="mt-2 text-xs font-semibold text-ink-muted">All spots filled</p>}

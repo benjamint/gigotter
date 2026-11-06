@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Photo from '../components/Photo'
 import { Empty, PageLoader, Progress, Spinner, useToast } from '../components/ui'
-import { claimListing, getListing, myClaims } from '../lib/api'
-import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft } from '../lib/format'
+import { claimListing, getListing, listingFiles, myClaims } from '../lib/api'
+import { GigFileList } from '../components/GigFiles'
+import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft, plural } from '../lib/format'
 import { useAsync, useSession } from '../lib/session'
 import { GIG_TYPES } from '../lib/types'
 import { photoRuleOf, schemaOf } from '../lib/forms'
@@ -19,6 +20,8 @@ export default function GigDetail() {
   const toast = useToast()
   const { data: l, loading, reload } = useAsync(() => getListing(id!), [id])
   const claims = useAsync(() => (user ? myClaims() : Promise.resolve([])), [user?.id])
+  const files = useAsync(() => listingFiles(id!), [id, user?.id])
+  const joined = !!claims.data?.some((c) => c.listing_id === id && c.status !== 'withdrawn' && c.status !== 'removed')
   const [busy, setBusy] = useState(false)
   if (loading) return <PageLoader />
   if (!l) return <div className="container-x max-w-xl py-20"><Empty title="Gig not found" action={<Link to="/gigs" className="btn-primary">Back to gigs</Link>} /></div>
@@ -94,13 +97,16 @@ export default function GigDetail() {
               {photoRuleOf(l) !== 'none' && <span className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft"><Camera className="h-3.5 w-3.5" />{photoRuleOf(l) === 'optional' ? 'Photo (optional)' : 'Photo'}</span>}
             </div>
           </section>
+          {(files.data?.length ?? 0) > 0 && (
+            <div className="mt-12"><GigFileList files={files.data!} title="Resources" note={joined ? undefined : 'More material may be shared once you join.'} /></div>
+          )}
         </motion.div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.7, ease: EASE }} className="card p-7">
             <div className="text-sm text-ink-muted">You can earn up to</div>
             <div className="figure mt-1 text-6xl leading-none">{money(maxEarn(l), l.currency)}</div>
-            <div className="mt-1.5 text-sm text-ink-muted">{payLine(l)}{l.units_per_student ? ` · up to ${l.units_per_student} ${l.unit_label}s` : ''}</div>
+            <div className="mt-1.5 text-sm text-ink-muted">{payLine(l)}{l.units_per_student ? ` · up to ${l.units_per_student} ${plural(l.unit_label, l.units_per_student)}` : ''}</div>
             <div className="mt-7">
               <div className="mb-2 flex justify-between text-xs text-ink-muted"><span>{l.taken ?? 0} joined</span><span>{l.slots} spots</span></div>
               <Progress value={l.taken ?? 0} max={l.slots} />

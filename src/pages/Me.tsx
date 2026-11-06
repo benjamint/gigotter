@@ -4,7 +4,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from '../components/ui'
 import { myClaims, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'
-import { ago, coverFor, money, timeLeft } from '../lib/format'
+import { ago, coverFor, money, timeLeft, plural } from '../lib/format'
 import { subTitle } from '../lib/forms'
 import { useAsync, useSession } from '../lib/session'
 
@@ -78,7 +78,7 @@ export default function Me() {
                   <div className="min-w-0 flex-1"><h3 className="truncate text-lg font-semibold">{c.listing.title}</h3><div className="text-xs text-ink-muted">{timeLeft(c.listing.expires_at).label}</div></div>
                   <ArrowRight className="h-5 w-5 transition group-hover:translate-x-1" />
                 </div>
-                <div className="mt-5 flex justify-between text-sm font-medium"><span>{done} / {goal} {c.listing.unit_label}s</span><span className="text-ink-muted">{Math.round((done / goal) * 100)}%</span></div>
+                <div className="mt-5 flex justify-between text-sm font-medium"><span>{done} / {goal} {plural(c.listing.unit_label, goal)}</span><span className="text-ink-muted">{Math.round((done / goal) * 100)}%</span></div>
                 <Progress value={done} max={goal} className="mt-2" />
               </Link>
             </motion.div>

@@ -1,11 +1,12 @@
 import { Plus, X } from 'lucide-react'
 import Photo from '../../components/Photo'
 import { FileDrop } from '../../components/Upload'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { AttachmentsEditor, type PendingFile } from '../../components/GigFiles'
 import { Spinner, useToast } from '../../components/ui'
-import { saveListing, uploadCover } from '../../lib/api'
+import { listingFiles, saveListing, uploadCover, uploadListingFile } from '../../lib/api'
 import { coverFor, money } from '../../lib/format'
-import { CURRENCIES, GIG_TYPES, type GigType, type Listing, type PhotoRule } from '../../lib/types'
+import { CURRENCIES, GIG_TYPES, type GigType, type Listing, type ListingFile, type PhotoRule } from '../../lib/types'
 import { TEMPLATES, photoRuleOf, schemaOf } from '../../lib/forms'
 import FormBuilder, { schemaProblem, toRows, toSchema } from './FormBuilder'
 
@@ -23,6 +24,9 @@ export default function ListingForm({ initial, onSaved, hasResponses = false }: 
   const [photo, setPhoto] = useState<PhotoRule>(initial.id ? photoRuleOf({ photo_rule: initial.photo_rule as PhotoRule }) : startT.photo)
   const [photoHint, setPhotoHint] = useState(initial.id ? initial.photo_hint ?? '' : startT.photoHint)
   const [touched, setTouched] = useState(false)
+  const [files, setFiles] = useState<ListingFile[]>([])
+  const [pending, setPending] = useState<PendingFile[]>([])
+  useEffect(() => { if (initial.id) listingFiles(initial.id).then(setFiles).catch(() => {}) }, [initial.id])
   const editRows: typeof setRows = (r) => { setTouched(true); setRows(r) }
   /** Load a type's starter form, unit name, pay model and photo rule. */
   const applyTemplate = (t: GigType) => {
@@ -53,8 +57,13 @@ export default function ListingForm({ initial, onSaved, hasResponses = false }: 
     try {
       const cover_url = cover ? await uploadCover(cover) : l.cover_url ?? null
       const form_schema = toSchema(rows)
-      await saveListing({ ...l, cover_url, form_schema, photo_rule: photo, photo_hint: photo === 'none' ? null : photoHint.trim() || null,
-        proof_fields: form_schema.map((f) => f.key), expires_at: new Date(exp).toISOString() }); onSaved()
+      const saved = await saveListing({ ...l, cover_url, form_schema, photo_rule: photo, photo_hint: photo === 'none' ? null : photoHint.trim() || null,
+        proof_fields: form_schema.map((f) => f.key), expires_at: new Date(exp).toISOString() })
+      // the gig exists now, so its files can be attached
+      const failed: string[] = []
+      for (const p of pending) { try { await uploadListingFile(saved.id, p.file, p.visibility) } catch (e: any) { failed.push(`${p.file.name}: ${e.message}`) } }
+      if (failed.length) { setL(saved); setPending([]); listingFiles(saved.id).then(setFiles); return toast(`Gig saved, but ${failed.length} file(s) didn’t upload — ${failed[0]}`, 'err') }
+      onSaved()
     }
     catch (err: any) { toast(err.message, 'err') } finally { setBusy(false) }
   }
@@ -117,11 +126,13 @@ export default function ListingForm({ initial, onSaved, hasResponses = false }: 
       <FormBuilder rows={rows} setRows={editRows} photo={photo} setPhoto={(p) => { setTouched(true); setPhoto(p) }} photoHint={photoHint} setPhotoHint={setPhotoHint}
         unit={l.unit_label ?? ''} hasResponses={hasResponses} />
 
+      <AttachmentsEditor saved={files} setSaved={setFiles} pending={pending} setPending={setPending} />
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div><label className="label">Status</label><select className="input" value={l.status} onChange={(e) => set('status', e.target.value as any)}>{['draft', 'live', 'paused', 'closed'].map((s) => <option key={s}>{s}</option>)}</select></div>
       </div>
       <div><label className="label">Client <span className="font-normal text-ink-muted">(who the work is for)</span></label><input className="input" value={l.client_name ?? ''} onChange={(e) => set('client_name', e.target.value)} /></div>
-      <button className="btn-brand w-full" disabled={busy}>{busy ? <Spinner /> : initial.id ? 'Save changes' : 'Publish gig'}</button>
+      <button className="btn-brand w-full" disabled={busy}>{busy ? <><Spinner />{pending.length ? 'Uploading files…' : 'Saving…'}</> : l.id ? 'Save changes' : 'Publish gig'}</button>
     </form>
   )
 }

@@ -40,3 +40,12 @@ export const ACCENTS = {
   grape: { bg: 'bg-grape-300/40', solid: 'bg-grape-500', text: 'text-grape-700', ring: 'ring-grape-300' },
   lime: { bg: 'bg-lime-300', solid: 'bg-lime-400', text: 'text-ink', ring: 'ring-lime-400' },
 } as const
+
+/** English plural for a unit name: business → businesses, delivery → deliveries, salon → salons. */
+export function plural(word: string, n = 2): string {
+  const w = (word || '').trim()
+  if (n === 1 || !w) return w
+  if (/(s|x|z|ch|sh)$/i.test(w)) return w + 'es'
+  if (/[^aeiou]y$/i.test(w)) return w.slice(0, -1) + 'ies'
+  return w + 's'
+}

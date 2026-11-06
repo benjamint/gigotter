@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Check, ChevronDown, ClipboardList, Copy, FileText, MapPin, Send, Wallet } from 'lucide-react'
+import { ArrowLeft, Calendar, Check, ChevronDown, ClipboardList, Copy, FileText, MapPin, Paperclip, Send, Wallet } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { mapsUrl } from '../components/AddressField'
@@ -7,8 +7,9 @@ import { FieldInput, isWide } from '../components/FormFields'
 import Photo from '../components/Photo'
 import { FileDrop } from '../components/Upload'
 import { Empty, PageLoader, Progress, Spinner, SubPill, useToast } from '../components/ui'
-import { myClaims, submitWork, withdrawClaim } from '../lib/api'
-import { ago, coverFor, money, payLine, timeLeft } from '../lib/format'
+import { listingFiles, myClaims, submitWork, withdrawClaim } from '../lib/api'
+import { GigFileList } from '../components/GigFiles'
+import { ago, coverFor, money, payLine, timeLeft, plural } from '../lib/format'
 import { friendlyError } from '../lib/security'
 import { useScrollIntoViewOn } from '../lib/scroll'
 import { useAsync, useSession } from '../lib/session'
@@ -30,6 +31,8 @@ export default function MyGig() {
   const [busy, setBusy] = useState(false)
   const [formKey, setFormKey] = useState(0)
   const tabsRef = useScrollIntoViewOn<HTMLDivElement>([tab, formKey])
+  const lid = data?.find((x) => x.id === claimId)?.listing_id
+  const files = useAsync(() => (lid ? listingFiles(lid) : Promise.resolve([])), [lid])
 
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login" replace />
@@ -92,7 +95,7 @@ export default function MyGig() {
         <div className="grid gap-px border-t border-line bg-line sm:grid-cols-3">
           <div className="bg-white px-5 py-4 sm:px-6">
             <div className="text-xs text-ink-muted">Progress</div>
-            <div className="figure mt-1 text-3xl leading-tight">{done}{goal ? <span className="text-ink-muted"> / {goal}</span> : ''} <span className="font-sans text-sm text-ink-muted">{unit}s</span></div>
+            <div className="figure mt-1 text-3xl leading-tight">{done}{goal ? <span className="text-ink-muted"> / {goal}</span> : ''} <span className="font-sans text-sm text-ink-muted">{plural(unit, goal ?? done)}</span></div>
             <Progress value={done} max={goal ?? Math.max(done, 1)} className="mt-2" />
           </div>
           <div className="bg-white px-5 py-4 sm:px-6">
@@ -131,6 +134,11 @@ export default function MyGig() {
                 <div>
                   <h2 className="text-xl font-semibold">Log a {unit}</h2>
                   <p className="mt-1 text-sm text-ink-muted">Fill this in for each {unit} you complete. You’ll earn <b className="font-medium text-ink">{money(perUnit, l.currency)}</b> once it’s approved.</p>
+                  {(files.data?.length ?? 0) > 0 && (
+                    <button type="button" onClick={() => setTab('details')} className="mt-3 inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-100">
+                      <Paperclip className="h-3.5 w-3.5" />Read the {files.data!.length === 1 ? 'guide' : `${files.data!.length} files`} for this gig before you start
+                    </button>
+                  )}
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2">
                   {schema.map((f) => (
@@ -165,6 +173,7 @@ export default function MyGig() {
               <div className="space-y-8">
                 {l.summary && <p className="text-lg leading-relaxed text-ink-soft">{l.summary}</p>}
                 {l.description && <div><h3 className="font-semibold">About the work</h3><p className="mt-2 whitespace-pre-line leading-relaxed text-ink-soft">{l.description}</p></div>}
+                <GigFileList files={files.data ?? []} title="Files for this gig" />
                 {l.requirements.length > 0 && (
                   <div><h3 className="font-semibold">Requirements</h3>
                     <ul className="mt-3 divide-y divide-line border-y border-line">{l.requirements.map((r, i) => <li key={i} className="flex gap-3 py-3 text-ink-soft"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />{r}</li>)}</ul>
@@ -194,7 +203,7 @@ function Submitted({ subs, schema, currency, unit, onLog }: { subs: Submission[]
   const [f, setF] = useState<SubmissionStatus | 'all'>('all')
   const [open, setOpen] = useState<string | null>(null)
   const list = subs.filter((s) => f === 'all' || s.status === f)
-  if (!subs.length) return <Empty icon={<ClipboardList className="h-5 w-5" />} title={`No ${unit}s submitted yet`} body="Everything you log will show up here with its review status." action={onLog && <button onClick={onLog} className="btn-brand btn-sm">Log your first {unit}</button>} />
+  if (!subs.length) return <Empty icon={<ClipboardList className="h-5 w-5" />} title={`No ${plural(unit)} submitted yet`} body="Everything you log will show up here with its review status." action={onLog && <button onClick={onLog} className="btn-brand btn-sm">Log your first {unit}</button>} />
   return (
     <div>
       <div className="flex flex-wrap gap-2">

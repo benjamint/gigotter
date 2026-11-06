@@ -9,6 +9,7 @@ import { ago, coverFor, money, payLine, spotsLeft, timeLeft } from '../../lib/fo
 import { useAsync, useSession } from '../../lib/session'
 import type { KycStatus, Listing, Profile, Submission } from '../../lib/types'
 import ListingForm from './ListingForm'
+import { csvCell } from '../../lib/security'
 
 const TABS = [
   { k: 'overview', l: 'Overview', i: LayoutGrid },
@@ -273,7 +274,7 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
       const e = by.get(k) ?? { name: s.student?.full_name ?? '', provider: s.student?.momo_provider ?? '', number: s.student?.momo_number ?? '', acct: s.student?.momo_name ?? '', amount: 0, cur: s.listing?.currency ?? '', n: 0 }
       e.amount += s.amount ?? 0; e.n++; by.set(k, e)
     })
-    const csv = ['name,momo_provider,momo_number,momo_account_name,currency,units,amount', ...[...by.values()].map((e) => [e.name, e.provider, e.number, e.acct, e.cur, e.n, e.amount].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n')
+    const csv = ['name,momo_provider,momo_number,momo_account_name,currency,units,amount', ...[...by.values()].map((e) => [e.name, e.provider, e.number, e.acct, e.cur, e.n, e.amount].map(csvCell).join(','))].join('\n')
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `gigotter-payouts-${new Date().toISOString().slice(0, 10)}.csv`; a.click()
   }
   return (

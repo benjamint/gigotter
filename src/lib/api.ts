@@ -1,11 +1,15 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Claim, ClientRequest, KycStatus, Listing, Profile, Submission, SubmissionStatus } from './types'
 import { seedListings } from './seed'
+import { checkImage, safeExt } from './security'
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
-export const DEMO = !URL || !KEY
-export const sb: SupabaseClient | null = DEMO ? null : createClient(URL!, KEY!)
+/** Demo mode (browser-only fake data) is only allowed in local dev or when explicitly switched on. */
+export const DEMO = (!URL || !KEY) && (import.meta.env.DEV || import.meta.env.VITE_DEMO === 'true')
+/** Production build without Supabase settings: show a maintenance message instead of a fake demo. */
+export const MISCONFIGURED = (!URL || !KEY) && !DEMO
+export const sb: SupabaseClient | null = URL && KEY ? createClient(URL, KEY) : null
 
 export type Bucket = 'kyc' | 'proofs'
 export interface AuthUser { id: string; email: string }
@@ -100,7 +104,7 @@ export const auth = {
     const { data } = sb!.auth.onAuthStateChange(() => cb())
     return () => data.subscription.unsubscribe()
   },
-  async signUp(email: string, password: string, full_name: string) {
+  async signUp(email: string, password: string, full_name: string, captchaToken?: string) {
     email = email.trim().toLowerCase()
     if (DEMO) {
       const d = db()
@@ -111,11 +115,11 @@ export const auth = {
       d.session = id
       return save()
     }
-    const { data, error } = await sb!.auth.signUp({ email, password, options: { data: { full_name }, emailRedirectTo: `${location.origin}/verify` } })
+    const { data, error } = await sb!.auth.signUp({ email, password, options: { data: { full_name: full_name.trim().slice(0, 120) }, emailRedirectTo: `${location.origin}/verify`, captchaToken } })
     fail(error)
     if (!data.session) throw new Error('CHECK_EMAIL')
   },
-  async signIn(email: string, password: string) {
+  async signIn(email: string, password: string, captchaToken?: string) {
     email = email.trim().toLowerCase()
     if (DEMO) {
       const u = db().users.find((x) => x.email === email && x.password === password)
@@ -123,12 +127,18 @@ export const auth = {
       db().session = u.id
       return save()
     }
-    const { error } = await sb!.auth.signInWithPassword({ email, password })
+    const { error } = await sb!.auth.signInWithPassword({ email, password, options: { captchaToken } })
     fail(error)
   },
-  async resetPassword(email: string) {
+  async resetPassword(email: string, captchaToken?: string) {
     if (DEMO) return
-    const { error } = await sb!.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${location.origin}/reset-password` })
+    const { error } = await sb!.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${location.origin}/reset-password`, captchaToken })
+    fail(error)
+  },
+  /** Re-send the sign-up confirmation email. */
+  async resendSignup(email: string, captchaToken?: string) {
+    if (DEMO) return
+    const { error } = await sb!.auth.resend({ type: 'signup', email: email.trim().toLowerCase(), options: { emailRedirectTo: `${location.origin}/verify`, captchaToken } })
     fail(error)
   },
   /** Set a new password for the signed-in user (after opening a reset link). */
@@ -146,18 +156,19 @@ export const auth = {
 // ═══════════════════════════ files ═══════════════════════════
 export async function uploadFile(bucket: Bucket, file: File, name: string): Promise<string> {
   const u = must(await auth.user(), 'Sign in first')
-  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
-  const path = `${u.id}/${name}-${Date.now()}.${ext}`
+  const bad = checkImage(file); if (bad) throw new Error(bad)
+  const path = `${u.id}/${name}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt(file)}`
   if (DEMO) { db().files[`${bucket}/${path}`] = await toDataUrl(file); save(); return path }
-  const { error } = await sb!.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type })
+  const { error } = await sb!.storage.from(bucket).upload(path, file, { upsert: false, contentType: file.type || 'image/jpeg' })
   fail(error)
   return path
 }
 /** Public cover image for a gig (admin only). Returns a URL usable in <img>. */
 export async function uploadCover(file: File): Promise<string> {
+  const bad = checkImage(file, 8); if (bad) throw new Error(bad)
   if (DEMO) return toDataUrl(file, 1600)
-  const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${(file.name.split('.').pop() || 'jpg').toLowerCase()}`
-  const { error } = await sb!.storage.from('covers').upload(path, file, { contentType: file.type })
+  const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt(file)}`
+  const { error } = await sb!.storage.from('covers').upload(path, file, { contentType: file.type || 'image/jpeg' })
   fail(error)
   return sb!.storage.from('covers').getPublicUrl(path).data.publicUrl
 }
@@ -255,7 +266,7 @@ export async function claimListing(listingId: string): Promise<Claim> {
 }
 export async function withdrawClaim(claimId: string) {
   if (DEMO) { const c = db().claims.find((x) => x.id === claimId); if (c) c.status = 'withdrawn'; return save() }
-  const { error } = await sb!.from('claims').update({ status: 'withdrawn' }).eq('id', claimId)
+  const { error } = await sb!.rpc('withdraw_claim', { p_claim: claimId })
   fail(error)
 }
 export async function myClaims(): Promise<(Claim & { listing: Listing; subs: Submission[] })[]> {

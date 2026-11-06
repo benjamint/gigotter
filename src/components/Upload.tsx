@@ -1,11 +1,14 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, Check, ImageUp, RefreshCcw } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { checkImage } from '../lib/security'
 
-export function FileDrop({ label, hint, file, onFile, previewUrl, capture }: {
+export function FileDrop({ label, hint, file, onFile: rawOnFile, previewUrl, capture }: {
   label: string; hint?: string; file: File | null; onFile: (f: File) => void; previewUrl?: string | null; capture?: 'user' | 'environment'
 }) {
   const [drag, setDrag] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const onFile = (f: File) => { const bad = checkImage(f); setErr(bad); if (!bad) rawOnFile(f) }
   const [url, setUrl] = useState<string | null>(null)
   useEffect(() => { if (!file) return setUrl(null); const u = URL.createObjectURL(file); setUrl(u); return () => URL.revokeObjectURL(u) }, [file])
   const shown = url ?? previewUrl
@@ -14,7 +17,7 @@ export function FileDrop({ label, hint, file, onFile, previewUrl, capture }: {
       onDragOver={(e) => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) onFile(f) }}
       className={`relative flex min-h-[11rem] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border border-dashed p-4 text-center transition ${drag ? 'border-brand-600 bg-brand-50' : shown ? 'border-ink bg-white' : 'border-line bg-white hover:border-ink'}`}>
-      <input type="file" accept="image/*" capture={capture} className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture={capture} className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
       {shown ? (
         <>
           <img src={shown} alt={label} className="max-h-48 rounded-2xl object-contain" />
@@ -26,6 +29,7 @@ export function FileDrop({ label, hint, file, onFile, previewUrl, capture }: {
           <motion.div animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="grid h-12 w-12 place-items-center rounded-2xl bg-sand"><ImageUp /></motion.div>
           <div className="mt-3 font-semibold">{label}</div>
           {hint && <div className="mt-0.5 text-xs text-ink-muted">{hint}</div>}
+          {err && <div className="mt-2 text-xs font-medium text-red-600">{err}</div>}
         </>
       )}
     </label>
@@ -33,12 +37,13 @@ export function FileDrop({ label, hint, file, onFile, previewUrl, capture }: {
 }
 
 /** Live camera selfie, falls back to the phone's front camera file picker */
-export function SelfieCam({ file, onFile, previewUrl }: { file: File | null; onFile: (f: File) => void; previewUrl?: string | null }) {
+export function SelfieCam({ file, onFile: rawOnFile, previewUrl }: { file: File | null; onFile: (f: File) => void; previewUrl?: string | null }) {
   const video = useRef<HTMLVideoElement>(null)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [flash, setFlash] = useState(false)
   const [shot, setShot] = useState<string | null>(null)
+  const onFile = (f: File) => { const bad = checkImage(f); setErr(bad); if (!bad) rawOnFile(f) }
 
   useEffect(() => { if (!file) return setShot(null); const u = URL.createObjectURL(file); setShot(u); return () => URL.revokeObjectURL(u) }, [file])
   useEffect(() => () => stream?.getTracks().forEach((t) => t.stop()), [stream])
@@ -82,7 +87,7 @@ export function SelfieCam({ file, onFile, previewUrl }: { file: File | null; onF
         )}
         <label className="btn-ghost cursor-pointer">
           Upload instead
-          <input type="file" accept="image/*" capture="user" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
+          <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="user" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }} />
         </label>
       </div>
       {err && <p className="mt-3 text-sm text-red-600">{err}</p>}

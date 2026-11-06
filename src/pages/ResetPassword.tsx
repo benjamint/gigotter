@@ -6,6 +6,7 @@ import { Logo } from '../components/Layout'
 import { PageLoader, Spinner, useToast } from '../components/ui'
 import { auth } from '../lib/api'
 import { useSession } from '../lib/session'
+import { friendlyError, passwordProblem } from '../lib/security'
 
 /** Landing page for the "reset password" email link. Supabase signs the user in from the link; here they choose a new password. */
 export default function ResetPassword() {
@@ -19,11 +20,12 @@ export default function ResetPassword() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (pw.length < 8) return toast('Use at least 8 characters', 'err')
+    if (busy) return
+    const problem = passwordProblem(pw); if (problem) return toast(problem, 'err')
     if (pw !== pw2) return toast('Passwords don’t match', 'err')
     setBusy(true)
     try { await auth.updatePassword(pw); toast('Password updated'); nav('/me') }
-    catch (err: any) { toast(err.message, 'err') } finally { setBusy(false) }
+    catch (err: any) { toast(friendlyError(err.message), 'err') } finally { setBusy(false) }
   }
 
   if (loading) return <PageLoader />
@@ -45,7 +47,7 @@ export default function ResetPassword() {
             <form onSubmit={submit} className="mt-8 space-y-4">
               <div><label className="label">New password</label>
                 <div className="relative">
-                  <input className="input pr-12" type={show ? 'text' : 'password'} minLength={8} required value={pw} onChange={(e) => setPw(e.target.value)} placeholder="8+ characters" autoComplete="new-password" />
+                  <input className="input pr-12" type={show ? 'text' : 'password'} minLength={8} required value={pw} onChange={(e) => setPw(e.target.value)} maxLength={72} placeholder="8+ characters, letters and numbers" autoComplete="new-password" />
                   <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-ink-muted" aria-label="Toggle password">{show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
                 </div>
               </div>

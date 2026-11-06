@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-With no `.env`, the app runs in **demo mode**: data is stored in your browser and the demo admin login is `admin@gigotter.com` / `gigotteradmin`.
+With no `.env`, `npm run dev` runs in **demo mode**: data is stored in your browser and the demo admin login is `admin@gigotter.com` / `gigotteradmin`.
 
 ## Photos
 
@@ -28,6 +28,10 @@ The design uses real photography. Drop images into `public/images/` using the na
 4. Under Auth → URL configuration, add your site URL (e.g. `https://gigotter.com`) and `/verify` as a redirect.
 
 Deploy on Vercel as a static Vite app. `vercel.json` already handles SPA routing.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the audit, fixes and the Supabase settings checklist.
 
 ## How it works
 

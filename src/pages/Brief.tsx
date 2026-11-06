@@ -3,17 +3,24 @@ import { ArrowRight, Check } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Reveal, Spinner, useToast } from '../components/ui'
 import { createRequest } from '../lib/api'
+import { cooldownLeft, friendlyError, startCooldown } from '../lib/security'
 
 export default function Brief() {
   const toast = useToast()
   const [f, setF] = useState({ name: '', email: '', company: '', need: '', budget: '', deadline: '' })
+  const [trap, setTrap] = useState('') // hidden field: real people never fill it in
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value })
   const submit = async (e: FormEvent) => {
-    e.preventDefault(); setBusy(true)
-    try { await createRequest({ ...f, company: f.company || null, budget: f.budget || null, deadline: f.deadline || null }); setDone(true) }
-    catch (err: any) { toast(err.message, 'err') } finally { setBusy(false) }
+    e.preventDefault()
+    if (busy) return
+    if (trap) { setDone(true); return } // bot: pretend it worked
+    const wait = cooldownLeft('brief'); if (wait) return toast(`Please wait ${wait}s before sending another brief`, 'err')
+    if (f.need.trim().length < 10) return toast('Tell us a little more about what you need', 'err')
+    setBusy(true)
+    try { await createRequest({ ...f, company: f.company || null, budget: f.budget || null, deadline: f.deadline || null }); startCooldown('brief', 120); setDone(true) }
+    catch (err: any) { toast(friendlyError(err.message), 'err') } finally { setBusy(false) }
   }
   return (
     <div className="mx-auto grid max-w-6xl gap-12 px-4 py-12 lg:grid-cols-2">
@@ -38,15 +45,18 @@ export default function Brief() {
         ) : (
           <form onSubmit={submit} className="space-y-4">
             <h2 className="text-2xl font-semibold">Post a brief</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div><label className="label">Your name</label><input className="input" required value={f.name} onChange={set('name')} /></div>
-              <div><label className="label">Email</label><input className="input" type="email" required value={f.email} onChange={set('email')} /></div>
+            <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+              <label>Website <input tabIndex={-1} autoComplete="off" value={trap} onChange={(e) => setTrap(e.target.value)} /></label>
             </div>
-            <div><label className="label">Company</label><input className="input" value={f.company} onChange={set('company')} /></div>
-            <div><label className="label">What do you need done?</label><textarea className="input min-h-[120px]" required value={f.need} onChange={set('need')} placeholder="e.g. Get 100 market traders in Makola to try our POS app" /></div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div><label className="label">Budget</label><input className="input" value={f.budget} onChange={set('budget')} placeholder="₵2,000" /></div>
-              <div><label className="label">Deadline</label><input className="input" value={f.deadline} onChange={set('deadline')} placeholder="End of month" /></div>
+              <div><label className="label">Your name</label><input className="input" required maxLength={120} value={f.name} onChange={set('name')} /></div>
+              <div><label className="label">Email</label><input className="input" type="email" required maxLength={200} value={f.email} onChange={set('email')} /></div>
+            </div>
+            <div><label className="label">Company</label><input className="input" maxLength={160} value={f.company} onChange={set('company')} /></div>
+            <div><label className="label">What do you need done?</label><textarea className="input min-h-[120px]" required minLength={10} maxLength={4000} value={f.need} onChange={set('need')} placeholder="e.g. Get 100 market traders in Makola to try our POS app" /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><label className="label">Budget</label><input className="input" maxLength={80} value={f.budget} onChange={set('budget')} placeholder="₵2,000" /></div>
+              <div><label className="label">Deadline</label><input className="input" maxLength={80} value={f.deadline} onChange={set('deadline')} placeholder="End of month" /></div>
             </div>
             <button className="btn-brand w-full" disabled={busy}>{busy ? <Spinner /> : <>Send brief <ArrowRight className="h-4 w-4" /></>}</button>
           </form>

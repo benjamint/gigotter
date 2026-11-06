@@ -26,7 +26,7 @@ Remaining, accepted: the Vite and esbuild advisories affect only the local devel
 ## Supabase dashboard checklist
 
 - [ ] Run `supabase/migrations/0003_security_hardening.sql`.
-- [ ] **Authentication → Sign In / Providers → Email:** Confirm email **on**, Secure email change **on**, Secure password change **on**, minimum password length **8**, require letters and digits.
+- [ ] **Authentication → Sign In / Providers → click the “Email” provider** (panel opens): Confirm email **on**, Secure email change **on**, Secure password change **on** (may be labelled “Require reauthentication when changing password”), Minimum password length **8**, Password requirements **Letters and digits** (matches the sign-up form's own check). Save.
 - [ ] **Authentication → Sign In / Providers:** turn off providers you don't use (Phone, Anonymous sign-ins).
 - [ ] **Authentication → URL Configuration:** only `https://gigotter.com/**` (and the Vercel preview URL if needed) in Redirect URLs.
 - [ ] **Authentication → Rate Limits:** keep the defaults. Raise "emails per hour" only as far as you need once Resend is connected.

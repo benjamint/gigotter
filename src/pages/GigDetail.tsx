@@ -7,7 +7,8 @@ import { Empty, PageLoader, Progress, Spinner, useToast } from '../components/ui
 import { claimListing, getListing, myClaims } from '../lib/api'
 import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft } from '../lib/format'
 import { useAsync, useSession } from '../lib/session'
-import { GIG_TYPES, PROOF_FIELDS } from '../lib/types'
+import { GIG_TYPES } from '../lib/types'
+import { photoRuleOf, schemaOf } from '../lib/forms'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -89,8 +90,8 @@ export default function GigDetail() {
             <h2 className="text-xl font-semibold">What you’ll submit</h2>
             <p className="mt-2 text-ink-muted">For each {l.unit_label} you complete:</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {l.proof_fields.map((f) => <span key={f} className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft">{PROOF_FIELDS[f]?.label ?? f}</span>)}
-              <span className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft"><Camera className="h-3.5 w-3.5" />Photo</span>
+              {schemaOf(l).map((f) => <span key={f.key} className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft">{f.label}</span>)}
+              {photoRuleOf(l) !== 'none' && <span className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft"><Camera className="h-3.5 w-3.5" />{photoRuleOf(l) === 'optional' ? 'Photo (optional)' : 'Photo'}</span>}
             </div>
           </section>
         </motion.div>

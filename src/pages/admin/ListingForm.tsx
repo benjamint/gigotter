@@ -5,18 +5,36 @@ import { useState, type FormEvent } from 'react'
 import { Spinner, useToast } from '../../components/ui'
 import { saveListing, uploadCover } from '../../lib/api'
 import { coverFor, money } from '../../lib/format'
-import { CURRENCIES, GIG_TYPES, PROOF_FIELDS, type Listing } from '../../lib/types'
+import { CURRENCIES, GIG_TYPES, type GigType, type Listing, type PhotoRule } from '../../lib/types'
+import { TEMPLATES, photoRuleOf, schemaOf } from '../../lib/forms'
+import FormBuilder, { schemaProblem, toRows, toSchema } from './FormBuilder'
 
 const toLocal = (iso?: string) => { const d = iso ? new Date(iso) : new Date(Date.now() + 14 * 864e5); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16) }
 
-export default function ListingForm({ initial, onSaved }: { initial: Partial<Listing>; onSaved: () => void }) {
+export default function ListingForm({ initial, onSaved, hasResponses = false }: { initial: Partial<Listing>; onSaved: () => void; hasResponses?: boolean }) {
   const toast = useToast()
   const [busy, setBusy] = useState(false)
   const [l, setL] = useState<Partial<Listing>>({
     type: 'onboarding', pay_model: 'per_unit', rate: 50, unit_label: 'business', units_per_student: 10, slots: 5, currency: 'GHS',
-    status: 'live', requirements: [], is_remote: false, client_name: '',
-    proof_fields: ['business_name', 'owner_name', 'owner_phone', 'location'], ...initial,
+    status: 'live', requirements: [...TEMPLATES.onboarding.requirements], is_remote: false, client_name: '', ...initial,
   })
+  const startT = TEMPLATES[(initial.type ?? 'onboarding') as GigType]
+  const [rows, setRows] = useState(() => toRows(initial.id ? schemaOf({ form_schema: initial.form_schema ?? [], proof_fields: initial.proof_fields ?? [] }) : startT.fields))
+  const [photo, setPhoto] = useState<PhotoRule>(initial.id ? photoRuleOf({ photo_rule: initial.photo_rule as PhotoRule }) : startT.photo)
+  const [photoHint, setPhotoHint] = useState(initial.id ? initial.photo_hint ?? '' : startT.photoHint)
+  const [touched, setTouched] = useState(false)
+  const editRows: typeof setRows = (r) => { setTouched(true); setRows(r) }
+  /** Load a type's starter form, unit name, pay model and photo rule. */
+  const applyTemplate = (t: GigType) => {
+    const T = TEMPLATES[t]
+    setRows(toRows(T.fields)); setPhoto(T.photo); setPhotoHint(T.photoHint); setTouched(false)
+    setL((x) => ({ ...x, type: t, unit_label: T.unit, pay_model: T.pay, requirements: x.requirements?.length && touched ? x.requirements : [...T.requirements],
+      ...(T.pay === 'fixed' && !x.id ? { units_per_student: 1 } : {}) }))
+  }
+  const pickType = (t: GigType) => {
+    if (!initial.id && !touched) return applyTemplate(t)
+    set('type', t)
+  }
   const [exp, setExp] = useState(toLocal(initial.expires_at))
   const [req, setReq] = useState('')
   const [cover, setCover] = useState<File | null>(null)
@@ -29,10 +47,14 @@ export default function ListingForm({ initial, onSaved }: { initial: Partial<Lis
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!l.title) return toast('Give it a title', 'err')
+    const problem = schemaProblem(rows, photo)
+    if (problem) return toast(problem, 'err')
     setBusy(true)
     try {
       const cover_url = cover ? await uploadCover(cover) : l.cover_url ?? null
-      await saveListing({ ...l, cover_url, expires_at: new Date(exp).toISOString() }); onSaved()
+      const form_schema = toSchema(rows)
+      await saveListing({ ...l, cover_url, form_schema, photo_rule: photo, photo_hint: photo === 'none' ? null : photoHint.trim() || null,
+        proof_fields: form_schema.map((f) => f.key), expires_at: new Date(exp).toISOString() }); onSaved()
     }
     catch (err: any) { toast(err.message, 'err') } finally { setBusy(false) }
   }
@@ -47,10 +69,17 @@ export default function ListingForm({ initial, onSaved }: { initial: Partial<Lis
           {!cover && <Photo src={coverFor({ cover_url: l.cover_url ?? null, type: l.type ?? 'onboarding' })} alt="Current cover" label="Default cover" className="hidden min-h-[11rem] rounded-2xl sm:block" />}
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {Object.entries(GIG_TYPES).map(([k, v]) => (
-          <button type="button" key={k} onClick={() => set('type', k as any)} className={`rounded-full border px-3 py-1.5 text-sm font-medium ${l.type === k ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{v.emoji} {v.label}</button>
-        ))}
+      <div>
+        <label className="label">Kind of work</label>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(GIG_TYPES).map(([k, v]) => (
+            <button type="button" key={k} onClick={() => pickType(k as GigType)} className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${l.type === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink/40'}`}>{v.label}</button>
+          ))}
+        </div>
+        <p className="mt-2 text-sm text-ink-muted">
+          {TEMPLATES[(l.type ?? 'other') as GigType].blurb}{' '}
+          {(initial.id || touched) && <button type="button" onClick={() => { if (confirm('Replace the questions below with the starter form for this kind of work?')) applyTemplate(l.type as GigType) }} className="font-medium text-brand-600 underline underline-offset-2">Use the {GIG_TYPES[l.type as GigType].label.toLowerCase()} starter form</button>}
+        </p>
       </div>
       <div><label className="label">Title</label><input className="input" value={l.title ?? ''} onChange={(e) => set('title', e.target.value)} placeholder="Onboard 30 women-owned salons" /></div>
       <div><label className="label">One-liner <span className="font-normal text-ink-muted">(shows on the card)</span></label><input className="input" value={l.summary ?? ''} onChange={(e) => set('summary', e.target.value)} placeholder="Walk in, pitch Glowy in 2 mins, get paid." /></div>
@@ -71,12 +100,12 @@ export default function ListingForm({ initial, onSaved }: { initial: Partial<Lis
 
       <div className="rounded-3xl border border-line bg-white p-4">
         <div className="mb-3 flex gap-2">
-          {(['per_unit', 'fixed'] as const).map((m) => <button type="button" key={m} onClick={() => set('pay_model', m)} className={`flex-1 rounded-2xl border p-3 text-left text-sm ${l.pay_model === m ? 'border-ink bg-brand-50' : 'border-line'}`}><b>{m === 'per_unit' ? 'Pay per unit' : 'Fixed per student'}</b><div className="text-xs text-ink-muted">{m === 'per_unit' ? 'e.g. ₵50 per salon' : 'e.g. ₵300 for the whole job'}</div></button>)}
+          {(['per_unit', 'fixed'] as const).map((m) => <button type="button" key={m} onClick={() => set('pay_model', m)} className={`flex-1 rounded-2xl border p-3 text-left text-sm ${l.pay_model === m ? 'border-ink bg-brand-50' : 'border-line'}`}><b>{m === 'per_unit' ? `Pay per ${l.unit_label || 'unit'}` : 'Fixed per student'}</b><div className="text-xs text-ink-muted">{m === 'per_unit' ? `e.g. ₵50 per ${l.unit_label || 'salon'}` : 'e.g. ₵80 to attend, ₵300 for the whole job'}</div></button>)}
         </div>
         <div className="grid gap-3 sm:grid-cols-4">
           <div><label className="label">Currency</label><select className="input" value={l.currency} onChange={(e) => set('currency', e.target.value)}>{Object.keys(CURRENCIES).map((c) => <option key={c}>{c}</option>)}</select></div>
           <div><label className="label">{l.pay_model === 'per_unit' ? 'Rate / unit' : 'Pay / student'}</label><input className="input" type="number" min={0} step="0.01" value={l.rate ?? ''} onChange={(e) => set('rate', Number(e.target.value))} /></div>
-          <div><label className="label">Unit name</label><input className="input" value={l.unit_label ?? ''} onChange={(e) => set('unit_label', e.target.value)} placeholder="salon" /></div>
+          <div><label className="label">Unit name</label><input className="input" value={l.unit_label ?? ''} onChange={(e) => set('unit_label', e.target.value)} placeholder="salon, session, test…" /></div>
           <div><label className="label">Units / student</label><input className="input" type="number" min={1} value={l.units_per_student ?? ''} onChange={(e) => set('units_per_student', num(e.target.value))} placeholder="∞" /></div>
           <div><label className="label">Students needed</label><input className="input" type="number" min={1} value={l.slots ?? 1} onChange={(e) => set('slots', Number(e.target.value))} /></div>
           <div><label className="label">Budget cap</label><input className="input" type="number" min={0} value={l.total_budget ?? ''} onChange={(e) => set('total_budget', num(e.target.value))} placeholder="optional" /></div>
@@ -85,15 +114,8 @@ export default function ListingForm({ initial, onSaved }: { initial: Partial<Lis
         <p className="mt-3 text-sm text-ink-muted">Each student earns up to <b className="text-ink">{money(perStudent, l.currency)}</b>. Max spend if every spot completes: <b className="text-ink">{money(l.total_budget ? Math.min(l.total_budget, maxSpend) : maxSpend, l.currency)}</b>{l.total_budget && l.total_budget < maxSpend ? ' (capped)' : ''}.</p>
       </div>
 
-      <div>
-        <label className="label">Proof students must submit (+ a photo)</label>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(PROOF_FIELDS).map(([k, v]) => {
-            const on = l.proof_fields?.includes(k)
-            return <button type="button" key={k} onClick={() => set('proof_fields', on ? l.proof_fields!.filter((x) => x !== k) : [...(l.proof_fields ?? []), k])} className={`rounded-full border px-3 py-1.5 text-sm font-medium ${on ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{v.label}</button>
-          })}
-        </div>
-      </div>
+      <FormBuilder rows={rows} setRows={editRows} photo={photo} setPhoto={(p) => { setTouched(true); setPhoto(p) }} photoHint={photoHint} setPhotoHint={setPhotoHint}
+        unit={l.unit_label ?? ''} hasResponses={hasResponses} />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div><label className="label">Status</label><select className="input" value={l.status} onChange={(e) => set('status', e.target.value as any)}>{['draft', 'live', 'paused', 'closed'].map((s) => <option key={s}>{s}</option>)}</select></div>

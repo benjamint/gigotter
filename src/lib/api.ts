@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Claim, ClientRequest, KycStatus, Listing, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
 import { seedListings } from './seed'
+import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { checkImage, safeExt } from './security'
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -26,7 +27,7 @@ interface DemoDB {
   testimonials?: Testimonial[]
   files: Record<string, string>
 }
-const KEY_DB = 'gigotter-demo-v1'
+const KEY_DB = 'gigotter-demo-v2'
 const uid = () => crypto.randomUUID()
 const now = () => new Date().toISOString()
 const listeners = new Set<() => void>()
@@ -221,7 +222,7 @@ export async function getListing(id: string): Promise<Listing | null> {
 }
 /** Columns that actually exist on the listings table — anything else (e.g. joined stats) is dropped before saving. */
 const LISTING_COLUMNS = ['id', 'title', 'type', 'summary', 'description', 'requirements', 'location', 'is_remote', 'pay_model', 'rate',
-  'unit_label', 'units_per_student', 'total_budget', 'currency', 'slots', 'proof_fields', 'expires_at', 'status', 'accent', 'emoji',
+  'unit_label', 'units_per_student', 'total_budget', 'currency', 'slots', 'proof_fields', 'form_schema', 'photo_rule', 'photo_hint', 'expires_at', 'status', 'accent', 'emoji',
   'client_name', 'cover_url'] as const
 export async function saveListing(l: Partial<Listing>): Promise<Listing> {
   const row = Object.fromEntries(LISTING_COLUMNS.filter((k) => k in l).map((k) => [k, (l as any)[k]])) as Partial<Listing>
@@ -306,13 +307,22 @@ export async function submitWork(claimId: string, data: Record<string, string>, 
     const amount = l.pay_model === 'per_unit' ? l.rate : Math.round((l.rate / Math.max(l.units_per_student ?? 1, 1)) * 100) / 100
     const spent = d.submissions.filter((s) => s.listing_id === l.id && s.status !== 'rejected').reduce((a, s) => a + (s.amount ?? 0), 0)
     if (l.total_budget && spent + amount > l.total_budget) throw new Error('Budget for this gig is used up')
-    const key = (data.owner_phone || data.phone || data.email || '').toLowerCase().replace(/[^a-z0-9@]/g, '')
-    if (key && d.submissions.some((s) => s.listing_id === l.id && s.status !== 'rejected' &&
-      (s.data.owner_phone || s.data.phone || s.data.email || '').toLowerCase().replace(/[^a-z0-9@]/g, '') === key)) {
-      throw new Error('This business has already been submitted (same contact)')
+    // same rules as submit_work on the server
+    const schema = schemaOf(l)
+    const problem = validateAnswers(schema, data)
+    if (problem) throw new Error(problem)
+    if (photoRuleOf(l) === 'required' && !proofPath) throw new Error('Add a photo as proof')
+    const clean: Record<string, string> = {}
+    for (const f of schema) { const v = (data[f.key] ?? '').trim(); if (v) clean[f.key] = v }
+    if (schema.some((f) => f.type === 'address') && data.gps) { clean.gps = data.gps; if (data.gps_accuracy) clean.gps_accuracy = data.gps_accuracy }
+    const norm = (v = '') => v.toLowerCase().replace(/[^a-z0-9@./]/g, '')
+    const uq = schema.find((f) => f.unique && clean[f.key])
+    if (uq && d.submissions.some((s) => s.listing_id === l.id && s.status !== 'rejected' && norm(s.data[uq.key]) === norm(clean[uq.key]))) {
+      throw new Error('This has already been submitted on this gig')
     }
     const s: Submission = {
-      id: uid(), claim_id: c.id, listing_id: l.id, student_id: u.id, data, proof_path: proofPath, status: 'pending',
+      id: uid(), claim_id: c.id, listing_id: l.id, student_id: u.id, data: clean, proof_path: proofPath, status: 'pending',
+      summary: subTitle({ data: clean }, schema, l.unit_label),
       amount, admin_note: null, reviewed_at: null, paid_at: null, payout_ref: null, created_at: now(),
     }
     d.submissions.push(s); save(); return s

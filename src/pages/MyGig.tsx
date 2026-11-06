@@ -2,7 +2,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Calendar, Check, ChevronDown, ClipboardList, Copy, FileText, MapPin, Send, Wallet } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import AddressField, { mapsUrl } from '../components/AddressField'
+import { mapsUrl } from '../components/AddressField'
+import { FieldInput, isWide } from '../components/FormFields'
 import Photo from '../components/Photo'
 import { FileDrop } from '../components/Upload'
 import { Empty, PageLoader, Progress, Spinner, SubPill, useToast } from '../components/ui'
@@ -11,7 +12,8 @@ import { ago, coverFor, money, payLine, timeLeft } from '../lib/format'
 import { friendlyError } from '../lib/security'
 import { useScrollIntoViewOn } from '../lib/scroll'
 import { useAsync, useSession } from '../lib/session'
-import { PROOF_FIELDS, fieldLabel, type Submission, type SubmissionStatus } from '../lib/types'
+import { displayValue, labelFor, photoRuleOf, schemaOf, subTitle, validateAnswers } from '../lib/forms'
+import type { FormField, Submission, SubmissionStatus } from '../lib/types'
 
 type Tab = 'log' | 'submitted' | 'details'
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -45,14 +47,18 @@ export default function MyGig() {
   const pending = c.subs.filter((s) => s.status === 'pending').reduce((a, s) => a + (s.amount ?? 0), 0)
   const perUnit = l.pay_model === 'per_unit' ? l.rate : l.rate / (goal || 1)
   const unit = l.unit_label
+  const schema = schemaOf(l)
+  const photo = photoRuleOf(l)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (busy) return
-    if (!proof) return toast('Add a photo as proof', 'err')
+    const problem = validateAnswers(schema, form)
+    if (problem) return toast(problem, 'err')
+    if (photo === 'required' && !proof) return toast('Add a photo as proof', 'err')
     setBusy(true)
     try {
-      await submitWork(c.id, form, proof)
+      await submitWork(c.id, form, photo === 'none' ? null : proof)
       toast(`${money(perUnit, l.currency)} ${unit} submitted for review`)
       setForm({}); setProof(null); setFormKey((k) => k + 1)
       reload()
@@ -127,29 +133,19 @@ export default function MyGig() {
                   <p className="mt-1 text-sm text-ink-muted">Fill this in for each {unit} you complete. You’ll earn <b className="font-medium text-ink">{money(perUnit, l.currency)}</b> once it’s approved.</p>
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2">
-                  {l.proof_fields.map((k) => {
-                    const meta = PROOF_FIELDS[k] ?? { label: fieldLabel(k), placeholder: '' }
-                    const wide = meta.multiline || k === 'location'
-                    return (
-                      <div key={k} className={wide ? 'sm:col-span-2' : ''}>
-                        <label className="label">{meta.label}{meta.optional && <span className="font-normal text-ink-muted"> (optional)</span>}</label>
-                        {k === 'location' ? (
-                          <AddressField value={form.location ?? ''} gps={form.gps} accuracy={form.gps_accuracy} placeholder={meta.placeholder} required
-                            onChange={(v) => setForm({ ...form, location: v })}
-                            onGps={(gps, acc) => { const n = { ...form }; if (gps) { n.gps = gps; n.gps_accuracy = acc ?? '' } else { delete n.gps; delete n.gps_accuracy } setForm(n) }} />
-                        ) : meta.multiline ? (
-                          <textarea className="input min-h-[84px]" maxLength={300} required={!meta.optional} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={meta.placeholder} />
-                        ) : (
-                          <input className="input" maxLength={300} required={!meta.optional} type={meta.type ?? 'text'} value={form[k] ?? ''} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={meta.placeholder} />
-                        )}
-                        {meta.hint && <p className={`text-xs leading-relaxed text-ink-muted ${k === 'location' ? 'mt-2' : 'mt-1.5'}`}>{meta.hint}</p>}
-                      </div>
-                    )
-                  })}
-                  <div className="sm:col-span-2">
-                    <label className="label">Photo proof</label>
-                    <FileDrop label="Add a photo" hint="Shopfront, the owner with the app open, or a screenshot" capture="environment" file={proof} onFile={setProof} />
-                  </div>
+                  {schema.map((f) => (
+                    <div key={f.key} className={isWide(f) ? 'sm:col-span-2' : ''}>
+                      <label className="label">{f.label}{!f.required && <span className="font-normal text-ink-muted"> (optional)</span>}</label>
+                      <FieldInput f={f} form={form} setForm={setForm} />
+                      {f.hint && <p className={`text-xs leading-relaxed text-ink-muted ${f.type === 'address' ? 'mt-2' : 'mt-1.5'}`}>{f.hint}</p>}
+                    </div>
+                  ))}
+                  {photo !== 'none' && (
+                    <div className="sm:col-span-2">
+                      <label className="label">Photo proof{photo === 'optional' && <span className="font-normal text-ink-muted"> (optional)</span>}</label>
+                      <FileDrop label="Add a photo" hint={l.photo_hint || 'A clear photo or screenshot that shows the work was done'} capture="environment" file={proof} onFile={setProof} />
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-col-reverse gap-3 border-t border-line pt-6 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-ink-muted">We check every submission. Fake or duplicate entries aren’t paid.</p>
@@ -163,7 +159,7 @@ export default function MyGig() {
                 action={<button onClick={() => setTab('submitted')} className="btn-ghost btn-sm">See what you submitted</button>} />
             ))}
 
-            {tab === 'submitted' && <Submitted subs={c.subs} currency={l.currency} unit={unit} onLog={canSubmit ? () => setTab('log') : undefined} />}
+            {tab === 'submitted' && <Submitted subs={c.subs} schema={schema} currency={l.currency} unit={unit} onLog={canSubmit ? () => setTab('log') : undefined} />}
 
             {tab === 'details' && (
               <div className="space-y-8">
@@ -175,7 +171,7 @@ export default function MyGig() {
                   </div>
                 )}
                 <div><h3 className="font-semibold">What to submit for each {unit}</h3>
-                  <div className="mt-3 flex flex-wrap gap-2">{l.proof_fields.map((f) => <span key={f} className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft">{fieldLabel(f)}</span>)}<span className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft">Photo</span></div>
+                  <div className="mt-3 flex flex-wrap gap-2">{schema.map((f) => <span key={f.key} className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft">{f.label}</span>)}{photo !== 'none' && <span className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft">Photo{photo === 'optional' ? ' (optional)' : ''}</span>}</div>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm text-ink-muted">
                   <span>Closes {new Date(l.expires_at).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
@@ -194,7 +190,7 @@ export default function MyGig() {
 
 const FILTERS: (SubmissionStatus | 'all')[] = ['all', 'pending', 'approved', 'paid', 'rejected']
 
-function Submitted({ subs, currency, unit, onLog }: { subs: Submission[]; currency: string; unit: string; onLog?: () => void }) {
+function Submitted({ subs, schema, currency, unit, onLog }: { subs: Submission[]; schema: FormField[]; currency: string; unit: string; onLog?: () => void }) {
   const [f, setF] = useState<SubmissionStatus | 'all'>('all')
   const [open, setOpen] = useState<string | null>(null)
   const list = subs.filter((s) => f === 'all' || s.status === f)
@@ -211,13 +207,13 @@ function Submitted({ subs, currency, unit, onLog }: { subs: Submission[]; curren
       <ul className="mt-5 divide-y divide-line border-y border-line">
         {list.map((s) => {
           const isOpen = open === s.id
-          const title = s.data.business_name || s.data.owner_name || s.data.email || 'Submission'
+          const title = subTitle(s, schema, unit[0].toUpperCase() + unit.slice(1))
           return (
             <li key={s.id}>
               <button onClick={() => setOpen(isOpen ? null : s.id)} className="flex w-full items-center gap-4 py-4 text-left">
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{title}</div>
-                  <div className="truncate text-xs text-ink-muted">{s.data.location || s.data.owner_phone || ''}{s.data.location || s.data.owner_phone ? ' · ' : ''}{ago(s.created_at)}</div>
+                  <div className="truncate text-xs text-ink-muted">{ago(s.created_at)}</div>
                 </div>
                 <div className="text-right"><div className="text-sm font-semibold">{money(s.amount, currency)}</div><SubPill s={s.status} /></div>
                 <ChevronDown className={`h-4 w-4 shrink-0 text-ink-muted transition ${isOpen ? 'rotate-180' : ''}`} />
@@ -227,10 +223,10 @@ function Submitted({ subs, currency, unit, onLog }: { subs: Submission[]; curren
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
                     <dl className="mb-4 grid gap-x-6 gap-y-3 rounded-2xl bg-paper p-4 text-sm sm:grid-cols-2">
                       {Object.entries(s.data).filter(([k]) => k !== 'gps_accuracy').map(([k, v]) => (
-                        <div key={k} className={k === 'location' || k === 'notes' ? 'sm:col-span-2' : ''}>
-                          <dt className="text-xs text-ink-muted">{fieldLabel(k)}</dt>
-                          <dd className="mt-0.5 break-words font-medium">
-                            {k === 'gps' ? <a href={mapsUrl(v)!} target="_blank" rel="noreferrer" className="text-brand-600 underline underline-offset-2">View pin on map</a> : v}
+                        <div key={k} className={['long', 'address'].includes(schema.find((x) => x.key === k)?.type ?? '') ? 'sm:col-span-2' : ''}>
+                          <dt className="text-xs text-ink-muted">{labelFor(schema, k)}</dt>
+                          <dd className="mt-0.5 whitespace-pre-line break-words font-medium">
+                            {k === 'gps' ? <a href={mapsUrl(v)!} target="_blank" rel="noreferrer" className="text-brand-600 underline underline-offset-2">View pin on map</a> : displayValue(schema.find((x) => x.key === k), v)}
                           </dd>
                         </div>
                       ))}

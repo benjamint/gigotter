@@ -1,5 +1,5 @@
 export type KycStatus = 'unverified' | 'pending' | 'verified' | 'rejected'
-export type GigType = 'onboarding' | 'focus_group' | 'research' | 'survey' | 'content' | 'other'
+export type GigType = 'onboarding' | 'focus_group' | 'research' | 'survey' | 'app_testing' | 'errand' | 'content' | 'other'
 export type PayModel = 'per_unit' | 'fixed'
 export type ListingStatus = 'draft' | 'live' | 'paused' | 'closed'
 export type ClaimStatus = 'active' | 'completed' | 'withdrawn' | 'removed'
@@ -46,7 +46,11 @@ export interface Listing {
   total_budget: number | null
   currency: string
   slots: number
+  /** legacy: fixed field keys. New gigs use form_schema (see schemaOf in lib/forms.ts). */
   proof_fields: string[]
+  form_schema: FormField[]
+  photo_rule: PhotoRule
+  photo_hint: string | null
   expires_at: string
   status: ListingStatus
   accent: Accent
@@ -77,6 +81,8 @@ export interface Submission {
   listing_id: string
   student_id: string
   data: Record<string, string>
+  /** first answer, used as the submission's name in lists and emails */
+  summary?: string | null
   proof_path: string | null
   status: SubmissionStatus
   amount: number | null
@@ -106,9 +112,26 @@ export const GIG_TYPES: Record<GigType, { label: string; emoji: string }> = {
   focus_group: { label: 'Focus group', emoji: '' },
   research: { label: 'Field research', emoji: '' },
   survey: { label: 'Survey', emoji: '' },
+  app_testing: { label: 'App testing', emoji: '' },
+  errand: { label: 'Errand', emoji: '' },
   content: { label: 'Content', emoji: '' },
   other: { label: 'Other', emoji: '' },
 }
+
+export type FieldType = 'text' | 'long' | 'phone' | 'email' | 'number' | 'date' | 'choice' | 'rating' | 'yes_no' | 'address' | 'link'
+export interface FormField {
+  key: string
+  label: string
+  type: FieldType
+  required: boolean
+  hint?: string
+  placeholder?: string
+  /** for 'choice' */
+  options?: string[]
+  /** the same answer can't be submitted twice on one gig (e.g. a phone number) */
+  unique?: boolean
+}
+export type PhotoRule = 'required' | 'optional' | 'none'
 
 export interface ProofField { label: string; placeholder: string; type?: string; hint?: string; multiline?: boolean; optional?: boolean }
 export const PROOF_FIELDS: Record<string, ProofField> = {

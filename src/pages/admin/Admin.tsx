@@ -9,6 +9,7 @@ import { ago, coverFor, money, payLine, spotsLeft, timeLeft } from '../../lib/fo
 import { useAsync, useSession } from '../../lib/session'
 import type { KycStatus, Listing, Profile, Submission } from '../../lib/types'
 import ListingForm from './ListingForm'
+import { subTitle } from '../../lib/forms'
 import { csvCell } from '../../lib/security'
 
 const TABS = [
@@ -264,7 +265,7 @@ function Gigs({ listings, subs, reload }: { listings: Listing[]; subs: Submissio
       </div>
       {!listings.length && <Empty title="No gigs yet" action={<button onClick={() => setEdit({})} className="btn-brand">Post the first one</button>} />}
       <Modal open={!!edit} onClose={() => setEdit(null)} wide>
-        {edit && <ListingForm initial={edit} onSaved={() => { setEdit(null); reload(); toast('Gig saved') }} />}
+        {edit && <ListingForm initial={edit} hasResponses={!!edit.id && subs.some((s: any) => s.listing_id === edit.id)} onSaved={() => { setEdit(null); reload(); toast('Gig saved') }} />}
       </Modal>
     </div>
   )
@@ -314,7 +315,7 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
             {list.map((s) => (
               <tr key={s.id} className="align-top hover:bg-paper">
                 <td className="p-4"><input type="checkbox" className="accent-brand-600" checked={picked.includes(s.id)} onChange={(e) => setPicked(e.target.checked ? [...picked, s.id] : picked.filter((x) => x !== s.id))} /></td>
-                <td className="py-4 pr-3"><div className="font-semibold">{s.data.business_name || s.data.owner_name}</div><div className="text-xs text-ink-muted">{Object.entries(s.data).filter(([k]) => k !== 'business_name').map(([, v]) => v).filter(Boolean).join(' · ')}</div><div className="text-xs text-ink-muted">{ago(s.created_at)}</div></td>
+                <td className="py-4 pr-3"><div className="font-semibold">{subTitle(s)}</div><div className="max-w-xs truncate text-xs text-ink-muted">{Object.entries(s.data).filter(([k, v]) => !['gps', 'gps_accuracy'].includes(k) && v !== subTitle(s)).map(([, v]) => v).filter(Boolean).join(' · ')}</div><div className="text-xs text-ink-muted">{ago(s.created_at)}</div></td>
                 <td className="py-4 pr-3"><Link to={`/admin/gigs/${s.listing_id}`} className="underline-offset-2 hover:underline">{s.listing?.title}</Link></td>
                 <td className="py-4 pr-3"><div>{s.student?.full_name}</div><div className="text-xs text-ink-muted">{s.student?.momo_number}</div></td>
                 <td className="py-4 pr-3 font-semibold">{money(s.amount, s.listing?.currency)}{s.payout_ref && <div className="text-xs font-normal text-ink-muted">ref {s.payout_ref}</div>}</td>

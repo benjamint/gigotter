@@ -9,7 +9,8 @@ import { admin, fileUrl, getListing } from '../../lib/api'
 import { ago, coverFor, money, payLine, timeLeft } from '../../lib/format'
 import { csvCell } from '../../lib/security'
 import { useAsync, useSession } from '../../lib/session'
-import { fieldLabel, type Listing, type Profile, type Submission, type SubmissionStatus } from '../../lib/types'
+import { displayValue, labelFor, schemaOf, subTitle } from '../../lib/forms'
+import { type Listing, type Profile, type Submission, type SubmissionStatus } from '../../lib/types'
 
 const STATUSES: (SubmissionStatus | 'all')[] = ['all', 'pending', 'approved', 'paid', 'rejected']
 const initials = (n?: string | null) => (n || '?').split(' ').map((x) => x[0]).slice(0, 2).join('').toUpperCase()
@@ -61,11 +62,12 @@ export default function GigResponses() {
   }
 
   const exportCsv = () => {
-    const fields = [...new Set([...l.proof_fields, ...d.subs.flatMap((s) => Object.keys(s.data))])]
-    const header = ['submitted_at', 'student', 'status', 'amount', ...fields.map(fieldLabel), 'map_link']
+    const schema = schemaOf(l)
+    const fields = [...new Set([...schema.map((f) => f.key), ...d.subs.flatMap((s) => Object.keys(s.data))])]
+    const header = ['submitted_at', 'student', 'status', 'amount', ...fields.map((k) => labelFor(schema, k)), 'map_link']
     const rows = list.map((s) => [
       new Date(s.created_at).toISOString(), s.student?.full_name ?? '', s.status, s.amount ?? '',
-      ...fields.map((f) => s.data[f] ?? ''), mapsUrl(s.data.gps, s.data.location) ?? '',
+      ...fields.map((f) => s.data[f] ?? ''), mapsUrl(s.data.gps, addrOf(schema, s.data)) ?? '',
     ])
     const csv = [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\n')
     const a = document.createElement('a')
@@ -172,9 +174,12 @@ function ResponseCard({ s, l, i, onReview, onProof }: { s: Submission; l: Listin
   const [busy, setBusy] = useState(false)
   useEffect(() => { let on = true; if (s.proof_path) fileUrl('proofs', s.proof_path).then((u) => on && setThumb(u)); return () => { on = false } }, [s.proof_path])
 
-  const fields = [...new Set([...l.proof_fields, ...Object.keys(s.data)])].filter((k) => !['gps', 'gps_accuracy', 'location'].includes(k))
-  const title = s.data.business_name || s.data.owner_name || s.data.email || `Response ${i + 1}`
-  const map = mapsUrl(s.data.gps, s.data.location)
+  const schema = schemaOf(l)
+  const addrKey = schema.find((f) => f.type === 'address')?.key
+  const fields = [...new Set([...schema.map((f) => f.key), ...Object.keys(s.data)])].filter((k) => !['gps', 'gps_accuracy', addrKey].includes(k))
+  const title = subTitle(s, schema, `Response ${i + 1}`)
+  const addr = addrOf(schema, s.data)
+  const map = mapsUrl(s.data.gps, addr)
   const act = async (st: SubmissionStatus, n?: string) => { setBusy(true); try { await onReview([s.id], st, n) } finally { setBusy(false) } }
 
   return (
@@ -191,19 +196,25 @@ function ResponseCard({ s, l, i, onReview, onProof }: { s: Submission; l: Listin
         <div className="space-y-4">
           <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
             {fields.map((k) => (
-              <div key={k} className={k === 'notes' ? 'sm:col-span-2' : ''}>
-                <dt className="text-xs text-ink-muted">{fieldLabel(k)}</dt>
-                <dd className="mt-0.5 break-words font-medium">
-                  {k === 'owner_phone' && s.data[k] ? <a href={`tel:${s.data[k].replace(/[^\d+]/g, '')}`} className="inline-flex items-center gap-1.5 hover:text-brand-600"><Phone className="h-3.5 w-3.5" />{s.data[k]}</a>
-                    : s.data[k] || <span className="font-normal text-ink-muted">—</span>}
+              <div key={k} className={schema.find((f) => f.key === k)?.type === 'long' ? 'sm:col-span-2' : ''}>
+                <dt className="text-xs text-ink-muted">{labelFor(schema, k)}</dt>
+                <dd className="mt-0.5 whitespace-pre-line break-words font-medium">
+                  {(() => {
+                    const f = schema.find((x) => x.key === k), v = s.data[k]
+                    if (!v) return <span className="font-normal text-ink-muted">—</span>
+                    if (f?.type === 'phone') return <a href={`tel:${v.replace(/[^\d+]/g, '')}`} className="inline-flex items-center gap-1.5 hover:text-brand-600"><Phone className="h-3.5 w-3.5" />{v}</a>
+                    if (f?.type === 'email') return <a href={`mailto:${v}`} className="hover:text-brand-600">{v}</a>
+                    if (f?.type === 'link' && /^https?:\/\//i.test(v)) return <a href={v} target="_blank" rel="noreferrer noopener" className="text-brand-600 underline underline-offset-2">{v}</a>
+                    return displayValue(f, v)
+                  })()}
                 </dd>
               </div>
             ))}
           </dl>
-          {(s.data.location || s.data.gps) && (
+          {(addr || s.data.gps) && (
             <div className="rounded-xl bg-paper p-4 text-sm">
               <div className="flex items-center gap-1.5 text-xs text-ink-muted"><MapPin className="h-3.5 w-3.5" />Address</div>
-              <p className="mt-1 whitespace-pre-line font-medium">{s.data.location || '—'}</p>
+              <p className="mt-1 whitespace-pre-line font-medium">{addr || '—'}</p>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                 {s.data.gps ? <span className="text-brand-700">GPS pin {s.data.gps}{s.data.gps_accuracy ? ` (±${s.data.gps_accuracy} m)` : ''}</span> : <span className="text-ink-muted">No GPS pin — address only</span>}
                 {map && <a href={map} target="_blank" rel="noreferrer" className="font-medium text-brand-600 underline underline-offset-2">Open in Google Maps</a>}
@@ -241,3 +252,6 @@ function ResponseCard({ s, l, i, onReview, onProof }: { s: Submission; l: Listin
     </motion.article>
   )
 }
+
+/** The answer to the gig's address question, if it has one. */
+const addrOf = (schema: { key: string; type: string }[], data: Record<string, string>) => { const k = schema.find((f) => f.type === 'address')?.key; return k ? data[k] : data.location }

@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, BadgeCheck, ClipboardList, Handshake, MessagesSquare, Plus, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
+import { ArrowRight, BadgeCheck, ClipboardList, Handshake, MessagesSquare, Plus, Package, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import GigCard from '../components/GigCard'
@@ -121,6 +121,8 @@ export default function Landing() {
             [MessagesSquare, 'Focus groups', 'Bring the right people into a room and keep the conversation flowing.'],
             [Search, 'Field research', 'Visit shops and markets to collect prices, photos and insight.'],
             [ClipboardList, 'Surveys', 'Gather genuine responses from people who match the brief.'],
+            [Smartphone, 'App testing', 'Try new apps and websites and say honestly what works.'],
+            [Package, 'Errands', 'Deliveries, drop-offs and quick checks around town.'],
           ].map(([I, t, d]: any, i) => <WorkTile key={t} I={I} t={t} d={d} i={i} />)}
         </div>
       </section>

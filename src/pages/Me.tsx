@@ -5,6 +5,7 @@ import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from
 import { myClaims, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'
 import { ago, coverFor, money, timeLeft } from '../lib/format'
+import { subTitle } from '../lib/forms'
 import { useAsync, useSession } from '../lib/session'
 
 export default function Me() {
@@ -92,7 +93,7 @@ export default function Me() {
             {subs.slice(0, 12).map((s) => (
               <div key={s.id} className="flex items-center gap-4 p-4">
                 <Sparkles className="h-5 w-5 shrink-0 text-brand-600" />
-                <div className="min-w-0 flex-1"><div className="truncate font-semibold">{s.data.business_name || s.data.owner_name || 'Submission'}</div><div className="truncate text-xs text-ink-muted">{s.title} · {ago(s.created_at)}</div></div>
+                <div className="min-w-0 flex-1"><div className="truncate font-semibold">{subTitle(s)}</div><div className="truncate text-xs text-ink-muted">{s.title} · {ago(s.created_at)}</div></div>
                 <div className="text-right"><div className="font-semibold">{money(s.amount, s.cur)}</div><SubPill s={s.status} /></div>
               </div>
             ))}

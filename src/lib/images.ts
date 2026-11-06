@@ -18,6 +18,8 @@ export const GIG_COVERS: Record<GigType, string> = {
   focus_group: '/images/gig-focus-group.jpg', // people around a table talking
   research: '/images/gig-research.jpg',     // market stalls, clipboard
   survey: '/images/gig-survey.jpg',         // person on phone filling a form
+  app_testing: '/images/gig-survey.jpg',    // reuses the phone shot
+  errand: '/images/gig-other.jpg',
   content: '/images/gig-content.jpg',       // phone filming
   other: '/images/gig-other.jpg',
 }

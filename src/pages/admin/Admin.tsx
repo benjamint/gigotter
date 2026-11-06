@@ -278,7 +278,7 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
   const [proof, setProof] = useState<string | null>(null)
   const list = subs.filter((s) => s.status === f)
   useEffect(() => setPicked([]), [f])
-  const act = async (ids: string[], status: Submission['status'], extra = {}) => { await admin.review(ids, status, extra); toast(`${ids.length} marked ${status}`); setPicked([]); reload() }
+  const act = async (ids: string[], status: Submission['status'], extra = {}) => { await admin.review(ids, status, extra); toast(`${ids.length} marked ${status}${status === 'pending' ? '' : ' — students emailed'}`); setPicked([]); reload() }
 
   const exportCsv = () => {
     const rows = subs.filter((s) => s.status === 'approved')

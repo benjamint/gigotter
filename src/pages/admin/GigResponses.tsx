@@ -56,7 +56,7 @@ export default function GigResponses() {
 
   const review = async (ids: string[], st: SubmissionStatus, note?: string) => {
     await admin.review(ids, st, note ? { admin_note: note } : {})
-    toast(`${ids.length} ${ids.length === 1 ? 'response' : 'responses'} ${st}`)
+    toast(`${ids.length} ${ids.length === 1 ? 'response' : 'responses'} ${st} — student${ids.length === 1 ? '' : 's'} emailed`)
     data.reload()
   }
 

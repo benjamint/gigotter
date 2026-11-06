@@ -127,7 +127,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {(quotes.data?.length ?? 0) >= 2 && (
+      {(quotes.data?.length ?? 0) >= 1 && (
         <section className="py-24">
           <Reveal className="container-x"><SectionHead eyebrow="From students" title={<>In their <span className="em">own words.</span></>} /></Reveal>
           <div className="mt-10"><TestimonialStrip items={quotes.data!} /></div>

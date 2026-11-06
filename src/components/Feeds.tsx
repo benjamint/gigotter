@@ -51,7 +51,19 @@ export function PayoutFeed({ items, title = 'Recently paid' }: { items: PayoutIt
 }
 
 export function TestimonialStrip({ items }: { items: Testimonial[] }) {
-  if (items.length < 2) return null
+  if (!items.length) return null
+  // one or two quotes sit still; a scrolling strip only once there are enough to fill it
+  if (items.length < 3) return (
+    <div className={`container-x grid gap-5 ${items.length === 2 ? 'md:grid-cols-2' : 'max-w-3xl'}`}>
+      {items.map((t) => (
+        <figure key={t.id} className={`flex flex-col rounded-3xl border border-line bg-white shadow-soft ${items.length === 1 ? 'p-8 text-center md:p-12' : 'p-7'}`}>
+          <Quote className={`h-6 w-6 text-brand-200 ${items.length === 1 ? 'mx-auto' : ''}`} />
+          <blockquote className={`mt-4 flex-1 font-serif italic leading-snug text-ink ${items.length === 1 ? 'text-2xl md:text-3xl' : 'text-xl'}`}>“{t.quote}”</blockquote>
+          <figcaption className="mt-6 text-sm"><b className="font-medium">{t.name}</b>{t.school && <span className="text-ink-muted"> · {t.school}</span>}</figcaption>
+        </figure>
+      ))}
+    </div>
+  )
   return (
     <Marquee seconds={Math.max(40, items.length * 12)} reverse>
       <div className="flex gap-5">

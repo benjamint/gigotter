@@ -109,16 +109,25 @@ export const GIG_TYPES: Record<GigType, { label: string; emoji: string }> = {
   other: { label: 'Other', emoji: '' },
 }
 
-export const PROOF_FIELDS: Record<string, { label: string; placeholder: string; type?: string }> = {
-  business_name: { label: 'Business name', placeholder: 'Ama’s Glam Studio' },
-  owner_name: { label: 'Founder / owner name', placeholder: 'Ama Mensah' },
-  owner_phone: { label: 'Owner phone', placeholder: '024 123 4567', type: 'tel' },
+export interface ProofField { label: string; placeholder: string; type?: string; hint?: string; multiline?: boolean; optional?: boolean }
+export const PROOF_FIELDS: Record<string, ProofField> = {
+  business_name: { label: 'Business name', placeholder: 'Ama’s Glam Studio', hint: 'As it appears on the signboard.' },
+  owner_name: { label: 'Founder / owner name', placeholder: 'Ama Mensah', hint: 'Full name of the person who runs it.' },
+  owner_phone: { label: 'Owner phone', placeholder: '024 123 4567', type: 'tel', hint: 'A number we can call to confirm.' },
   email: { label: 'Email', placeholder: 'ama@studio.com', type: 'email' },
-  location: { label: 'Location / area', placeholder: 'East Legon, Accra' },
-  instagram: { label: 'Instagram / TikTok', placeholder: '@amasglam' },
-  app_signup_email: { label: 'Email they signed up with', placeholder: 'ama@studio.com', type: 'email' },
-  notes: { label: 'Notes', placeholder: 'Anything we should know?' },
+  location: {
+    label: 'Full address', multiline: true,
+    placeholder: 'Shop 12, Oxford Street, Osu, Accra — opposite Papaye',
+    hint: 'Building or shop number, street, area and city, plus a nearby landmark. Tap “Use my current location” while you’re there so we can find it on a map.',
+  },
+  digital_address: { label: 'Ghana Post digital address', placeholder: 'GA-123-4567', hint: 'From the GhanaPostGPS app or the sign on the building.', optional: true },
+  instagram: { label: 'Instagram / TikTok', placeholder: '@amasglam', optional: true },
+  app_signup_email: { label: 'Email they signed up with', placeholder: 'ama@studio.com', type: 'email', hint: 'The email they used to create their account, so we can match it.' },
+  notes: { label: 'Notes', placeholder: 'Anything we should know?', multiline: true, optional: true },
 }
+/** Extra values captured automatically (not chosen by admins). */
+export const AUTO_FIELDS: Record<string, string> = { gps: 'GPS location', gps_accuracy: 'GPS accuracy (m)' }
+export const fieldLabel = (k: string) => PROOF_FIELDS[k]?.label ?? AUTO_FIELDS[k] ?? k.replace(/_/g, ' ')
 
 export const MOMO_PROVIDERS = ['MTN MoMo', 'Telecel Cash', 'AT Money', 'OPay', 'PalmPay', 'M-Pesa', 'Other']
 export const CURRENCIES: Record<string, string> = { GHS: '₵', USD: '$', NGN: '₦', KES: 'KSh ' }

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import { Check, Download, Edit3, Inbox, LayoutGrid, Plus, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Plus, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { CountUp, Empty, KycPill, Modal, PageLoader, SubPill, useToast } from '../../components/ui'
 import { admin, deleteListing, fileUrl, listListings } from '../../lib/api'
 import Photo from '../../components/Photo'
@@ -22,7 +22,9 @@ type Tab = (typeof TABS)[number]['k']
 
 export default function Admin() {
   const { profile, loading } = useSession()
-  const [tab, setTab] = useState<Tab>('overview')
+  const [sp, setSp] = useSearchParams()
+  const tab = (TABS.some((t) => t.k === sp.get('tab')) ? sp.get('tab') : 'overview') as Tab
+  const setTab = (t: Tab) => setSp(t === 'overview' ? {} : { tab: t }, { replace: true })
   const data = useAsync(async () => {
     const [profiles, listings, subs, requests, claims] = await Promise.all([admin.profiles(), listListings({ all: true }), admin.submissions(), admin.requests(), admin.claims()])
     return { profiles: profiles.filter((p) => p.role !== 'admin'), listings, subs, requests, claims }
@@ -55,7 +57,7 @@ export default function Admin() {
           <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
             {tab === 'overview' && <Overview d={d} go={setTab} />}
             {tab === 'students' && <Students profiles={d.profiles} reload={data.reload} />}
-            {tab === 'gigs' && <Gigs listings={d.listings} reload={data.reload} />}
+            {tab === 'gigs' && <Gigs listings={d.listings} subs={d.subs} reload={data.reload} />}
             {tab === 'work' && <Work subs={d.subs} reload={data.reload} />}
             {tab === 'briefs' && <Briefs reqs={d.requests} reload={data.reload} />}
           </motion.div>
@@ -220,7 +222,7 @@ function KycReview({ p, onClose, onDone }: { p: Profile | null; onClose: () => v
 }
 
 // ═════════════ gigs ═════════════
-function Gigs({ listings, reload }: { listings: Listing[]; reload: () => void }) {
+function Gigs({ listings, subs, reload }: { listings: Listing[]; subs: Submission[]; reload: () => void }) {
   const toast = useToast()
   const [edit, setEdit] = useState<Partial<Listing> | null>(null)
   return (
@@ -244,6 +246,16 @@ function Gigs({ listings, reload }: { listings: Listing[]; reload: () => void })
                 <div className="rounded-xl bg-sand p-2"><div className="font-semibold">{money(l.committed, l.currency)}</div><div className="text-xs text-ink-muted">of {money(budget, l.currency)}</div></div>
               </div>
               {spotsLeft(l) === 0 && <p className="mt-2 text-xs font-semibold text-ink-muted">All spots filled</p>}
+              {(() => {
+                const mine = subs.filter((s) => s.listing_id === l.id)
+                const waiting = mine.filter((s) => s.status === 'pending').length
+                return (
+                  <Link to={`/admin/gigs/${l.id}`} className="mt-4 flex items-center justify-between rounded-xl border border-line px-4 py-3 text-sm font-medium transition hover:border-ink/30 hover:bg-paper">
+                    <span>View responses <span className="text-ink-muted">({mine.length})</span></span>
+                    <span className="flex items-center gap-2">{waiting > 0 && <span className="chip bg-amber-50 text-amber-800">{waiting} to review</span>}<ArrowRight className="h-4 w-4" /></span>
+                  </Link>
+                )
+              })()}
             </div>
           )
         })}
@@ -301,7 +313,7 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
               <tr key={s.id} className="align-top hover:bg-paper">
                 <td className="p-4"><input type="checkbox" className="accent-brand-600" checked={picked.includes(s.id)} onChange={(e) => setPicked(e.target.checked ? [...picked, s.id] : picked.filter((x) => x !== s.id))} /></td>
                 <td className="py-4 pr-3"><div className="font-semibold">{s.data.business_name || s.data.owner_name}</div><div className="text-xs text-ink-muted">{Object.entries(s.data).filter(([k]) => k !== 'business_name').map(([, v]) => v).filter(Boolean).join(' · ')}</div><div className="text-xs text-ink-muted">{ago(s.created_at)}</div></td>
-                <td className="py-4 pr-3">{s.listing?.title}</td>
+                <td className="py-4 pr-3"><Link to={`/admin/gigs/${s.listing_id}`} className="underline-offset-2 hover:underline">{s.listing?.title}</Link></td>
                 <td className="py-4 pr-3"><div>{s.student?.full_name}</div><div className="text-xs text-ink-muted">{s.student?.momo_number}</div></td>
                 <td className="py-4 pr-3 font-semibold">{money(s.amount, s.listing?.currency)}{s.payout_ref && <div className="text-xs font-normal text-ink-muted">ref {s.payout_ref}</div>}</td>
                 <td className="py-4 pr-3">{s.proof_path ? <button onClick={async () => setProof(await fileUrl('proofs', s.proof_path))} className="font-semibold underline">View</button> : '—'}</td>

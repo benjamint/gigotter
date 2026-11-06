@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
 import Admin from './pages/admin/Admin'
+import GigResponses from './pages/admin/GigResponses'
 import AuthPage from './pages/Auth'
 import ResetPassword from './pages/ResetPassword'
 import Brief from './pages/Brief'
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="me/gig/:claimId" element={<Page><MyGig /></Page>} />
           <Route path="brief" element={<Page><Brief /></Page>} />
           <Route path="admin" element={<Page><Admin /></Page>} />
+          <Route path="admin/gigs/:id" element={<Page><GigResponses /></Page>} />
           <Route path="privacy" element={<Page><Privacy /></Page>} />
           <Route path="terms" element={<Page><Terms /></Page>} />
           <Route path="*" element={<div className="mx-auto max-w-lg px-4 py-24"><Empty title="Page not found" body="The page you’re looking for doesn’t exist or has moved." action={<Link to="/" className="btn-primary">Go home</Link>} /></div>} />

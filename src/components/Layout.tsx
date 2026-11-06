@@ -1,4 +1,5 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion'
+import { ScrollProgress } from './motion'
 import { BadgeCheck, ChevronDown, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -21,7 +22,17 @@ export default function Layout() {
   const loc = useLocation()
   const nav = useNavigate()
   useEffect(() => { setOpen(false); window.scrollTo(0, 0) }, [loc.pathname])
-  useEffect(() => { const f = () => setScrolled(window.scrollY > 8); f(); window.addEventListener('scroll', f, { passive: true }); return () => window.removeEventListener('scroll', f) }, [])
+  const [hidden, setHidden] = useState(false)
+  const { scrollY } = useScroll()
+  // hide the header while reading down the page, bring it back as soon as you scroll up
+  useMotionValueEvent(scrollY, 'change', (y) => {
+    const prev = scrollY.getPrevious() ?? 0
+    setScrolled(y > 8)
+    if (y < 160 || y < prev - 4) setHidden(false)
+    else if (y > prev + 6) setHidden(true)
+  })
+  useEffect(() => setScrolled(window.scrollY > 8), [])
+  const hide = hidden && !open
   // the main website menu is the same for everyone; account pages live in the avatar menu
   const links = [
     { to: '/gigs', label: 'Find work' },
@@ -43,7 +54,8 @@ export default function Layout() {
           <button onClick={resetDemo} className="ml-2 underline underline-offset-2 hover:text-white">Reset</button>
         </div>
       )}
-      <header className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? 'border-b border-line bg-paper/85 backdrop-blur-xl' : 'border-b border-transparent bg-paper'}`}>
+      <ScrollProgress />
+      <header className={`sticky top-0 z-40 transition-[transform,background-color,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${hide ? '-translate-y-full' : 'translate-y-0'} ${scrolled ? 'border-b border-line bg-paper/85 backdrop-blur-xl' : 'border-b border-transparent bg-paper'}`}>
         <div className="container-x flex h-16 items-center justify-between">
           <Logo />
           <nav className="hidden items-center gap-8 md:flex">
@@ -72,7 +84,11 @@ export default function Layout() {
           {open && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-line bg-paper md:hidden">
               <div className="container-x flex flex-col py-4">
-                {links.map((l) => <NavLink key={l.to} to={l.to} className="border-b border-line py-4 text-lg font-medium">{l.label}</NavLink>)}
+                {links.map((l, i) => (
+                  <motion.div key={l.to} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 + i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
+                    <NavLink to={l.to} className="block border-b border-line py-4 text-lg font-medium">{l.label}</NavLink>
+                  </motion.div>
+                ))}
                 {user && <div className="pt-4 text-xs font-medium uppercase tracking-wider text-ink-muted">Your account</div>}
                 {user && account.map((l) => <NavLink key={l.to} to={l.to} className="flex items-center gap-3 border-b border-line py-4 text-lg font-medium"><l.icon className="h-5 w-5 text-ink-muted" />{l.label}</NavLink>)}
                 {user
@@ -93,22 +109,22 @@ export default function Layout() {
           <div className="text-sm">
             <div className="mb-3 font-medium">Students</div>
             <div className="space-y-2.5 text-white/60">
-              <Link to="/gigs" className="block hover:text-white">Find work</Link>
-              <Link to="/signup" className="block hover:text-white">Get verified</Link>
-              <Link to="/me" className="block hover:text-white">Dashboard</Link>
+              <Link to="/gigs" className="link-u block w-fit hover:text-white">Find work</Link>
+              <Link to="/signup" className="link-u block w-fit hover:text-white">Get verified</Link>
+              <Link to="/me" className="link-u block w-fit hover:text-white">Dashboard</Link>
             </div>
           </div>
           <div className="text-sm">
             <div className="mb-3 font-medium">Businesses</div>
             <div className="space-y-2.5 text-white/60">
-              <Link to="/brief" className="block hover:text-white">Post a brief</Link>
-              <Link to="/brief" className="block hover:text-white">How we verify</Link>
+              <Link to="/brief" className="link-u block w-fit hover:text-white">Post a brief</Link>
+              <Link to="/brief" className="link-u block w-fit hover:text-white">How we verify</Link>
             </div>
           </div>
         </div>
         <div className="container-x flex flex-col gap-2 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} Gigotter. Accra, Ghana.</span>
-          <span className="flex gap-5"><Link to="/privacy" className="hover:text-white">Privacy</Link><Link to="/terms" className="hover:text-white">Terms</Link><span className="hidden sm:inline">ID documents are stored privately and used only for verification.</span></span>
+          <span className="flex gap-5"><Link to="/privacy" className="link-u hover:text-white">Privacy</Link><Link to="/terms" className="link-u hover:text-white">Terms</Link><span className="hidden sm:inline">ID documents are stored privately and used only for verification.</span></span>
         </div>
       </footer>
     </div>

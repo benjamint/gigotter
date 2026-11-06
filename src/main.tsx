@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { MotionConfig } from 'framer-motion'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { ToastProvider } from './components/ui'
@@ -26,7 +27,9 @@ if (MISCONFIGURED) {
       <BrowserRouter>
         <SessionProvider>
           <ToastProvider>
-            <App />
+            <MotionConfig reducedMotion="user">
+              <App />
+            </MotionConfig>
           </ToastProvider>
         </SessionProvider>
       </BrowserRouter>

@@ -13,6 +13,18 @@
   .btn-primary { @apply btn bg-ink text-white px-6 py-3 hover:bg-ink-soft; }
   .btn-brand { @apply btn bg-brand-600 text-white px-6 py-3 hover:bg-brand-700; }
   .btn-ghost { @apply btn px-5 py-3 border border-line bg-white text-ink hover:border-ink/30 hover:bg-white; }
+  /* arrows nudge forward on hover */
+  .btn .lucide-arrow-right, .btn .lucide-arrow-up-right { @apply transition-transform duration-300 ease-out; }
+  .btn:hover .lucide-arrow-right { transform: translateX(3px); }
+  .btn:hover .lucide-arrow-up-right { transform: translate(2px,-2px); }
+  /* primary buttons get a soft sheen sweep */
+  .btn-primary, .btn-brand { position: relative; overflow: hidden; isolation: isolate; }
+  .btn-primary::after, .btn-brand::after { content: ''; position: absolute; inset: 0; z-index: -1; transform: translateX(-120%) skewX(-20deg);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent); transition: transform .7s cubic-bezier(.22,1,.36,1); }
+  .btn-primary:hover::after, .btn-brand:hover::after { transform: translateX(120%) skewX(-20deg); }
+  /* underline that grows from the left */
+  .link-u { background: linear-gradient(currentColor,currentColor) 0 100% / 0 1px no-repeat; transition: background-size .35s cubic-bezier(.22,1,.36,1); }
+  .link-u:hover { background-size: 100% 1px; }
   .btn-sm { @apply px-4 py-2 text-sm; }
   .card { @apply bg-white rounded-2xl border border-line shadow-soft; }
   .input { @apply w-full rounded-xl border border-line bg-white px-4 py-3 text-[15px] outline-none transition placeholder:text-ink-muted/60 focus:border-brand-500 focus:ring-4 focus:ring-brand-100; }
@@ -24,4 +36,6 @@
   .figure { @apply font-serif font-normal tracking-normal; font-variant-numeric: lining-nums tabular-nums; }
   .container-x { @apply mx-auto max-w-6xl px-4 sm:px-6; }
 }
+@keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+.animate-float { animation: float 6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }

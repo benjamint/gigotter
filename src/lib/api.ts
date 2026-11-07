@@ -220,18 +220,18 @@ export async function deleteListingFile(f: ListingFile) {
   fail(error)
   await sb!.storage.from('gig-files').remove([f.path])
 }
-/** Opens (PDF, images) or downloads (Office files) an attachment through a 10-minute signed link. */
-export async function openListingFile(f: ListingFile) {
-  const inline = f.mime === 'application/pdf' || f.mime.startsWith('image/')
-  if (DEMO) {
-    const a = document.createElement('a'); a.href = db().files[`gig-files/${f.path}`] ?? ''; a.download = f.name; a.click(); return
-  }
-  const tab = inline ? window.open('', '_blank') : null // open synchronously so phones don't block it as a pop-up
-  const { data, error } = await sb!.storage.from('gig-files').createSignedUrl(f.path, 600, inline ? undefined : { download: f.name })
-  if (error || !data) { tab?.close(); fail(error ?? new Error('Could not open this file')) }
-  if (tab) { tab.opener = null; tab.location.href = data!.signedUrl } else window.location.assign(data!.signedUrl)
+/** A 10-minute link to an attachment; `download` makes the browser save it under its real name. */
+export async function listingFileUrl(f: ListingFile, download = false): Promise<string> {
+  if (DEMO) return db().files[`gig-files/${f.path}`] ?? ''
+  const { data, error } = await sb!.storage.from('gig-files').createSignedUrl(f.path, 600, download ? { download: f.name } : undefined)
+  if (error || !data) fail(error ?? new Error('Could not open this file'))
+  return data!.signedUrl
 }
-
+/** Saves an attachment to the device (works in in-app browsers, unlike opening a new tab). */
+export async function downloadListingFile(f: ListingFile) {
+  const a = document.createElement('a'); a.href = await listingFileUrl(f, true); a.download = f.name; a.rel = 'noopener'
+  document.body.appendChild(a); a.click(); a.remove()
+}
 // ═══════════════════════════ profile ═══════════════════════════
 export async function myProfile(): Promise<Profile | null> {
   const u = await auth.user()

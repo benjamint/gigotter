@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { Download, Eye, FileImage, FileSpreadsheet, FileText, Globe, Lock, Paperclip, Presentation, Trash2, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { deleteListingFile, openListingFile, setListingFileVisibility } from '../lib/api'
+import { deleteListingFile, downloadListingFile, setListingFileVisibility } from '../lib/api'
+import FileViewer, { canPreview } from './FileViewer'
 import { checkDoc, fileSize, friendlyError } from '../lib/security'
 import type { ListingFile } from '../lib/types'
 import { Spinner, useToast } from './ui'
@@ -13,16 +14,19 @@ function Icon({ mime, className = 'h-5 w-5' }: { mime: string; className?: strin
   return <FileText className={className} />
 }
 const kind = (mime: string) => mime === 'application/pdf' ? 'PDF' : mime.startsWith('image/') ? 'Image' : mime.includes('word') ? 'Word' : mime.includes('presentation') ? 'PowerPoint' : mime.includes('sheet') ? 'Excel' : mime === 'text/csv' ? 'CSV' : 'Text'
-const opensInline = (mime: string) => mime === 'application/pdf' || mime.startsWith('image/')
+const opensInline = canPreview
 
 /** Read-only list for students: tap to open or download. */
 export function GigFileList({ files, title = 'Resources', note }: { files: ListingFile[]; title?: string; note?: string }) {
   const toast = useToast()
   const [busy, setBusy] = useState<string | null>(null)
+  const [viewing, setViewing] = useState<ListingFile | null>(null)
   if (!files.length) return null
+  // PDFs and images preview inside the app; Office files download
   const open = async (f: ListingFile) => {
+    if (canPreview(f.mime)) return setViewing(f)
     setBusy(f.id)
-    try { await openListingFile(f) } catch (e: any) { toast(friendlyError(e.message), 'err') } finally { setBusy(null) }
+    try { await downloadListingFile(f) } catch (e: any) { toast(friendlyError(e.message), 'err') } finally { setBusy(null) }
   }
   return (
     <section>
@@ -45,6 +49,7 @@ export function GigFileList({ files, title = 'Resources', note }: { files: Listi
           </li>
         ))}
       </ul>
+      <FileViewer file={viewing} onClose={() => setViewing(null)} />
     </section>
   )
 }

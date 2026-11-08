@@ -9,6 +9,7 @@ import Brief from './pages/Brief'
 import GigDetail from './pages/GigDetail'
 import Gigs from './pages/Gigs'
 import Landing from './pages/Landing'
+import Scan from './pages/Scan'
 import Me from './pages/Me'
 import MyGig from './pages/MyGig'
 import Verify from './pages/Verify'
@@ -25,6 +26,7 @@ export default function App() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={loc} key={loc.pathname}>
+        <Route path="s/:code" element={<Scan />} />
         <Route element={<Layout />}>
           <Route index element={<Page><Landing /></Page>} />
           <Route path="gigs" element={<Page><Gigs /></Page>} />

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Claim, ClientRequest, KycStatus, Listing, ListingFile, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
+import type { Claim, ClientRequest, KycStatus, Listing, ListingFile, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { checkDoc, checkImage, safeExt } from './security'
@@ -25,6 +25,8 @@ interface DemoDB {
   submissions: Submission[]
   requests: ClientRequest[]
   testimonials?: Testimonial[]
+  qrCodes?: QrCode[]
+  qrScans?: { code: string; visitor: string | null; device: string; scanned_at: string }[]
   files: Record<string, string>
   listingFiles?: ListingFile[]
 }
@@ -45,6 +47,7 @@ function load(): DemoDB {
     profiles: [blankProfile(adminId, 'admin@gigotter.com', 'Gigotter Admin', 'admin')],
     listings: seedListings(),
     claims: [], submissions: [], requests: [], files: {},
+    qrCodes: [{ code: 'brochure', label: 'A4 brochure', target: '/', archived: false, created_at: now() }, { code: 'card', label: 'QR card / poster', target: '/', archived: false, created_at: now() }, { code: 'tiktok', label: 'TikTok', target: '/', archived: false, created_at: now() }],
   }
   save(db)
   return db
@@ -114,11 +117,12 @@ export const auth = {
       if (d.users.some((u) => u.email === email)) throw new Error('That email already has an account — log in instead.')
       const id = uid()
       d.users.push({ id, email, password })
-      d.profiles.push(blankProfile(id, email, full_name))
+      d.profiles.push({ ...blankProfile(id, email, full_name), signup_source: scanSource() })
       d.session = id
       return save()
     }
-    const { data, error } = await sb!.auth.signUp({ email, password, options: { data: { full_name: full_name.trim().slice(0, 120) }, emailRedirectTo: `${location.origin}/verify`, captchaToken } })
+    const signup_source = scanSource() ?? undefined
+    const { data, error } = await sb!.auth.signUp({ email, password, options: { data: { full_name: full_name.trim().slice(0, 120), signup_source }, emailRedirectTo: `${location.origin}/verify`, captchaToken } })
     fail(error)
     if (!data.session) throw new Error('CHECK_EMAIL')
   },
@@ -232,6 +236,68 @@ export async function downloadListingFile(f: ListingFile) {
   const a = document.createElement('a'); a.href = await listingFileUrl(f, true); a.download = f.name; a.rel = 'noopener'
   document.body.appendChild(a); a.click(); a.remove()
 }
+// ═══════════════════════════ QR codes ═══════════════════════════
+const SRC_KEY = 'gigotter-src', VISITOR_KEY = 'gigotter-visitor'
+/** The QR code this browser arrived through in the last 30 days, if any (credited at sign-up). */
+export function scanSource(): string | null {
+  try { const s = JSON.parse(localStorage.getItem(SRC_KEY) || 'null'); return s && Date.now() - s.at < 30 * 864e5 ? s.code : null } catch { return null }
+}
+const deviceType = () => { const ua = navigator.userAgent; return /iPad|Tablet|Android(?!.*Mobile)/i.test(ua) ? 'tablet' : /Mobi|iPhone|Android/i.test(ua) ? 'mobile' : 'desktop' }
+/** Records a scan of gigotter.com/s/<code> and returns the page to continue to. Never throws. */
+export async function logScan(code: string): Promise<string> {
+  code = code.toLowerCase().trim()
+  let visitor: string | null = null
+  try { visitor = localStorage.getItem(VISITOR_KEY) || crypto.randomUUID(); localStorage.setItem(VISITOR_KEY, visitor) } catch { /* storage blocked */ }
+  try {
+    let target = '/'
+    if (DEMO) {
+      const d = db(), c = (d.qrCodes ?? []).find((x) => x.code === code)
+      // same rules as log_scan: archived codes and the same browser within 30 minutes aren't counted
+      const recent = (d.qrScans ?? []).some((s) => s.code === code && visitor && s.visitor === visitor && Date.now() - +new Date(s.scanned_at) < 30 * 60000)
+      if (c) { target = c.target; if (!c.archived && !recent) { (d.qrScans ??= []).push({ code, visitor, device: deviceType(), scanned_at: now() }); save() } }
+    } else {
+      const { data } = await sb!.rpc('log_scan', { p_code: code, p_visitor: visitor, p_device: deviceType() })
+      if (typeof data === 'string') target = data
+    }
+    // remembered for 30 days so a later sign-up is credited to this code (the database ignores unknown codes)
+    try { localStorage.setItem(SRC_KEY, JSON.stringify({ code, at: Date.now() })) } catch { /* ignore */ }
+    return /^\/[A-Za-z0-9/_-]*$/.test(target) ? target : '/'
+  } catch { return '/' }
+}
+export const qr = {
+  async stats(): Promise<QrStat[]> {
+    if (DEMO) {
+      const d = db(), scans = d.qrScans ?? [], day = (t: string) => new Date(t).toDateString()
+      return (d.qrCodes ?? []).map((c) => {
+        const mine = scans.filter((s) => s.code === c.code)
+        const daily = Array.from({ length: 14 }, (_, i) => { const dd = new Date(Date.now() - (13 - i) * 864e5).toDateString(); return mine.filter((s) => day(s.scanned_at) === dd).length })
+        const signed = d.profiles.filter((p) => p.signup_source === c.code)
+        return { ...c, scans: mine.length, people: new Set(mine.map((s, i) => s.visitor ?? String(i))).size, scans_7d: mine.filter((s) => Date.now() - +new Date(s.scanned_at) < 7 * 864e5).length,
+          mobile: mine.filter((s) => s.device === 'mobile' || s.device === 'tablet').length, last_scan: mine.length ? mine[mine.length - 1].scanned_at : null,
+          signups: signed.length, verified: signed.filter((p) => p.kyc_status === 'verified').length, daily }
+      })
+    }
+    const { data, error } = await sb!.rpc('qr_stats')
+    fail(error)
+    return ((data ?? []) as QrStat[]).map((r) => ({ ...r, scans: +r.scans, people: +r.people, scans_7d: +r.scans_7d, mobile: +r.mobile, signups: +r.signups, verified: +r.verified, daily: r.daily ?? [] }))
+  },
+  async save(c: Pick<QrCode, 'code' | 'label' | 'target'> & { archived?: boolean }, isNew: boolean) {
+    const row = { code: c.code.toLowerCase().trim(), label: c.label.trim(), target: c.target, ...(c.archived != null ? { archived: c.archived } : {}) }
+    if (!/^[a-z0-9][a-z0-9-]{1,23}$/.test(row.code)) throw new Error('Use 2–24 lowercase letters, numbers or dashes for the code, e.g. legon-posters')
+    if (!row.label) throw new Error('Give it a name, e.g. “Legon campus posters”')
+    if (DEMO) {
+      const d = db(); d.qrCodes ??= []
+      const ex = d.qrCodes.find((x) => x.code === row.code)
+      if (isNew && ex) throw new Error('That code is already used — pick another')
+      if (ex) Object.assign(ex, row); else d.qrCodes.push({ archived: false, created_at: now(), ...row })
+      return save()
+    }
+    const { error } = isNew ? await sb!.from('qr_codes').insert(row) : await sb!.from('qr_codes').update(row).eq('code', row.code)
+    if (error?.code === '23505') throw new Error('That code is already used — pick another')
+    fail(error)
+  },
+}
+
 // ═══════════════════════════ profile ═══════════════════════════
 export async function myProfile(): Promise<Profile | null> {
   const u = await auth.user()

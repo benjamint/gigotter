@@ -70,7 +70,7 @@ export function Privacy() {
             ]} />
             <p><b className="font-medium text-ink">When you do gigs:</b> the gigs you join, the work you submit (such as a business name, the owner’s name and phone number, location and a photo), and your earnings and payout history.</p>
             <p><b className="font-medium text-ink">When a business sends us a brief:</b> the contact name, email, company and details of the request.</p>
-            <p><b className="font-medium text-ink">Automatically:</b> basic technical information needed to run the site, such as your browser type and pages loaded, and an encrypted session so you stay logged in. We do not use advertising trackers.</p>
+            <p><b className="font-medium text-ink">Automatically:</b> basic technical information needed to run the site, such as your browser type and pages loaded, and an encrypted session so you stay logged in. If you open Gigotter by scanning one of our QR codes, we count the scan anonymously (the time, whether it was a phone or computer, and a random ID stored in your browser so the same device isn’t counted twice). We keep a note of which code you used for 30 days so we know which posters and flyers work; if you sign up in that time, it’s recorded on your account. We never record your IP address or link scans to anyone who hasn’t signed up. We do not use advertising trackers.</p>
           </>,
         },
         {

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, Quote, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
@@ -9,6 +9,7 @@ import { ago, coverFor, money, payLine, spotsLeft, timeLeft, plural } from '../.
 import { useAsync, useSession } from '../../lib/session'
 import type { KycStatus, Listing, Profile, Submission } from '../../lib/types'
 import ListingForm from './ListingForm'
+import QrCodes from './QrCodes'
 import { subTitle } from '../../lib/forms'
 import { csvCell } from '../../lib/security'
 
@@ -19,6 +20,7 @@ const TABS = [
   { k: 'work', l: 'Work & payouts', i: Wallet },
   { k: 'briefs', l: 'Briefs', i: Inbox },
   { k: 'testimonials', l: 'Testimonials', i: Quote },
+  { k: 'qr', l: 'QR codes', i: QrCode },
 ] as const
 type Tab = (typeof TABS)[number]['k']
 
@@ -63,6 +65,7 @@ export default function Admin() {
             {tab === 'work' && <Work subs={d.subs} reload={data.reload} />}
             {tab === 'briefs' && <Briefs reqs={d.requests} reload={data.reload} />}
             {tab === 'testimonials' && <Testimonials />}
+            {tab === 'qr' && <QrCodes />}
           </motion.div>
         )}
       </div>

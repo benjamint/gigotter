@@ -29,6 +29,8 @@ export interface Profile {
   momo_name: string | null
   referral_code: string | null
   show_in_feed?: boolean
+  /** QR code they first arrived through (set at sign-up) */
+  signup_source?: string | null
   created_at: string
 }
 
@@ -170,6 +172,9 @@ export const fieldLabel = (k: string) => PROOF_FIELDS[k]?.label ?? AUTO_FIELDS[k
 
 export const MOMO_PROVIDERS = ['MTN MoMo', 'Telecel Cash', 'AT Money', 'OPay', 'PalmPay', 'M-Pesa', 'Other']
 export const CURRENCIES: Record<string, string> = { GHS: '₵', USD: '$', NGN: '₦', KES: 'KSh ' }
+
+export interface QrCode { code: string; label: string; target: string; archived: boolean; created_at: string }
+export interface QrStat extends QrCode { scans: number; people: number; scans_7d: number; mobile: number; last_scan: string | null; signups: number; verified: number; daily: number[] }
 
 export interface PayoutItem { name: string; school: string | null; amount: number; currency: string; gig: string; units: number; paid_at: string }
 export interface Testimonial { id: string; name: string; school: string | null; quote: string; consent: boolean; published: boolean; created_at: string }

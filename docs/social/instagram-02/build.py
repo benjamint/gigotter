@@ -32,6 +32,8 @@ s1 = f"""
 <section class="s" style="background:#10291F"><div class="in">
   {top(1, True)}
   <div style="margin-top:auto">
+    <div style="display:inline-flex;align-items:center;gap:16px;padding:18px 30px;border-radius:999px;background:#B7CDBE;color:#10291F;font:600 32px Inter;margin-bottom:46px">
+      <span style="width:14px;height:14px;border-radius:50%;background:#10291F;display:block"></span>Calling UG &amp; UPSA students</div>
     <h1 style="font-size:180px;color:#fff">Free<br>period?</h1>
     <h1 style="margin-top:18px;font-size:150px;color:#B7CDBE"><span class="em">Get paid</span><br><span class="em">for it.</span></h1>
   </div>
@@ -66,7 +68,7 @@ s3 = f"""
   <div style="margin:auto 0;display:flex;flex-direction:column;align-items:center">
     <img src="{LOGO}" alt="" style="width:170px;height:170px">
     <h1 style="margin-top:48px;font-size:118px;color:#15171A">Your first gig<br><span class="em" style="color:#245A44">is waiting.</span></h1>
-    <p style="margin-top:34px;font-size:36px;line-height:1.4;color:#6B7077">Sign up in two minutes.</p>
+    <p style="margin-top:34px;font-size:36px;line-height:1.4;color:#6B7077">Open to students at Legon, UPSA and beyond.<br>Sign up in two minutes.</p>
     <div style="margin-top:56px;padding:30px 56px;border-radius:999px;background:#15171A;color:#fff;font:700 46px Tight;letter-spacing:-0.02em">gigotter.com</div>
     <p style="margin-top:26px;font:600 28px Inter;color:#2F6B52">Link in bio</p>
   </div>

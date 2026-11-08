@@ -332,7 +332,7 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
         <div className="flex gap-2">
           {f === 'approved' && <button onClick={exportCsv} className="btn-ghost btn-sm"><Download className="h-4 w-4" />Payout CSV</button>}
           {picked.length > 0 && f === 'pending' && <><button onClick={() => act(picked, 'rejected')} className="btn-ghost btn-sm">Reject {picked.length}</button><button onClick={() => act(picked, 'approved')} className="btn-primary btn-sm">Approve {picked.length}</button></>}
-          {picked.length > 0 && f === 'approved' && <button onClick={() => { const ref = prompt('MoMo batch / transaction reference?') ?? ''; act(picked, 'paid', { payout_ref: ref }) }} className="btn-primary btn-sm">Mark {picked.length} paid</button>}
+          {picked.length > 0 && f === 'approved' && <button onClick={() => { const ref = prompt('MoMo batch / transaction reference?') ?? ''; act(picked, 'paid', { payout_ref: ref }) }} className="btn-primary btn-sm" title="Sends the simple 'you’ve been paid' email. For a receipt, use Record payment on the gig’s responses page.">Mark {picked.length} paid (no receipt)</button>}
         </div>
       </div>
       <div className="card mt-4 overflow-x-auto">

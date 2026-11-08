@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Copy, ShieldAlert, Sparkles } from 'lucide-react'
+import { ArrowRight, Copy, Receipt, ShieldAlert, Sparkles } from 'lucide-react'
 import { Link, Navigate } from 'react-router-dom'
 import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from '../components/ui'
-import { myClaims, updateMyProfile } from '../lib/api'
+import { myClaims, myPayments, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'
 import { ago, coverFor, money, timeLeft, plural } from '../lib/format'
 import { subTitle } from '../lib/forms'
@@ -12,6 +12,7 @@ export default function Me() {
   const { user, profile, loading, refresh } = useSession()
   const toast = useToast()
   const { data, loading: l2 } = useAsync(() => (user ? myClaims() : Promise.resolve([])), [user?.id])
+  const pays = useAsync(() => (user ? myPayments() : Promise.resolve([])), [user?.id])
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login?next=/me" replace />
   if (!profile || l2) return <PageLoader />
@@ -95,6 +96,24 @@ export default function Me() {
                 <Sparkles className="h-5 w-5 shrink-0 text-brand-600" />
                 <div className="min-w-0 flex-1"><div className="truncate font-semibold">{subTitle(s)}</div><div className="truncate text-xs text-ink-muted">{s.title} · {ago(s.created_at)}</div></div>
                 <div className="text-right"><div className="font-semibold">{money(s.amount, s.cur)}</div><SubPill s={s.status} /></div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+      {(pays.data?.length ?? 0) > 0 && (
+        <>
+          <h2 className="mt-12 text-3xl font-semibold tracking-tightest">Payments <span className="em">received</span></h2>
+          <div className="card mt-5 divide-y divide-line overflow-hidden">
+            {pays.data!.map((p) => (
+              <div key={p.id} className="flex items-center gap-4 p-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700"><Receipt className="h-5 w-5" /></span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold">{money(p.amount, p.currency)} <span className="font-normal text-ink-muted">to {p.method || 'MoMo'}{p.momo_number ? ` ••• ${p.momo_number.replace(/\D/g, '').slice(-3)}` : ''}</span></div>
+                  <div className="truncate text-xs text-ink-muted">Receipt {p.receipt_no} · {new Date(p.paid_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}{p.reference ? ` · Ref ${p.reference}` : ''} · {p.items} item{p.items === 1 ? '' : 's'}</div>
+                  {p.note && <div className="mt-1 text-xs text-ink-soft">{p.note}</div>}
+                </div>
+                <span className="chip bg-brand-50 text-brand-700">Paid</span>
               </div>
             ))}
           </div>

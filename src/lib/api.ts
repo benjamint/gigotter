@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Claim, ClientRequest, KycStatus, Listing, ListingFile, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
+import type { Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { checkDoc, checkImage, safeExt } from './security'
@@ -27,6 +27,7 @@ interface DemoDB {
   testimonials?: Testimonial[]
   qrCodes?: QrCode[]
   briefMeta?: Record<string, { size: number; mime: string }>
+  payments?: Payment[]
   qrScans?: { code: string; visitor: string | null; device: string; scanned_at: string }[]
   files: Record<string, string>
   listingFiles?: ListingFile[]
@@ -238,6 +239,15 @@ export async function downloadListingFile(f: ListingFile) {
   const a = document.createElement('a'); a.href = await listingFileUrl(f, true); a.download = f.name; a.rel = 'noopener'
   document.body.appendChild(a); a.click(); a.remove()
 }
+/** The signed-in student's payment receipts. */
+export async function myPayments(): Promise<Payment[]> {
+  const u = await auth.user(); if (!u) return []
+  if (DEMO) return (db().payments ?? []).filter((p) => p.student_id === u.id).reverse()
+  const { data, error } = await sb!.from('payments').select('*').eq('student_id', u.id).order('paid_at', { ascending: false })
+  if (error) return []
+  return (data ?? []).map((p) => ({ ...p, amount: Number(p.amount) }))
+}
+
 // ═══════════════════════════ QR codes ═══════════════════════════
 const SRC_KEY = 'gigotter-src', VISITOR_KEY = 'gigotter-visitor'
 /** The QR code this browser arrived through in the last 30 days, if any (credited at sign-up). */
@@ -520,6 +530,43 @@ export const admin = {
     if (DEMO) { db().submissions.forEach((s) => ids.includes(s.id) && Object.assign(s, patch)); return save() }
     const { error } = await sb!.from('submissions').update(patch).in('id', ids)
     fail(error)
+  },
+  /** Payments recorded for a student (optionally on one gig), newest first. */
+  async payments(studentId: string, listingId?: string): Promise<Payment[]> {
+    if (DEMO) return (db().payments ?? []).filter((p) => p.student_id === studentId && (!listingId || p.listing_id === listingId)).reverse()
+    let q = sb!.from('payments').select('*').eq('student_id', studentId).order('paid_at', { ascending: false })
+    if (listingId) q = q.eq('listing_id', listingId)
+    const { data, error } = await q
+    fail(error); return (data ?? []).map((p) => ({ ...p, amount: Number(p.amount) }))
+  },
+  /** Records a MoMo payment you sent, marks the submissions paid and emails the student a receipt. */
+  async recordPayment(studentId: string, submissionIds: string[], amount: number, reference: string, note: string, paidAt?: string): Promise<Payment> {
+    if (DEMO) {
+      const d = db(), p = must(d.profiles.find((x) => x.id === studentId), 'Student not found')
+      const subs = d.submissions.filter((s) => submissionIds.includes(s.id) && s.student_id === studentId && s.status === 'approved' && !s.payment_id)
+      if (!(amount > 0)) throw new Error('Enter the amount you sent')
+      if (!submissionIds.length || subs.length !== submissionIds.length) throw new Error('Some of those submissions aren’t approved and unpaid for this student any more. Refresh and try again')
+      const lid = new Set(subs.map((s) => s.listing_id)).size === 1 ? subs[0].listing_id : null
+      d.payments ??= []
+      const pay: Payment = { id: uid(), receipt_no: `GIG-${1001 + d.payments.length}`, student_id: studentId, listing_id: lid, amount: Math.round(amount * 100) / 100,
+        currency: d.listings.find((l) => l.id === lid)?.currency ?? 'GHS', method: p.momo_provider, momo_number: p.momo_number, momo_name: p.momo_name,
+        reference: reference.trim() || null, note: note.trim() || null, items: subs.length, paid_at: paidAt ?? now(), email_sent_at: now(), created_at: now() }
+      d.payments.push(pay)
+      subs.forEach((s) => Object.assign(s, { status: 'paid', paid_at: pay.paid_at, payment_id: pay.id, payout_ref: pay.reference ?? pay.receipt_no }))
+      save(); return pay
+    }
+    const { data, error } = await sb!.rpc('record_payment', { p_student: studentId, p_submissions: submissionIds, p_amount: amount,
+      p_reference: reference.trim() || null, p_note: note.trim() || null, p_paid_at: paidAt ?? null })
+    fail(error); return { ...(data as Payment), amount: Number((data as Payment).amount) }
+  },
+  async resendReceipt(paymentId: string): Promise<string> {
+    if (DEMO) {
+      const p = must((db().payments ?? []).find((x) => x.id === paymentId), 'Payment not found')
+      if (p.email_sent_at && Date.now() - +new Date(p.email_sent_at) < 120000) throw new Error('A receipt was just sent — wait a couple of minutes before sending again')
+      p.email_sent_at = now(); save(); return p.email_sent_at
+    }
+    const { data, error } = await sb!.rpc('resend_payment_receipt', { p_payment: paymentId })
+    fail(error); return data as string
   },
   async requests(): Promise<ClientRequest[]> {
     if (DEMO) return [...db().requests].reverse()

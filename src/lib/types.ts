@@ -94,6 +94,8 @@ export interface Submission {
   reviewed_at: string | null
   paid_at: string | null
   payout_ref: string | null
+  /** set when paid through Record payment (has a receipt) */
+  payment_id?: string | null
   created_at: string
   listing?: Pick<Listing, 'title' | 'currency' | 'unit_label'>
   student?: Pick<Profile, 'full_name' | 'momo_number' | 'momo_provider' | 'momo_name'>
@@ -184,6 +186,13 @@ export const CURRENCIES: Record<string, string> = { GHS: '₵', USD: '$', NGN: '
 
 export interface QrCode { code: string; label: string; target: string; archived: boolean; created_at: string }
 export interface QrStat extends QrCode { scans: number; people: number; scans_7d: number; mobile: number; last_scan: string | null; signups: number; verified: number; daily: number[] }
+
+/** A manual MoMo payment you recorded; the student gets an emailed receipt. */
+export interface Payment {
+  id: string; receipt_no: string; student_id: string; listing_id: string | null
+  amount: number; currency: string; method: string | null; momo_number: string | null; momo_name: string | null
+  reference: string | null; note: string | null; items: number; paid_at: string; email_sent_at: string | null; created_at: string
+}
 
 export interface PayoutItem { name: string; school: string | null; amount: number; currency: string; gig: string; units: number; paid_at: string }
 export interface Testimonial { id: string; name: string; school: string | null; quote: string; consent: boolean; published: boolean; created_at: string }

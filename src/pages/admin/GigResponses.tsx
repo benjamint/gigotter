@@ -10,6 +10,7 @@ import { ago, coverFor, money, payLine, timeLeft } from '../../lib/format'
 import { csvCell } from '../../lib/security'
 import { useAsync, useSession } from '../../lib/session'
 import { displayValue, labelFor, schemaOf, subTitle } from '../../lib/forms'
+import PaymentPanel from './PaymentPanel'
 import { type Listing, type Profile, type Submission, type SubmissionStatus } from '../../lib/types'
 
 const STATUSES: (SubmissionStatus | 'all')[] = ['all', 'pending', 'approved', 'paid', 'rejected']
@@ -143,6 +144,11 @@ export default function GigResponses() {
               <span>{pendingShown.length} responses here are waiting for review.</span>
               <button onClick={() => { if (confirm(`Approve all ${pendingShown.length} responses shown?`)) review(pendingShown.map((s) => s.id), 'approved') }} className="btn btn-sm bg-brand-600 px-4 text-white hover:bg-brand-700"><Check className="h-4 w-4" />Approve all {pendingShown.length}</button>
             </div>
+          )}
+
+          {student !== 'all' && (() => { const sp = d.profiles.find((x) => x.id === student); return sp ? <div className="mt-4"><PaymentPanel student={sp} subs={d.subs.filter((x) => x.student_id === student)} listing={l} onPaid={data.reload} /></div> : null })()}
+          {student === 'all' && d.subs.some((x) => x.status === 'approved' && !x.payment_id) && (
+            <p className="mt-4 rounded-xl bg-paper px-4 py-3 text-sm text-ink-muted">To record a MoMo payment and send a receipt, pick a student on the left.</p>
           )}
 
           <div className="mt-4 space-y-4">

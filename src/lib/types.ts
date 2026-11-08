@@ -107,6 +107,13 @@ export interface ClientRequest {
   need: string
   budget: string | null
   deadline: string | null
+  phone?: string | null
+  work_type?: string | null
+  location?: string | null
+  /** private, admin only */
+  admin_note?: string | null
+  /** the gig this brief was turned into */
+  listing_id?: string | null
   status: string
   created_at: string
 }
@@ -148,6 +155,8 @@ export interface ListingFile {
   /** public = anyone viewing the gig; joined = only students who joined it */
   visibility: 'public' | 'joined'
   created_at: string
+  /** storage bucket; gig attachments by default, 'brief-files' for files sent with a business brief */
+  bucket?: 'gig-files' | 'brief-files'
 }
 
 export interface ProofField { label: string; placeholder: string; type?: string; hint?: string; multiline?: boolean; optional?: boolean }

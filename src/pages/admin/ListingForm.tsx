@@ -12,7 +12,11 @@ import FormBuilder, { schemaProblem, toRows, toSchema } from './FormBuilder'
 
 const toLocal = (iso?: string) => { const d = iso ? new Date(iso) : new Date(Date.now() + 14 * 864e5); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16) }
 
-export default function ListingForm({ initial, onSaved, hasResponses = false }: { initial: Partial<Listing>; onSaved: () => void; hasResponses?: boolean }) {
+export default function ListingForm({ initial, onSaved, hasResponses = false, initialFiles = [], heading }: {
+  initial: Partial<Listing>; onSaved: (saved: Listing) => void; hasResponses?: boolean
+  /** files to attach on save (e.g. from a business brief) */
+  initialFiles?: PendingFile[]; heading?: string
+}) {
   const toast = useToast()
   const [busy, setBusy] = useState(false)
   const [l, setL] = useState<Partial<Listing>>({
@@ -25,7 +29,8 @@ export default function ListingForm({ initial, onSaved, hasResponses = false }: 
   const [photoHint, setPhotoHint] = useState(initial.id ? initial.photo_hint ?? '' : startT.photoHint)
   const [touched, setTouched] = useState(false)
   const [files, setFiles] = useState<ListingFile[]>([])
-  const [pending, setPending] = useState<PendingFile[]>([])
+  const [pending, setPending] = useState<PendingFile[]>(initialFiles)
+  useEffect(() => { if (initialFiles.length) setPending(initialFiles) }, [initialFiles])
   useEffect(() => { if (initial.id) listingFiles(initial.id).then(setFiles).catch(() => {}) }, [initial.id])
   const editRows: typeof setRows = (r) => { setTouched(true); setRows(r) }
   /** Load a type's starter form, unit name, pay model and photo rule. */
@@ -63,14 +68,14 @@ export default function ListingForm({ initial, onSaved, hasResponses = false }: 
       const failed: string[] = []
       for (const p of pending) { try { await uploadListingFile(saved.id, p.file, p.visibility) } catch (e: any) { failed.push(`${p.file.name}: ${e.message}`) } }
       if (failed.length) { setL(saved); setPending([]); listingFiles(saved.id).then(setFiles); return toast(`Gig saved, but ${failed.length} file(s) didn’t upload — ${failed[0]}`, 'err') }
-      onSaved()
+      onSaved(saved)
     }
     catch (err: any) { toast(err.message, 'err') } finally { setBusy(false) }
   }
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <h2 className="text-2xl font-semibold tracking-tight">{initial.id ? 'Edit gig' : 'New gig'}</h2>
+      <h2 className="text-2xl font-semibold tracking-tight">{heading ?? (initial.id ? 'Edit gig' : 'New gig')}</h2>
       <div>
         <label className="label">Cover photo <span className="font-normal text-ink-muted">(optional — a default is used per gig type)</span></label>
         <div className="grid gap-3 sm:grid-cols-[1fr_200px]">

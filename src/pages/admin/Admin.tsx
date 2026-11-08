@@ -10,6 +10,7 @@ import { useAsync, useSession } from '../../lib/session'
 import type { KycStatus, Listing, Profile, Submission } from '../../lib/types'
 import ListingForm from './ListingForm'
 import QrCodes from './QrCodes'
+import Briefs from './Briefs'
 import { subTitle } from '../../lib/forms'
 import { csvCell } from '../../lib/security'
 
@@ -364,25 +365,6 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
 }
 
 // ═════════════ briefs ═════════════
-function Briefs({ reqs, reload }: { reqs: any[]; reload: () => void }) {
-  if (!reqs.length) return <Empty title="No briefs yet" body="When businesses post via “Hire students”, they’ll land here. Turn the good ones into gigs." />
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {reqs.map((r) => (
-        <div key={r.id} className="card p-5">
-          <div className="flex items-start justify-between gap-3"><div><div className="font-semibold">{r.company || r.name}</div><div className="text-xs text-ink-muted">{r.name} · <a href={`mailto:${r.email}`} className="underline">{r.email}</a> · {ago(r.created_at)}</div></div>
-            <select value={r.status} onChange={async (e) => { await admin.setRequestStatus(r.id, e.target.value); reload() }} className="rounded-full border border-line bg-white px-3 py-1 text-xs font-semibold">
-              {['new', 'contacted', 'converted', 'declined'].map((s) => <option key={s}>{s}</option>)}
-            </select>
-          </div>
-          <p className="mt-3 whitespace-pre-line">{r.need}</p>
-          <div className="mt-3 flex gap-2 text-xs">{r.budget && <span className="chip bg-brand-50 text-brand-700">Budget: {r.budget}</span>}{r.deadline && <span className="chip bg-sand">Due: {r.deadline}</span>}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 // ═════════════ testimonials ═════════════
 function Testimonials() {
   const toast = useToast()

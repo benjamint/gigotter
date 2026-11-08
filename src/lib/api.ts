@@ -26,6 +26,7 @@ interface DemoDB {
   requests: ClientRequest[]
   testimonials?: Testimonial[]
   qrCodes?: QrCode[]
+  briefMeta?: Record<string, { size: number; mime: string }>
   qrScans?: { code: string; visitor: string | null; device: string; scanned_at: string }[]
   files: Record<string, string>
   listingFiles?: ListingFile[]
@@ -226,8 +227,9 @@ export async function deleteListingFile(f: ListingFile) {
 }
 /** A 10-minute link to an attachment; `download` makes the browser save it under its real name. */
 export async function listingFileUrl(f: ListingFile, download = false): Promise<string> {
-  if (DEMO) return db().files[`gig-files/${f.path}`] ?? ''
-  const { data, error } = await sb!.storage.from('gig-files').createSignedUrl(f.path, 600, download ? { download: f.name } : undefined)
+  const bucket = f.bucket ?? 'gig-files'
+  if (DEMO) return db().files[`${bucket}/${f.path}`] ?? ''
+  const { data, error } = await sb!.storage.from(bucket).createSignedUrl(f.path, 600, download ? { download: f.name } : undefined)
   if (error || !data) fail(error ?? new Error('Could not open this file'))
   return data!.signedUrl
 }
@@ -450,11 +452,26 @@ export async function submitWork(claimId: string, data: Record<string, string>, 
 }
 
 // ═══════════════════════════ client briefs ═══════════════════════════
-export async function createRequest(r: Omit<ClientRequest, 'id' | 'status' | 'created_at'>) {
-  if (DEMO) { db().requests.push({ ...r, id: uid(), status: 'new', created_at: now() }); return save() }
-  const { error } = await sb!.from('client_requests').insert(r)
-  fail(error)
+/** Sends a business brief, then uploads its files (max 5, 10 MB each). Returns the names of files that failed. */
+export async function createRequest(r: Omit<ClientRequest, 'id' | 'status' | 'created_at'>, files: File[] = []): Promise<string[]> {
+  const id = uid()
+  const row = { ...r, id, admin_note: undefined, listing_id: undefined }
+  if (DEMO) { db().requests.push({ ...row, status: 'new', created_at: now() }); save() }
+  else { const { error } = await sb!.from('client_requests').insert(row); fail(error) }
+  const failed: string[] = []
+  for (const [i, file] of files.slice(0, 5).entries()) {
+    try {
+      const [ext, mime] = checkDoc(file, 10)
+      // keep the original name readable in the path so admins see what was sent
+      const base = file.name.replace(/\.[^.]+$/, '').normalize('NFKD').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'file'
+      const path = `${id}/${i + 1}-${base}.${ext}`
+      if (DEMO) { db().files[`brief-files/${path}`] = await toDataUrlRaw(file); db().briefMeta = { ...(db().briefMeta ?? {}), [path]: { size: file.size, mime } }; save() }
+      else { const { error } = await sb!.storage.from('brief-files').upload(path, file, { upsert: false, contentType: mime }); fail(error) }
+    } catch (e: any) { failed.push(`${file.name}: ${e.message}`) }
+  }
+  return failed
 }
+const toDataUrlRaw = (f: File) => new Promise<string>((res) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(f) })
 
 // ═══════════════════════════ admin ═══════════════════════════
 export const admin = {
@@ -509,10 +526,31 @@ export const admin = {
     const { data, error } = await sb!.from('client_requests').select('*').order('created_at', { ascending: false })
     fail(error); return data ?? []
   },
-  async setRequestStatus(id: string, status: string) {
-    if (DEMO) { const r = db().requests.find((x) => x.id === id); if (r) r.status = status; return save() }
-    const { error } = await sb!.from('client_requests').update({ status }).eq('id', id)
+  async setRequestStatus(id: string, status: string) { return admin.updateBrief(id, { status }) },
+  async updateBrief(id: string, patch: Partial<Pick<ClientRequest, 'status' | 'admin_note' | 'listing_id'>>) {
+    if (DEMO) { const r = db().requests.find((x) => x.id === id); if (r) Object.assign(r, patch); return save() }
+    const { error } = await sb!.from('client_requests').update(patch).eq('id', id)
     fail(error)
+  },
+  /** Files a business attached to their brief (shown with the same viewer as gig files). */
+  async briefFiles(id: string): Promise<ListingFile[]> {
+    const show = (path: string) => path.split('/').pop()!.replace(/^\d+-/, '')
+    const mk = (path: string, size: number, mime: string, at: string): ListingFile =>
+      ({ id: path, listing_id: '', name: show(path), path, size_bytes: size, mime, visibility: 'joined', created_at: at, bucket: 'brief-files' })
+    if (DEMO) {
+      const d = db(); return Object.keys(d.files).filter((k) => k.startsWith(`brief-files/${id}/`)).map((k) => k.slice('brief-files/'.length)).sort()
+        .map((p) => mk(p, d.briefMeta?.[p]?.size ?? 0, d.briefMeta?.[p]?.mime ?? 'application/octet-stream', now()))
+    }
+    const { data, error } = await sb!.storage.from('brief-files').list(id, { limit: 20, sortBy: { column: 'name', order: 'asc' } })
+    fail(error)
+    return (data ?? []).filter((o) => o.id).map((o) => mk(`${id}/${o.name}`, (o.metadata as any)?.size ?? 0, (o.metadata as any)?.mimetype ?? 'application/octet-stream', o.created_at ?? now()))
+  },
+  /** Downloads a stored file so it can be re-attached elsewhere (e.g. a brief's files onto a new gig). */
+  async fileAsUpload(f: ListingFile): Promise<File> {
+    const url = await listingFileUrl(f)
+    // demo files are data: URLs, which the site's security policy won't let fetch() read
+    const blob = url.startsWith('data:') ? new Blob([Uint8Array.from(atob(url.split(',')[1]), (c) => c.charCodeAt(0))], { type: f.mime }) : await (await fetch(url)).blob()
+    return new File([blob], f.name, { type: f.mime })
   },
 }
 

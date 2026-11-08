@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Plus, Quote, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, Quote, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
@@ -165,7 +165,7 @@ function Students({ profiles, reload }: { profiles: Profile[]; reload: () => voi
                 <td><div>{p.school ?? '—'}</div><div className="text-xs text-ink-muted">{p.programme} {p.study_year}</div></td>
                 <td><div>{p.momo_number ?? '—'}</div><div className="text-xs text-ink-muted">{p.momo_provider}</div></td>
                 <td className="text-ink-muted">{ago(p.created_at)}</td>
-                <td><KycPill s={p.kyc_status} /></td>
+                <td><KycPill s={p.kyc_status} />{(p.kyc_status === 'verified' || p.kyc_status === 'rejected') && <EmailNote at={p.kyc_email_sent_at} />}</td>
                 <td className="p-4 text-right"><button onClick={() => setSel(p)} className="btn-ghost btn-sm">{p.kyc_status === 'pending' ? 'Review' : 'View'}</button></td>
               </tr>
             ))}
@@ -173,13 +173,20 @@ function Students({ profiles, reload }: { profiles: Profile[]; reload: () => voi
         </table>
         {!list.length && <div className="p-8"><Empty title="All clear" body="Nobody in this bucket." /></div>}
       </div>
-      <KycReview p={sel} onClose={() => setSel(null)} onDone={() => { setSel(null); reload() }} />
+      <KycReview p={sel} onClose={() => setSel(null)} onDone={() => { setSel(null); reload() }} onEmailed={(at) => { setSel((x) => (x ? { ...x, kyc_email_sent_at: at } : x)); reload() }} />
     </div>
   )
 }
 
-function KycReview({ p, onClose, onDone }: { p: Profile | null; onClose: () => void; onDone: () => void }) {
+function EmailNote({ at }: { at?: string | null }) {
+  return at
+    ? <div className="mt-1 flex items-center gap-1 text-xs text-ink-muted"><Mail className="h-3 w-3" />Emailed {ago(at)}</div>
+    : <div className="mt-1 flex items-center gap-1 text-xs font-medium text-clay-600"><MailWarning className="h-3 w-3" />Not emailed</div>
+}
+
+function KycReview({ p, onClose, onDone, onEmailed }: { p: Profile | null; onClose: () => void; onDone: () => void; onEmailed: (at: string) => void }) {
   const toast = useToast()
+  const [sending, setSending] = useState(false)
   const [img, setImg] = useState<{ id?: string | null; student?: string | null; selfie?: string | null }>({})
   const [note, setNote] = useState('')
   useEffect(() => {
@@ -193,6 +200,13 @@ function KycReview({ p, onClose, onDone }: { p: Profile | null; onClose: () => v
     await admin.setKyc(p.id, s, s === 'rejected' ? note : null)
     toast(s === 'verified' ? `${p.full_name} verified — we’ve emailed them` : 'Sent back for fixes — we’ve emailed them the note')
     onDone()
+  }
+  const emailable = p.kyc_status === 'verified' || p.kyc_status === 'rejected'
+  const resend = async () => {
+    if (sending) return
+    setSending(true)
+    try { const at = await admin.resendKycEmail(p.id); toast(`${p.kyc_status === 'verified' ? 'Verification' : 'Fix-it'} email sent to ${p.email}`); onEmailed(at) }
+    catch (e: any) { toast(e.message, 'err') } finally { setSending(false) }
   }
   const nameMismatch = p.momo_name && p.full_name && p.momo_name.trim().toLowerCase() !== p.full_name.trim().toLowerCase()
   return (
@@ -216,9 +230,20 @@ function KycReview({ p, onClose, onDone }: { p: Profile | null; onClose: () => v
       {nameMismatch && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">MoMo account name “{p.momo_name}” doesn’t match ID name “{p.full_name}”.</p>}
       <div className="mt-4 rounded-2xl bg-sand p-3 text-xs text-ink-muted"><b>Checklist:</b> face in selfie matches ID photo · names match across ID, student card & MoMo · student card not expired · images aren’t screenshots of screens.</div>
       <textarea className="input mt-4" placeholder="Note to student (required if rejecting) — e.g. ‘Student ID is blurry, please retake’" value={note} onChange={(e) => setNote(e.target.value)} />
+      {emailable && (
+        <div className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 ${p.kyc_email_sent_at ? 'bg-paper' : 'bg-clay-50'}`}>
+          <div className="text-sm">
+            <div className="font-medium">{p.kyc_status === 'verified' ? 'Verification email' : 'Fix-it email'}</div>
+            <div className="text-ink-muted">{p.kyc_email_sent_at
+              ? `Last sent ${ago(p.kyc_email_sent_at)} · ${new Date(p.kyc_email_sent_at).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+              : p.kyc_status === 'verified' ? 'No email on record — likely verified before emails were switched on.' : 'No email on record.'}</div>
+          </div>
+          <button onClick={resend} disabled={sending} className="btn-ghost btn-sm">{sending ? <Spinner /> : <Mail className="h-4 w-4" />}{p.kyc_email_sent_at ? 'Send again' : p.kyc_status === 'verified' ? 'Send verification email' : 'Send fix-it email'}</button>
+        </div>
+      )}
       <div className="mt-4 flex flex-wrap justify-end gap-2">
-        <button onClick={() => act('rejected')} className="btn-ghost btn-sm"><X className="h-4 w-4" />Needs fixing</button>
-        <button onClick={() => act('verified')} className="btn btn-sm bg-brand-600 px-5 text-white hover:bg-brand-700"><Check className="h-4 w-4" />Approve</button>
+        {p.kyc_status !== 'rejected' && <button onClick={() => act('rejected')} className="btn-ghost btn-sm"><X className="h-4 w-4" />{p.kyc_status === 'verified' ? 'Revoke — needs fixing' : 'Needs fixing'}</button>}
+        {p.kyc_status !== 'verified' && <button onClick={() => act('verified')} className="btn btn-sm bg-brand-600 px-5 text-white hover:bg-brand-700"><Check className="h-4 w-4" />Approve</button>}
       </div>
     </Modal>
   )

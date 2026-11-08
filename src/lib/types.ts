@@ -19,6 +19,8 @@ export interface Profile {
   kyc_status: KycStatus
   kyc_note: string | null
   kyc_submitted_at: string | null
+  /** when the verified / needs-fixing email was last sent */
+  kyc_email_sent_at?: string | null
   id_card_path: string | null
   student_card_path: string | null
   selfie_path: string | null

@@ -398,9 +398,21 @@ export const admin = {
     fail(error); return data ?? []
   },
   async setKyc(id: string, status: KycStatus, note: string | null) {
-    if (DEMO) { const p = db().profiles.find((x) => x.id === id); if (p) { p.kyc_status = status; p.kyc_note = note } return save() }
+    if (DEMO) { const p = db().profiles.find((x) => x.id === id); if (p) { if (p.kyc_status !== status && (status === 'verified' || status === 'rejected')) p.kyc_email_sent_at = now(); p.kyc_status = status; p.kyc_note = note } return save() }
     const { error } = await sb!.from('profiles').update({ kyc_status: status, kyc_note: note }).eq('id', id)
     fail(error)
+  },
+  /** Send (or resend) the verified / needs-fixing email for a student's current status. */
+  async resendKycEmail(id: string): Promise<string> {
+    if (DEMO) {
+      const p = must(db().profiles.find((x) => x.id === id), 'Student not found')
+      if (p.kyc_status !== 'verified' && p.kyc_status !== 'rejected') throw new Error('Only verified or needs-fixing students can be emailed')
+      if (p.kyc_email_sent_at && Date.now() - +new Date(p.kyc_email_sent_at) < 120000) throw new Error('An email was just sent — wait a couple of minutes before sending again')
+      p.kyc_email_sent_at = now(); save(); return p.kyc_email_sent_at
+    }
+    const { data, error } = await sb!.rpc('resend_kyc_email', { p_student: id })
+    fail(error)
+    return data as string
   },
   async submissions(): Promise<Submission[]> {
     let subs: Submission[]

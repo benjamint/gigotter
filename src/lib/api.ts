@@ -531,6 +531,13 @@ export const admin = {
     const { error } = await sb!.from('submissions').update(patch).in('id', ids)
     fail(error)
   },
+  /** Every recorded payment (admin), for totals like "Paid out". Empty if the payments table isn't set up yet. */
+  async allPayments(): Promise<Payment[]> {
+    if (DEMO) return [...(db().payments ?? [])]
+    const { data, error } = await sb!.from('payments').select('*')
+    if (error) return []
+    return (data ?? []).map((p) => ({ ...p, amount: Number(p.amount) }))
+  },
   /** Payments recorded for a student (optionally on one gig), newest first. */
   async payments(studentId: string, listingId?: string): Promise<Payment[]> {
     if (DEMO) return (db().payments ?? []).filter((p) => p.student_id === studentId && (!listingId || p.listing_id === listingId)).reverse()

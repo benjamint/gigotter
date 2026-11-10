@@ -7,7 +7,7 @@ import { admin, deleteListing, deleteTestimonial, fileUrl, listListings, listTes
 import Photo from '../../components/Photo'
 import { ago, coverFor, money, payLine, spotsLeft, timeLeft, plural } from '../../lib/format'
 import { useAsync, useSession } from '../../lib/session'
-import type { KycStatus, Listing, Profile, Submission } from '../../lib/types'
+import type { KycStatus, Listing, Payment, Profile, Submission } from '../../lib/types'
 import ListingForm from './ListingForm'
 import QrCodes from './QrCodes'
 import Briefs from './Briefs'
@@ -31,8 +31,8 @@ export default function Admin() {
   const tab = (TABS.some((t) => t.k === sp.get('tab')) ? sp.get('tab') : 'overview') as Tab
   const setTab = (t: Tab) => setSp(t === 'overview' ? {} : { tab: t }, { replace: true })
   const data = useAsync(async () => {
-    const [profiles, listings, subs, requests, claims] = await Promise.all([admin.profiles(), listListings({ all: true }), admin.submissions(), admin.requests(), admin.claims()])
-    return { profiles: profiles.filter((p) => p.role !== 'admin'), listings, subs, requests, claims }
+    const [profiles, listings, subs, requests, claims, payments] = await Promise.all([admin.profiles(), listListings({ all: true }), admin.submissions(), admin.requests(), admin.claims(), admin.allPayments()])
+    return { profiles: profiles.filter((p) => p.role !== 'admin'), listings, subs, requests, claims, payments }
   }, [])
   if (loading) return <PageLoader />
   if (profile?.role !== 'admin') return <Navigate to="/" replace />
@@ -87,8 +87,14 @@ function Overview({ d, go }: { d: any; go: (t: Tab) => void }) {
   const week = series.slice(-7).reduce((a, s) => a + s.n, 0)
   const owed = subs.filter((s) => s.status === 'approved')
   const paid = subs.filter((s) => s.status === 'paid')
-  const byCur = (xs: Submission[]) => Object.entries(xs.reduce<Record<string, number>>((a, s) => { const c = s.listing?.currency ?? 'GHS'; a[c] = (a[c] ?? 0) + (s.amount ?? 0); return a }, {}))
+  const total = (rows: { currency: string; amount: number }[]) => Object.entries(rows.reduce<Record<string, number>>((a, r) => { a[r.currency] = (a[r.currency] ?? 0) + r.amount; return a }, {}))
     .map(([c, v]) => money(v, c)).join(' · ') || money(0)
+  const byCur = (xs: Submission[]) => total(xs.map((s) => ({ currency: s.listing?.currency ?? 'GHS', amount: Number(s.amount ?? 0) })))
+  // Paid out = what you actually sent: recorded payments (which can include bonuses or part-payments),
+  // plus work marked paid the old way, without a receipt (counted at its submission value)
+  const payments: Payment[] = d.payments ?? []
+  const paidOut = total([...payments.map((x) => ({ currency: x.currency, amount: Number(x.amount) })),
+    ...paid.filter((s) => !s.payment_id).map((s) => ({ currency: s.listing?.currency ?? 'GHS', amount: Number(s.amount ?? 0) }))])
 
   const tiles = [
     { k: 'Total sign-ups', v: p.length, sub: `+${week} this week`, t: 'students' as Tab, bg: 'bg-brand-50' },
@@ -125,7 +131,7 @@ function Overview({ d, go }: { d: any; go: (t: Tab) => void }) {
         </div>
         <div className="card space-y-4 p-5">
           <div><div className="text-sm font-medium text-ink-muted">Owed (approved, unpaid)</div><div className="font-display text-2xl font-semibold">{byCur(owed)}</div></div>
-          <div><div className="text-sm font-medium text-ink-muted">Paid out</div><div className="font-display text-2xl font-semibold">{byCur(paid)}</div></div>
+          <div><div className="text-sm font-medium text-ink-muted">Paid out</div><div className="font-display text-2xl font-semibold">{paidOut}</div>{payments.length > 0 && <div className="text-xs text-ink-muted">{payments.length} payment{payments.length === 1 ? '' : 's'} recorded</div>}</div>
           <div><div className="text-sm font-medium text-ink-muted">Students on gigs</div><div className="font-display text-2xl font-semibold">{new Set(d.claims.filter((c: any) => c.status === 'active').map((c: any) => c.student_id)).size}</div></div>
           <button onClick={() => go('work')} className="btn-primary btn-sm w-full">Run payouts</button>
         </div>

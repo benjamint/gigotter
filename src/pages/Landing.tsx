@@ -39,7 +39,7 @@ export default function Landing() {
             </h1>
             <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7, ease: EASE }}
               className="mt-6 max-w-[34rem] text-lg leading-relaxed text-ink-muted md:text-xl">
-              Pick a paid gig from a real business, do the work between lectures, and get paid to your mobile money. Onboarding, surveys, focus groups and field research.
+              Pick a paid gig from a real business, do the work between lectures or around your job, and get paid to your mobile money. Onboarding, surveys, focus groups and field research.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap gap-3">
               <Magnetic><Link to={cta} className="btn-primary px-7 py-3.5">Find paid work <ArrowRight className="h-4 w-4" /></Link></Magnetic>
@@ -49,7 +49,7 @@ export default function Landing() {
               Not a student? <Link to="/signup?type=general" className="link-u font-medium text-ink">You can join too</Link>
             </motion.p>}
             <motion.div initial="h" animate="s" variants={{ s: { transition: { staggerChildren: 0.08, delayChildren: 0.8 } } }} className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink-muted">
-              {[[ShieldCheck, 'ID and selfie verified'], [Wallet, 'Paid to MoMo'], [BadgeCheck, 'No fees for students']].map(([I, t]: any) => (
+              {[[ShieldCheck, 'ID and selfie verified'], [Wallet, 'Paid to MoMo'], [BadgeCheck, 'No fees to join']].map(([I, t]: any) => (
                 <motion.span key={t} variants={{ h: { opacity: 0, y: 6 }, s: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }} className="flex items-center gap-2"><I className="h-4 w-4 text-brand-600" />{t}</motion.span>
               ))}
             </motion.div>
@@ -73,7 +73,7 @@ export default function Landing() {
 
       {/* ───────── STATS ───────── */}
       <section className="container-x pt-14">
-        <StatStrip items={[[24, 'h', 'Typical review time'], [100, '%', 'Paid to mobile money'], [0, '', 'Fees for students', '₵'], [5, ' min', 'To get verified']]} />
+        <StatStrip items={[[24, 'h', 'Typical review time'], [100, '%', 'Paid to mobile money'], [0, '', 'Fees to join', '₵'], [5, ' min', 'To get verified']]} />
       </section>
 
       {/* ───────── OPEN GIGS ───────── */}
@@ -105,8 +105,8 @@ export default function Landing() {
       <section className="container-x py-24 md:py-32">
         <Reveal><SectionHead eyebrow="Two sides, one platform" title={<SplitReveal inView>Earn on your schedule. Or get work done on the ground.</SplitReveal>} /></Reveal>
         <div className="mt-12 grid gap-4 md:grid-cols-2">
-          <Audience to={cta} tone="bg-[#c9d6c8]" tag="For students and earners" title="Paid work that fits around lectures."
-            points={['Verify once with your student ID and a selfie', 'Every gig shows the pay, the steps and the proof needed', 'Approved work is paid to your MoMo']}
+          <Audience to={cta} tone="bg-[#c9d6c8]" tag="For students and everyone earning" title="Paid work that fits around your day."
+            points={['Verify once with your student ID or Ghana Card, plus a selfie', 'Every gig shows the pay, the steps and the proof needed', 'Approved work is paid to your MoMo']}
             cta="Find paid work" img={IMG.auth} alt="Students on campus" />
           <Audience to="/business" tone="bg-brand-50" tag="For businesses and researchers" title="Verified people for sales, research and focus groups."
             points={['Customer sign-ups, surveys, price checks, focus groups', 'Photo, GPS and answers as proof for every result', 'Pay only for results that meet your brief']}
@@ -200,9 +200,9 @@ function Audience({ to, tone, tag, title, points, cta, img, alt, delay = 0 }: {
 const QA: [string, string][] = [
   ['Who can join?', 'Gigotter is built for students at universities, polytechnics and colleges: you’ll verify with your student ID, a national ID and a selfie. Not a student? You can join too and verify with your Ghana Card and a selfie, then take part in gigs that are open to everyone.'],
   ['How do gigs that need an application work?', 'Some gigs, like focus groups, look for particular people. You apply with a few answers, the Gigotter team selects who takes part, and you’re paid once you’ve taken part.'],
-  ['Why do you need my ID and a selfie?', 'We pay out real money and represent real businesses, so every account must belong to a real, verified student. Your documents are stored privately and seen only by our verification team.'],
+  ['Why do you need my ID and a selfie?', 'We pay out real money and represent real businesses, so every account must belong to a real, verified person. Your documents are stored privately and seen only by our verification team.'],
   ['When do I get paid?', 'Work is usually reviewed within 24 hours. Approved earnings are sent to your mobile money account in the weekly payout.'],
-  ['Can I take more than one gig?', 'Yes. Take on as many as you can manage. If you can’t complete one, withdraw from your dashboard so another student can take the spot.'],
+  ['Can I take more than one gig?', 'Yes. Take on as many as you can manage. If you can’t complete one, withdraw from your dashboard so someone else can take the spot.'],
   ['What counts as completed work?', 'Each gig lists exactly what to submit, usually the business name, contact and a photo. We only pay for work that meets the brief.'],
 ]
 

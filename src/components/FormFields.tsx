@@ -1,4 +1,5 @@
 import { Star } from 'lucide-react'
+import { splitMulti } from '../lib/forms'
 import type { FormField } from '../lib/types'
 import AddressField from './AddressField'
 
@@ -38,6 +39,20 @@ export function FieldInput({ f, form, setForm }: { f: FormField; form: Vals; set
         </div>
       )
     }
+    case 'multi': {
+      const opts = f.options ?? []
+      const picked = splitMulti(v)
+      // keep the options' own order so answers read the same for everyone
+      const toggle = (o: string) => set(opts.filter((x) => (x === o ? !picked.includes(o) : picked.includes(x))).join(', '))
+      return (
+        <div>
+          <div role="group" aria-label={f.label} className="flex flex-wrap gap-2">
+            {opts.map((o) => <button type="button" role="checkbox" aria-checked={picked.includes(o)} key={o} onClick={() => toggle(o)} className={pill(picked.includes(o))}>{o}</button>)}
+          </div>
+          <p className="mt-2 text-xs text-ink-muted">Tick all that apply{picked.length ? ` · ${picked.length} selected` : ''}</p>
+        </div>
+      )
+    }
     case 'rating':
       return (
         <div role="radiogroup" aria-label={f.label} className="flex items-center gap-1">
@@ -62,4 +77,4 @@ export function FieldInput({ f, form, setForm }: { f: FormField; form: Vals; set
 }
 
 /** Is this question a wide one (full row)? */
-export const isWide = (f: FormField) => ['long', 'address', 'choice', 'rating'].includes(f.type)
+export const isWide = (f: FormField) => ['long', 'address', 'choice', 'multi', 'rating'].includes(f.type)

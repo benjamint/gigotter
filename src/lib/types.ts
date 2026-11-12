@@ -147,7 +147,7 @@ export const GIG_TYPES: Record<GigType, { label: string; emoji: string }> = {
   other: { label: 'Other', emoji: '' },
 }
 
-export type FieldType = 'text' | 'long' | 'phone' | 'email' | 'number' | 'date' | 'choice' | 'rating' | 'yes_no' | 'address' | 'link'
+export type FieldType = 'text' | 'long' | 'phone' | 'email' | 'number' | 'date' | 'choice' | 'multi' | 'rating' | 'yes_no' | 'address' | 'link'
 export interface FormField {
   key: string
   label: string

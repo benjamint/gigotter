@@ -12,6 +12,7 @@ export const FIELD_TYPES: Record<FieldType, { label: string; hint: string }> = {
   number: { label: 'Number', hint: 'A price, a count, an age' },
   date: { label: 'Date', hint: 'When something happened' },
   choice: { label: 'Multiple choice', hint: 'Pick one from a list' },
+  multi: { label: 'Tick all that apply', hint: 'Pick any number from a list' },
   rating: { label: 'Rating 1–5', hint: 'Stars out of five' },
   yes_no: { label: 'Yes / No', hint: 'A quick confirmation' },
   address: { label: 'Address + GPS pin', hint: 'Full address, with a pin from their phone' },
@@ -163,6 +164,9 @@ export const labelFor = (schema: FormField[], k: string) =>
   schema.find((x) => x.key === k)?.label ?? ({ gps: 'GPS location', gps_accuracy: 'GPS accuracy (m)' } as Record<string, string>)[k] ?? PROOF_FIELDS[k]?.label ?? k.replace(/_/g, ' ')
 
 /** Client-side check that mirrors the server. Returns an error message or null. */
+/** A “tick all that apply” answer is stored as “A, B, C”. */
+export const splitMulti = (v: string) => v.split(',').map((o) => o.trim()).filter(Boolean)
+
 export function validateAnswers(schema: FormField[], data: Record<string, string>): string | null {
   for (const fld of schema) {
     const v = (data[fld.key] ?? '').trim()
@@ -170,6 +174,7 @@ export function validateAnswers(schema: FormField[], data: Record<string, string
     if (fld.type === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) return `${fld.label} doesn’t look like an email`
     if (fld.type === 'phone' && !/^\d{7,15}$/.test(v.replace(/\D/g, ''))) return `${fld.label} doesn’t look like a phone number`
     if (fld.type === 'number' && !/^-?\d+(\.\d+)?$/.test(v)) return `${fld.label} should be a number`
+    if (fld.type === 'multi' && splitMulti(v).some((o) => !(fld.options ?? []).includes(o))) return `Pick from the options for: ${fld.label}`
     if (fld.type === 'link' && !/^https?:\/\/\S+\.\S+/i.test(v)) return `${fld.label} should be a full link starting with https://`
   }
   return null

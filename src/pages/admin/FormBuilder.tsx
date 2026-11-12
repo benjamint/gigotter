@@ -16,7 +16,7 @@ export function toSchema(rows: Row[]): FormField[] {
     const out: FormField = { key, label: f.label.trim(), type: f.type, required: f.required }
     if (f.hint?.trim()) out.hint = f.hint.trim()
     if (f.placeholder?.trim()) out.placeholder = f.placeholder.trim()
-    if (f.type === 'choice') out.options = (f.options ?? []).map((o) => o.trim()).filter(Boolean)
+    if (f.type === 'choice' || f.type === 'multi') out.options = (f.options ?? []).map((o) => o.trim()).filter(Boolean)
     if (f.unique && ['text', 'phone', 'email', 'link'].includes(f.type)) out.unique = true
     return out
   })
@@ -26,7 +26,7 @@ export function schemaProblem(rows: Row[], photo: PhotoRule, what = 'question'):
   if (rows.length > 30) return 'Keep it to 30 questions or fewer'
   for (const r of rows) {
     if (!r.label.trim()) return 'Every question needs a label'
-    if (r.type === 'choice' && (r.options ?? []).filter((o) => o.trim()).length < 2) return `Give “${r.label}” at least two options`
+    if ((r.type === 'choice' || r.type === 'multi') && (r.options ?? []).filter((o) => o.trim()).length < 2) return `Give “${r.label}” at least two options`
   }
   if (rows.filter((r) => r.type === 'address').length > 1) return 'Use only one address question per gig'
   return null
@@ -79,10 +79,10 @@ export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint,
                     <GripVertical className="mt-3 h-4 w-4 shrink-0 cursor-grab text-ink-muted active:cursor-grabbing" aria-label="Drag to reorder" />
                     <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-[1fr_170px]">
                       <input className="input bg-white py-2.5" value={r.label} onChange={(e) => upd(r._id, { label: e.target.value })} placeholder={`Question ${i + 1}`} aria-label="Question" />
-                      <select className="input bg-white py-2.5" value={r.type} onChange={(e) => upd(r._id, { type: e.target.value as FieldType, options: e.target.value === 'choice' ? (r.options?.length ? r.options : ['', '']) : r.options })} aria-label="Answer type">
+                      <select className="input bg-white py-2.5" value={r.type} onChange={(e) => upd(r._id, { type: e.target.value as FieldType, options: e.target.value === 'choice' || e.target.value === 'multi' ? (r.options?.length ? r.options : ['', '']) : r.options })} aria-label="Answer type">
                         {Object.entries(FIELD_TYPES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                       </select>
-                      {r.type === 'choice' && (
+                      {(r.type === 'choice' || r.type === 'multi') && (
                         <input className="input bg-white py-2.5 sm:col-span-2" value={(r.options ?? []).join(', ')} placeholder="Options, separated by commas"
                           onChange={(e) => upd(r._id, { options: e.target.value.split(',').map((o) => o.trimStart()) })} aria-label="Options" />
                       )}

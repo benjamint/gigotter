@@ -162,7 +162,7 @@ export default function GigDetail() {
           </motion.div>
           <p className="mt-4 px-1 text-xs leading-relaxed text-ink-muted">{apply ? 'Applying doesn’t guarantee a place. If you’re selected and can’t make it, let us know so someone else can take your place.' : 'Joining reserves a spot. If you can’t complete it, withdraw from your dashboard so someone else can take it.'}</p>
         </aside>
-        <ApplyForm listing={l} open={applying} onClose={() => setApplying(false)} onApplied={() => { setApplying(false); apps.reload() }} />
+        <ApplyForm listing={l} open={applying} onClose={() => setApplying(false)} onApplied={() => apps.reload()} />
       </div>
     </div>
   )

@@ -57,7 +57,8 @@ const SUB_STYLE: Record<SubmissionStatus, string> = {
 export const SubPill = ({ s }: { s: SubmissionStatus }) => <span className={`chip capitalize ${SUB_STYLE[s]}`}><Dot />{s}</span>
 const Dot = () => <span className="h-1.5 w-1.5 rounded-full bg-current opacity-80" />
 
-export function Modal({ open, onClose, children, wide }: { open: boolean; onClose: () => void; children: ReactNode; wide?: boolean }) {
+/** `sheet`: full-height panel (bottom sheet on phones) whose children lay out their own fixed header, scrolling body and footer. */
+export function Modal({ open, onClose, children, wide, sheet }: { open: boolean; onClose: () => void; children: ReactNode; wide?: boolean; sheet?: boolean }) {
   useEffect(() => {
     if (!open) return
     const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -70,9 +71,11 @@ export function Modal({ open, onClose, children, wide }: { open: boolean; onClos
         <motion.div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 backdrop-blur-[2px] sm:items-center sm:p-6"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
           <motion.div onClick={(e) => e.stopPropagation()}
-            initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 24, opacity: 0 }} transition={{ duration: 0.3, ease: EASE }}
-            className={`relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-lift sm:rounded-3xl sm:p-8 ${wide ? 'sm:max-w-4xl' : 'sm:max-w-lg'}`}>
-            <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full text-ink-muted hover:bg-sand hover:text-ink"><X className="h-5 w-5" /></button>
+            initial={{ y: sheet ? 40 : 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: sheet ? 40 : 24, opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}
+            className={sheet
+              ? 'relative flex h-[94dvh] w-full flex-col overflow-hidden rounded-t-[28px] bg-white shadow-lift sm:h-auto sm:max-h-[88vh] sm:max-w-[640px] sm:rounded-[28px]'
+              : `relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-lift sm:rounded-3xl sm:p-8 ${wide ? 'sm:max-w-4xl' : 'sm:max-w-lg'}`}>
+            <button onClick={onClose} aria-label="Close" className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full text-ink-muted hover:bg-sand hover:text-ink"><X className="h-5 w-5" /></button>
             {children}
           </motion.div>
         </motion.div>

@@ -28,7 +28,8 @@ export function FieldInput({ f, form, setForm }: { f: FormField; form: Vals; set
       )
     case 'choice': {
       const opts = f.options ?? []
-      return opts.length > 6 ? (
+      // buttons are quicker to scan and tap; only very long lists fall back to a dropdown
+      return opts.length > 14 ? (
         <select className="input" required={f.required} value={v} onChange={(e) => set(e.target.value)}>
           <option value="">Choose one…</option>
           {opts.map((o) => <option key={o}>{o}</option>)}

@@ -76,8 +76,20 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ───────── OPEN GIGS (the main event, straight after the hero) ───────── */}
-      <section id="gigs" className="scroll-mt-20 bg-sand/60 py-16">
+      {/* ───────── STATS ───────── */}
+      <section className="container-x">
+        <div className="grid grid-cols-2 divide-line border-y border-line md:grid-cols-4 md:divide-x">
+          {[[24, 'h', 'Typical review time'], [100, '%', 'Paid to mobile money'], [0, '', 'Fees for students'], [5, ' min', 'To get verified']].map(([n, s, l], i) => (
+            <Reveal key={l as string} delay={i * 0.05} className="px-2 py-8 md:px-8">
+              <div className="font-display text-4xl font-semibold tracking-tight"><CountUp to={n as number} suffix={s as string} /></div>
+              <div className="mt-1 text-sm text-ink-muted">{l}</div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ───────── OPEN GIGS (the main event, right after the stats) ───────── */}
+      <section id="gigs" className="mt-12 scroll-mt-20 bg-sand/60 py-16">
         <div className="container-x">
           <Reveal className="flex flex-wrap items-end justify-between gap-6">
             <SectionHead eyebrow={live.length ? `${live.length} open now` : 'Open now'} title="Gigs you can start this week" />
@@ -97,18 +109,6 @@ export default function Landing() {
               <Link to={cta} className="btn-primary">{user ? 'Browse gigs' : 'Sign up free'} <ArrowRight className="h-4 w-4" /></Link>
             </div>
           )}
-        </div>
-      </section>
-
-      {/* ───────── STATS ───────── */}
-      <section className="container-x">
-        <div className="grid grid-cols-2 divide-line border-y border-line md:grid-cols-4 md:divide-x">
-          {[[24, 'h', 'Typical review time'], [100, '%', 'Paid to mobile money'], [0, '', 'Fees for students'], [5, ' min', 'To get verified']].map(([n, s, l], i) => (
-            <Reveal key={l as string} delay={i * 0.05} className="px-2 py-8 md:px-8">
-              <div className="font-display text-4xl font-semibold tracking-tight"><CountUp to={n as number} suffix={s as string} /></div>
-              <div className="mt-1 text-sm text-ink-muted">{l}</div>
-            </Reveal>
-          ))}
         </div>
       </section>
 

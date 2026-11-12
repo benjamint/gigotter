@@ -6,6 +6,7 @@ import GigResponses from './pages/admin/GigResponses'
 import AuthPage from './pages/Auth'
 import ResetPassword from './pages/ResetPassword'
 import Brief from './pages/Brief'
+import Business from './pages/Business'
 import GigDetail from './pages/GigDetail'
 import Gigs from './pages/Gigs'
 import Landing from './pages/Landing'
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="me" element={<Page><Me /></Page>} />
           <Route path="me/gig/:claimId" element={<Page><MyGig /></Page>} />
           <Route path="brief" element={<Page><Brief /></Page>} />
+          <Route path="business" element={<Page><Business /></Page>} />
           <Route path="admin" element={<Page><Admin /></Page>} />
           <Route path="admin/gigs/:id" element={<Page><GigResponses /></Page>} />
           <Route path="privacy" element={<Page><Privacy /></Page>} />

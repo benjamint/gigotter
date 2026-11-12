@@ -36,7 +36,7 @@ export default function Layout() {
   // the main website menu is the same for everyone; account pages live in the avatar menu
   const links = [
     { to: '/gigs', label: 'Find work' },
-    { to: '/brief', label: 'For businesses' },
+    { to: '/business', label: 'For businesses' },
   ]
   const isAdmin = profile?.role === 'admin'
   const account = [
@@ -117,8 +117,9 @@ export default function Layout() {
           <div className="text-sm">
             <div className="mb-3 font-medium">Businesses</div>
             <div className="space-y-2.5 text-white/60">
+              <Link to="/business" className="link-u block w-fit hover:text-white">What we do</Link>
+              <Link to="/business#pricing" className="link-u block w-fit hover:text-white">Pricing</Link>
               <Link to="/brief" className="link-u block w-fit hover:text-white">Post a brief</Link>
-              <Link to="/brief" className="link-u block w-fit hover:text-white">How we verify</Link>
             </div>
           </div>
         </div>

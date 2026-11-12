@@ -1,11 +1,12 @@
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, BadgeCheck, ClipboardList, Handshake, MessagesSquare, Plus, Package, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
+import { animate, motion, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { ArrowRight, BadgeCheck, ClipboardList, Handshake, MessagesSquare, Package, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import GigCard from '../components/GigCard'
 import Photo from '../components/Photo'
 import { CountUp, Reveal, SectionHead } from '../components/ui'
 import { PayoutFeed, TestimonialStrip } from '../components/Feeds'
+import FAQ from '../components/Faq'
 import { listListings, listTestimonials, payoutFeed } from '../lib/api'
 import { isOpen } from '../lib/format'
 import { IMG } from '../lib/images'
@@ -158,14 +159,14 @@ export default function Landing() {
               <div className="eyebrow text-brand-200">For businesses</div>
               <h2 className="mt-4 text-3xl font-semibold leading-[1.1] tracking-tightest text-white md:text-[2.6rem]"><SplitReveal inView>Need people on the ground? <span className="em text-brand-200">Send in the otters.</span></SplitReveal></h2>
               <p className="mt-5 max-w-md leading-relaxed text-white/65">Tell us what you need — customer sign-ups, market research, product sampling. We scope it, match verified students and you only pay for approved results.</p>
-              <div className="mt-8"><Magnetic><Link to="/brief" className="btn bg-white px-7 py-3.5 text-ink hover:bg-brand-50">Post a brief <ArrowRight className="h-4 w-4" /></Link></Magnetic></div>
+              <div className="mt-8"><Magnetic><Link to="/business" className="btn bg-white px-7 py-3.5 text-ink hover:bg-brand-50">See how it works <ArrowRight className="h-4 w-4" /></Link></Magnetic></div>
             </div>
             <Parallax className="min-h-[22rem] md:min-h-full" amount={30}><Photo src={IMG.business} alt="Founder at work" label="business.jpg" tone="dark" className="h-full min-h-[22rem] w-full" /></Parallax>
           </div>
         </Reveal>
       </section>
 
-      <FAQ />
+      <FAQ items={QA} />
 
       {/* ───────── CTA ───────── */}
       <section className="container-x pt-8 text-center">
@@ -206,7 +207,7 @@ function Calculator() {
   )
 }
 
-const QA = [
+const QA: [string, string][] = [
   ['Who can join?', 'Gigotter is built for students at universities, polytechnics and colleges: you’ll verify with your student ID, a national ID and a selfie. Not a student? You can join too and verify with your Ghana Card and a selfie, then take part in gigs that are open to everyone.'],
   ['How do gigs that need an application work?', 'Some gigs, like focus groups, look for particular people. You apply with a few answers, the Gigotter team selects who takes part, and you’re paid once you’ve taken part.'],
   ['Why do you need my ID and a selfie?', 'We pay out real money and represent real businesses, so every account must belong to a real, verified student. Your documents are stored privately and seen only by our verification team.'],
@@ -214,35 +215,6 @@ const QA = [
   ['Can I take more than one gig?', 'Yes — take on as many as you can manage. If you can’t complete one, withdraw from your dashboard so another student can take the spot.'],
   ['What counts as completed work?', 'Each gig lists exactly what to submit — usually the business name, contact and a photo. We only pay for work that meets the brief.'],
 ]
-function FAQ() {
-  const [o, setO] = useState<number | null>(0)
-  return (
-    <section className="container-x grid gap-12 pb-28 md:grid-cols-[.8fr_1.2fr]">
-      <Reveal><SectionHead eyebrow="FAQ" title="Questions, answered." body="Can’t find what you need? Email hello@gigotter.com." /></Reveal>
-      <div className="border-t border-line">
-        {QA.map(([q, a], i) => (
-          <div key={q} className="border-b border-line">
-            <button onClick={() => setO(o === i ? null : i)} aria-expanded={o === i} className="group flex w-full items-center justify-between gap-6 py-6 text-left">
-              <span className="text-[17px] font-medium transition-transform duration-300 group-hover:translate-x-1">{q}</span>
-              <motion.span animate={{ rotate: o === i ? 135 : 0 }} transition={{ duration: 0.4, ease: EASE }}
-                className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-colors duration-300 ${o === i ? 'border-ink bg-ink text-white' : 'border-line text-ink-muted group-hover:border-ink/40'}`}>
-                <Plus className="h-4 w-4" />
-              </motion.span>
-            </button>
-            <AnimatePresence initial={false}>
-              {o === i && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3, ease: EASE }} className="overflow-hidden">
-                  <p className="max-w-xl pb-6 leading-relaxed text-ink-muted">{a}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}
-
 /** Number that rolls to its new value (₵ formatted). */
 function Ticker({ to, duration = 1.2, delay = 0, decimals = 0 }: { to: number; duration?: number; delay?: number; decimals?: number }) {
   const reduce = useReducedMotion()

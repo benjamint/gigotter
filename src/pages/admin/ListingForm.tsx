@@ -6,7 +6,7 @@ import { AttachmentsEditor, type PendingFile } from '../../components/GigFiles'
 import { Spinner, useToast } from '../../components/ui'
 import { listingFiles, saveListing, uploadCover, uploadListingFile } from '../../lib/api'
 import { coverFor, money } from '../../lib/format'
-import { CURRENCIES, GIG_TYPES, type GigType, type Listing, type ListingFile, type PhotoRule } from '../../lib/types'
+import { AUDIENCES, CURRENCIES, GENDERS, GIG_TYPES, WORK_STATUSES, type Audience, type Eligibility, type Gender, type GigType, type JoinMode, type Listing, type ListingFile, type PhotoRule, type WorkStatus } from '../../lib/types'
 import { TEMPLATES, photoRuleOf, schemaOf } from '../../lib/forms'
 import FormBuilder, { schemaProblem, toRows, toSchema } from './FormBuilder'
 
@@ -28,6 +28,11 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
   const [photo, setPhoto] = useState<PhotoRule>(initial.id ? photoRuleOf({ photo_rule: initial.photo_rule as PhotoRule }) : startT.photo)
   const [photoHint, setPhotoHint] = useState(initial.id ? initial.photo_hint ?? '' : startT.photoHint)
   const [touched, setTouched] = useState(false)
+  // who can take part, and whether people join straight away or apply and get selected
+  const [audience, setAudience] = useState<Audience>(initial.audience ?? 'students')
+  const [joinMode, setJoinMode] = useState<JoinMode>(initial.join_mode ?? (initial.id ? 'open' : startT.apply ? 'apply' : 'open'))
+  const [appRows, setAppRows] = useState(() => toRows(initial.id ? initial.application_schema ?? [] : startT.apply ?? []))
+  const [elig, setElig] = useState<Eligibility>(initial.eligibility ?? {})
   const [files, setFiles] = useState<ListingFile[]>([])
   const [pending, setPending] = useState<PendingFile[]>(initialFiles)
   useEffect(() => { if (initialFiles.length) setPending(initialFiles) }, [initialFiles])
@@ -37,6 +42,7 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
   const applyTemplate = (t: GigType) => {
     const T = TEMPLATES[t]
     setRows(toRows(T.fields)); setPhoto(T.photo); setPhotoHint(T.photoHint); setTouched(false)
+    if (!initial.id) { setJoinMode(T.apply ? 'apply' : 'open'); setAppRows(toRows(T.apply ?? [])) }
     setL((x) => ({ ...x, type: t, unit_label: T.unit, pay_model: T.pay, requirements: x.requirements?.length && touched ? x.requirements : [...T.requirements],
       ...(T.pay === 'fixed' && !x.id ? { units_per_student: 1 } : {}) }))
   }
@@ -58,12 +64,16 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
     if (!l.title) return toast('Give it a title', 'err')
     const problem = schemaProblem(rows, photo)
     if (problem) return toast(problem, 'err')
+    if (joinMode === 'apply') { const p2 = schemaProblem(appRows, 'none', 'application question'); if (p2) return toast(p2, 'err') }
+    if (elig.min_age && elig.max_age && elig.min_age > elig.max_age) return toast('The minimum age is higher than the maximum', 'err')
     setBusy(true)
     try {
       const cover_url = cover ? await uploadCover(cover) : l.cover_url ?? null
       const form_schema = toSchema(rows)
       const saved = await saveListing({ ...l, cover_url, form_schema, photo_rule: photo, photo_hint: photo === 'none' ? null : photoHint.trim() || null,
-        proof_fields: form_schema.map((f) => f.key), expires_at: new Date(exp).toISOString() })
+        proof_fields: form_schema.map((f) => f.key), expires_at: new Date(exp).toISOString(),
+        audience, join_mode: joinMode, application_schema: joinMode === 'apply' ? toSchema(appRows) : [],
+        eligibility: Object.fromEntries(Object.entries(elig).filter(([, v]) => (Array.isArray(v) ? v.length : v != null && v !== ''))) })
       // the gig exists now, so its files can be attached
       const failed: string[] = []
       for (const p of pending) { try { await uploadListingFile(saved.id, p.file, p.visibility) } catch (e: any) { failed.push(`${p.file.name}: ${e.message}`) } }
@@ -127,6 +137,56 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
         </div>
         <p className="mt-3 text-sm text-ink-muted">Each student earns up to <b className="text-ink">{money(perStudent, l.currency)}</b>. Max spend if every spot completes: <b className="text-ink">{money(l.total_budget ? Math.min(l.total_budget, maxSpend) : maxSpend, l.currency)}</b>{l.total_budget && l.total_budget < maxSpend ? ' (capped)' : ''}.</p>
       </div>
+
+      <div className="rounded-3xl border border-line bg-white p-4 sm:p-5">
+        <div className="font-semibold">Who can take part</div>
+        <p className="text-sm text-ink-muted">Everyone can see the gig, but only these people can join or apply.</p>
+        <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Who can take part">
+          {(Object.keys(AUDIENCES) as Audience[]).map((a) => (
+            <button type="button" role="radio" aria-checked={audience === a} key={a} onClick={() => setAudience(a)}
+              className={`rounded-2xl border px-3 py-2.5 text-sm font-medium ${audience === a ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink/40'}`}>{AUDIENCES[a].label}</button>
+          ))}
+        </div>
+        <div className="mt-5 font-semibold">How people join</div>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="How people join">
+          {([['open', 'First come, first served', 'Anyone eligible joins straight away and starts the work.'], ['apply', 'Apply, and you select', 'People apply with their details and answers. You choose who takes part.']] as const).map(([k, t, d]) => (
+            <button type="button" role="radio" aria-checked={joinMode === k} key={k} onClick={() => setJoinMode(k)}
+              className={`rounded-2xl border p-3 text-left text-sm ${joinMode === k ? 'border-ink bg-brand-50' : 'border-line hover:border-ink/40'}`}><b>{t}</b><div className="text-xs text-ink-muted">{d}</div></button>
+          ))}
+        </div>
+        {joinMode === 'apply' && (
+          <div className="mt-5 space-y-3 rounded-2xl bg-paper p-4">
+            <div className="text-sm font-semibold">Who you’re looking for <span className="font-normal text-ink-muted">(optional, shown to applicants and used to filter)</span></div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex items-center gap-2 text-sm"><span className="w-12 shrink-0 text-ink-muted">Age</span>
+                <input className="input bg-white py-2" type="number" min={16} max={99} placeholder="min" value={elig.min_age ?? ''} onChange={(e) => setElig({ ...elig, min_age: e.target.value ? Number(e.target.value) : null })} aria-label="Minimum age" />
+                <span className="text-ink-muted">to</span>
+                <input className="input bg-white py-2" type="number" min={16} max={99} placeholder="max" value={elig.max_age ?? ''} onChange={(e) => setElig({ ...elig, max_age: e.target.value ? Number(e.target.value) : null })} aria-label="Maximum age" />
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 text-sm"><span className="mr-1 text-ink-muted">Gender</span>
+                {(['female', 'male'] as Gender[]).map((g) => {
+                  const on = elig.genders?.includes(g)
+                  return <button type="button" key={g} onClick={() => setElig({ ...elig, genders: on ? elig.genders!.filter((x) => x !== g) : [...(elig.genders ?? []), g] })}
+                    className={`rounded-full border px-3 py-1.5 ${on ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{GENDERS[g]}</button>
+                })}
+                <span className="text-xs text-ink-muted">(none = anyone)</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 text-sm"><span className="mr-1 text-ink-muted">Work</span>
+              {(Object.keys(WORK_STATUSES) as WorkStatus[]).map((w) => {
+                const on = elig.work_statuses?.includes(w)
+                return <button type="button" key={w} onClick={() => setElig({ ...elig, work_statuses: on ? elig.work_statuses!.filter((x) => x !== w) : [...(elig.work_statuses ?? []), w] })}
+                  className={`rounded-full border px-3 py-1.5 ${on ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{WORK_STATUSES[w]}</button>
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {joinMode === 'apply' && (
+        <FormBuilder rows={appRows} setRows={setAppRows} photo="none" setPhoto={() => {}} photoHint="" setPhotoHint={() => {}} unit={l.unit_label ?? ''} hasResponses={false} noPhoto
+          heading="Application questions" intro="What you want to know before choosing someone. Their age, gender, school or occupation is included automatically." />
+      )}
 
       <FormBuilder rows={rows} setRows={editRows} photo={photo} setPhoto={(p) => { setTouched(true); setPhoto(p) }} photoHint={photoHint} setPhotoHint={setPhotoHint}
         unit={l.unit_label ?? ''} hasResponses={hasResponses} />

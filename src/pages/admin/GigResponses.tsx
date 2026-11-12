@@ -11,6 +11,8 @@ import { csvCell } from '../../lib/security'
 import { useAsync, useSession } from '../../lib/session'
 import { displayValue, labelFor, schemaOf, subTitle } from '../../lib/forms'
 import PaymentPanel from './PaymentPanel'
+import Applicants from './Applicants'
+import { isApply } from '../../lib/audience'
 import { type Listing, type Profile, type Submission, type SubmissionStatus } from '../../lib/types'
 
 const STATUSES: (SubmissionStatus | 'all')[] = ['all', 'pending', 'approved', 'paid', 'rejected']
@@ -25,6 +27,7 @@ export default function GigResponses() {
     return { listing, subs: subs.filter((s) => s.listing_id === id), claims: claims.filter((c) => c.listing_id === id), profiles }
   }, [id])
   const [student, setStudent] = useState<string | 'all'>('all')
+  const [view, setView] = useState<'applicants' | 'work'>('applicants')
   const [status, setStatus] = useState<SubmissionStatus | 'all'>('all')
   const [q, setQ] = useState('')
   const [proof, setProof] = useState<string | null>(null)
@@ -41,7 +44,7 @@ export default function GigResponses() {
     }).sort((a, b) => b.pending - a.pending || b.total - a.total)
   }, [d])
 
-  if (loading || data.loading) return <PageLoader />
+  if (loading || (data.loading && !data.data)) return <PageLoader /> // later reloads keep the page (and its filters) in place
   if (profile?.role !== 'admin') return <Navigate to="/" replace />
   if (!d?.listing) return <div className="container-x max-w-xl py-20"><Empty title="Gig not found" action={<Link to="/admin?tab=gigs" className="btn-primary">Back to gigs</Link>} /></div>
   const l = d.listing
@@ -97,7 +100,7 @@ export default function GigResponses() {
       {/* stats */}
       <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
         {[
-          ['Students joined', `${d.claims.filter((c) => c.status !== 'withdrawn').length} / ${l.slots}`],
+          [isApply(l) ? 'Selected' : 'People joined', `${d.claims.filter((c) => c.status !== 'withdrawn').length} / ${l.slots}`],
           ['Responses', d.subs.length],
           ['To review', count('pending')],
           ['Approved', count('approved')],
@@ -108,7 +111,18 @@ export default function GigResponses() {
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[280px_1fr]">
+      {isApply(l) && (
+        <div className="mt-6 flex gap-1 border-b border-line">
+          {([['applicants', 'Applicants'], ['work', 'Work & attendance']] as const).map(([k, t]) => (
+            <button key={k} onClick={() => setView(k)} className={`relative px-4 pb-3 pt-1 text-sm ${view === k ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'}`}>
+              {t}{view === k && <motion.span layoutId="resp-view" className="absolute inset-x-0 -bottom-px h-0.5 bg-ink" />}
+            </button>
+          ))}
+        </div>
+      )}
+      {isApply(l) && view === 'applicants' && <div className="mt-6"><Applicants listing={l} onChanged={data.reload} /></div>}
+
+      <div className={`mt-6 grid gap-6 lg:grid-cols-[280px_1fr] ${isApply(l) && view === 'applicants' ? 'hidden' : ''}`}>
         {/* students */}
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="card overflow-hidden">

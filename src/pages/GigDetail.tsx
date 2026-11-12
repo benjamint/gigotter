@@ -4,7 +4,10 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Photo from '../components/Photo'
 import { Empty, PageLoader, Progress, Spinner, useToast } from '../components/ui'
-import { claimListing, getListing, listingFiles, myClaims } from '../lib/api'
+import { claimListing, getListing, listingFiles, myApplications, myClaims, withdrawApplication } from '../lib/api'
+import ApplyForm from '../components/ApplyForm'
+import { accountOf, audienceAllows, audienceOf, eligibilityText, isApply } from '../lib/audience'
+import { AUDIENCES } from '../lib/types'
 import { GigFileList } from '../components/GigFiles'
 import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft, plural } from '../lib/format'
 import { useAsync, useSession } from '../lib/session'
@@ -21,6 +24,8 @@ export default function GigDetail() {
   const { data: l, loading, reload } = useAsync(() => getListing(id!), [id])
   const claims = useAsync(() => (user ? myClaims() : Promise.resolve([])), [user?.id])
   const files = useAsync(() => listingFiles(id!), [id, user?.id])
+  const apps = useAsync(() => (user ? myApplications() : Promise.resolve([])), [user?.id])
+  const [applying, setApplying] = useState(false)
   const joined = !!claims.data?.some((c) => c.listing_id === id && c.status !== 'withdrawn' && c.status !== 'removed')
   const [busy, setBusy] = useState(false)
   if (loading) return <PageLoader />
@@ -30,9 +35,16 @@ export default function GigDetail() {
   const mine = claims.data?.find((c) => c.listing_id === l.id && c.status === 'active')
   const open = isOpen(l)
 
+  const apply = isApply(l)
+  const aud = audienceOf(l)
+  const fits = !profile || audienceAllows(aud, accountOf(profile))
+  const myApp = apps.data?.find((a) => a.listing_id === l.id && a.status !== 'withdrawn')
+  const looking = apply ? eligibilityText(l.eligibility) : ''
+
   const join = async () => {
-    if (!user) return nav(`/signup?next=/gigs/${l.id}`)
+    if (!user) return nav(`/signup?next=/gigs/${l.id}${aud === 'general' ? '&type=general' : ''}`)
     if (profile?.kyc_status !== 'verified') return nav('/verify')
+    if (apply) return setApplying(true)
     setBusy(true)
     try {
       const c = await claimListing(l.id)
@@ -46,7 +58,12 @@ export default function GigDetail() {
   else if (!open) cta = { label: t.expired ? 'This gig has closed' : spotsLeft(l) === 0 ? 'All spots taken' : 'Not open', disabled: true }
   else if (!user) cta = { label: 'Sign up to apply', hint: 'Free. Takes about two minutes.' }
   else if (profile?.kyc_status === 'pending') cta = { label: 'Verification in review', disabled: true, hint: 'You can join as soon as you’re approved.' }
-  else if (profile?.kyc_status !== 'verified') cta = { label: 'Get verified to join', hint: 'A quick ID and selfie check first.' }
+  else if (!fits) cta = { label: AUDIENCES[aud].label, disabled: true, hint: aud === 'students' ? 'This gig is for students. Keep an eye out for gigs open to everyone.' : 'This gig is for people who aren’t students right now.' }
+  else if (profile?.kyc_status !== 'verified') cta = { label: apply ? 'Get verified to apply' : 'Get verified to join', hint: 'A quick ID and selfie check first.' }
+  else if (apply && myApp) cta = myApp.status === 'declined'
+    ? { label: 'Not selected this time', disabled: true, hint: 'Thank you for applying. Keep an eye out for new gigs.' }
+    : { label: myApp.status === 'shortlisted' ? 'You’re on the shortlist' : 'Application sent', disabled: true, hint: 'We’ll email you when a decision is made.' }
+  else if (apply) cta = { label: 'Apply for this gig', hint: 'You’ll answer a few questions. Selected people are paid after taking part.' }
   else cta = { label: 'Join this gig' }
 
   return (
@@ -107,20 +124,30 @@ export default function GigDetail() {
             <div className="text-sm text-ink-muted">You can earn up to</div>
             <div className="figure mt-1 text-6xl leading-none">{money(maxEarn(l), l.currency)}</div>
             <div className="mt-1.5 text-sm text-ink-muted">{payLine(l)}{l.units_per_student ? ` · up to ${l.units_per_student} ${plural(l.unit_label, l.units_per_student)}` : ''}</div>
-            <div className="mt-7">
-              <div className="mb-2 flex justify-between text-xs text-ink-muted"><span>{l.taken ?? 0} joined</span><span>{l.slots} spots</span></div>
+            <div className="mt-5 flex flex-wrap gap-1.5">
+              <span className="chip bg-sand text-ink-soft">{AUDIENCES[aud].short}</span>
+              {apply && <span className="chip bg-brand-50 text-brand-700">Apply · selected by Gigotter</span>}
+            </div>
+            {looking && <p className="mt-3 text-sm text-ink-muted"><b className="font-medium text-ink">Looking for:</b> {looking}</p>}
+            <div className="mt-6">
+              <div className="mb-2 flex justify-between text-xs text-ink-muted"><span>{l.taken ?? 0} {apply ? 'selected' : 'joined'}</span><span>{l.slots} {plural(apply ? 'place' : 'spot', l.slots)}</span></div>
               <Progress value={l.taken ?? 0} max={l.slots} />
             </div>
             {mine
               ? <Link to={`/me/gig/${mine.id}`} className="btn-brand mt-7 w-full py-3.5">{cta.label}<ArrowRight className="h-4 w-4" /></Link>
               : <button onClick={join} disabled={cta.disabled || busy} className="btn-brand mt-7 w-full py-3.5">{busy ? <Spinner /> : cta.label}</button>}
             {cta.hint && <p className="mt-3 text-center text-xs text-ink-muted">{cta.hint}</p>}
+            {apply && myApp && ['applied', 'shortlisted'].includes(myApp.status) && (
+              <button onClick={async () => { if (!confirm('Withdraw your application?')) return; try { await withdrawApplication(myApp.id); toast('Application withdrawn'); apps.reload() } catch (e: any) { toast(e.message, 'err') } }}
+                className="mt-2 w-full text-center text-xs text-ink-muted underline underline-offset-2 hover:text-ink">Withdraw my application</button>
+            )}
             {profile?.kyc_status === 'rejected' && (
               <div className="mt-5 flex gap-2.5 rounded-xl bg-red-50 p-3.5 text-sm text-red-800"><AlertCircle className="h-4 w-4 shrink-0 translate-y-0.5" /><span>Your verification needs attention. <Link to="/verify" className="font-medium underline">Update it</Link></span></div>
             )}
           </motion.div>
-          <p className="mt-4 px-1 text-xs leading-relaxed text-ink-muted">Joining reserves a spot. If you can’t complete it, withdraw from your dashboard so another student can take it.</p>
+          <p className="mt-4 px-1 text-xs leading-relaxed text-ink-muted">{apply ? 'Applying doesn’t guarantee a place. If you’re selected and can’t make it, let us know so someone else can take your place.' : 'Joining reserves a spot. If you can’t complete it, withdraw from your dashboard so someone else can take it.'}</p>
         </aside>
+        <ApplyForm listing={l} open={applying} onClose={() => setApplying(false)} onApplied={() => { setApplying(false); apps.reload() }} />
       </div>
     </div>
   )

@@ -1,7 +1,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
+import type { AccountType, Application, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
+import { accountOf, audienceAllows, audienceMessage, audienceOf } from './audience'
 import { checkDoc, checkImage, safeExt } from './security'
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -28,6 +29,7 @@ interface DemoDB {
   qrCodes?: QrCode[]
   briefMeta?: Record<string, { size: number; mime: string }>
   payments?: Payment[]
+  applications?: Application[]
   qrScans?: { code: string; visitor: string | null; device: string; scanned_at: string }[]
   files: Record<string, string>
   listingFiles?: ListingFile[]
@@ -112,19 +114,19 @@ export const auth = {
     const { data } = sb!.auth.onAuthStateChange(() => cb())
     return () => data.subscription.unsubscribe()
   },
-  async signUp(email: string, password: string, full_name: string, captchaToken?: string) {
+  async signUp(email: string, password: string, full_name: string, captchaToken?: string, account_type: AccountType = 'student') {
     email = email.trim().toLowerCase()
     if (DEMO) {
       const d = db()
       if (d.users.some((u) => u.email === email)) throw new Error('That email already has an account — log in instead.')
       const id = uid()
       d.users.push({ id, email, password })
-      d.profiles.push({ ...blankProfile(id, email, full_name), signup_source: scanSource() })
+      d.profiles.push({ ...blankProfile(id, email, full_name), signup_source: scanSource(), account_type })
       d.session = id
       return save()
     }
     const signup_source = scanSource() ?? undefined
-    const { data, error } = await sb!.auth.signUp({ email, password, options: { data: { full_name: full_name.trim().slice(0, 120), signup_source }, emailRedirectTo: `${location.origin}/verify`, captchaToken } })
+    const { data, error } = await sb!.auth.signUp({ email, password, options: { data: { full_name: full_name.trim().slice(0, 120), signup_source, account_type }, emailRedirectTo: `${location.origin}/verify`, captchaToken } })
     fail(error)
     if (!data.session) throw new Error('CHECK_EMAIL')
   },
@@ -248,6 +250,47 @@ export async function myPayments(): Promise<Payment[]> {
   return (data ?? []).map((p) => ({ ...p, amount: Number(p.amount) }))
 }
 
+// ═══════════════════════════ applications (apply-and-select gigs) ═══════════════════════════
+/** Apply to a gig that selects people. Answers are checked against the gig's application questions. */
+export async function applyToListing(listingId: string, answers: Record<string, string>): Promise<Application> {
+  if (DEMO) {
+    const u = must(demoUser(), 'Sign in first'), d = db()
+    const p = must(d.profiles.find((x) => x.id === u.id), 'No profile')
+    if (p.kyc_status !== 'verified') throw new Error('Complete verification before applying')
+    const l = must(d.listings.find((x) => x.id === listingId), 'Gig not found')
+    if (l.status !== 'live' || new Date(l.expires_at) < new Date()) throw new Error('This gig isn’t taking applications')
+    if (l.join_mode !== 'apply') throw new Error('This gig doesn’t need an application. Just join it')
+    if (!audienceAllows(audienceOf(l), accountOf(p))) throw new Error(audienceMessage(audienceOf(l)))
+    const problem = validateAnswers(l.application_schema ?? [], answers); if (problem) throw new Error(problem)
+    const clean: Record<string, string> = {}; for (const f of l.application_schema ?? []) { const v = (answers[f.key] ?? '').trim(); if (v) clean[f.key] = v }
+    d.applications ??= []
+    const ex = d.applications.find((a) => a.listing_id === listingId && a.applicant_id === u.id)
+    if (ex && ex.status !== 'withdrawn') throw new Error('You’ve already applied to this gig')
+    if (ex) { Object.assign(ex, { answers: clean, status: 'applied', admin_note: null, decided_at: null, created_at: now() }); save(); return ex }
+    const a: Application = { id: uid(), listing_id: listingId, applicant_id: u.id, answers: clean, status: 'applied', admin_note: null, created_at: now(), decided_at: null }
+    d.applications.push(a); save(); return a
+  }
+  const { data, error } = await sb!.rpc('apply_to_listing', { p_listing: listingId, p_answers: answers })
+  fail(error); return data as Application
+}
+/** The signed-in person's applications, newest first, with the gig attached. */
+export async function myApplications(): Promise<Application[]> {
+  const u = await auth.user(); if (!u) return []
+  let apps: Application[]
+  if (DEMO) apps = (db().applications ?? []).filter((a) => a.applicant_id === u.id)
+  else { const { data, error } = await sb!.from('applications').select('*').eq('applicant_id', u.id); if (error) return []; apps = data ?? [] }
+  const ls = await listListings({ all: true })
+  return apps.map((a) => ({ ...a, listing: ls.find((l) => l.id === a.listing_id) })).sort((a, b) => b.created_at.localeCompare(a.created_at))
+}
+export async function withdrawApplication(id: string) {
+  if (DEMO) {
+    const u = must(demoUser(), 'Sign in first'), a = (db().applications ?? []).find((x) => x.id === id && x.applicant_id === u.id)
+    if (!a || !['applied', 'shortlisted'].includes(a.status)) throw new Error('This application can’t be withdrawn')
+    a.status = 'withdrawn'; a.decided_at = now(); return save()
+  }
+  const { error } = await sb!.rpc('withdraw_application', { p_application: id }); fail(error)
+}
+
 // ═══════════════════════════ QR codes ═══════════════════════════
 const SRC_KEY = 'gigotter-src', VISITOR_KEY = 'gigotter-visitor'
 /** The QR code this browser arrived through in the last 30 days, if any (credited at sign-up). */
@@ -351,7 +394,7 @@ export async function getListing(id: string): Promise<Listing | null> {
 }
 /** Columns that actually exist on the listings table — anything else (e.g. joined stats) is dropped before saving. */
 const LISTING_COLUMNS = ['id', 'title', 'type', 'summary', 'description', 'requirements', 'location', 'is_remote', 'pay_model', 'rate',
-  'unit_label', 'units_per_student', 'total_budget', 'currency', 'slots', 'proof_fields', 'form_schema', 'photo_rule', 'photo_hint', 'expires_at', 'status', 'accent', 'emoji',
+  'unit_label', 'units_per_student', 'total_budget', 'currency', 'slots', 'proof_fields', 'form_schema', 'photo_rule', 'photo_hint', 'audience', 'join_mode', 'application_schema', 'eligibility', 'expires_at', 'status', 'accent', 'emoji',
   'client_name', 'cover_url'] as const
 export async function saveListing(l: Partial<Listing>): Promise<Listing> {
   const row = Object.fromEntries(LISTING_COLUMNS.filter((k) => k in l).map((k) => [k, (l as any)[k]])) as Partial<Listing>
@@ -388,6 +431,8 @@ export async function claimListing(listingId: string): Promise<Claim> {
     const l = withStats(must(d.listings.find((x) => x.id === listingId), 'Gig not found'))
     if (l.status !== 'live') throw new Error('This gig is not open')
     if (new Date(l.expires_at) < new Date()) throw new Error('This gig has expired')
+    if (!audienceAllows(audienceOf(l), accountOf(p))) throw new Error(audienceMessage(audienceOf(l)))
+    if (l.join_mode === 'apply') throw new Error('This gig takes applications. Apply and we’ll let you know if you’re selected')
     const ex = d.claims.find((c) => c.listing_id === listingId && c.student_id === u.id)
     if (ex && ex.status === 'active') return ex
     if ((l.taken ?? 0) >= l.slots) throw new Error('All spots are taken')
@@ -530,6 +575,37 @@ export const admin = {
     if (DEMO) { db().submissions.forEach((s) => ids.includes(s.id) && Object.assign(s, patch)); return save() }
     const { error } = await sb!.from('submissions').update(patch).in('id', ids)
     fail(error)
+  },
+  /** Applications for one gig, with each applicant's profile. */
+  async applications(listingId: string): Promise<Application[]> {
+    let apps: Application[]
+    if (DEMO) apps = (db().applications ?? []).filter((a) => a.listing_id === listingId)
+    else { const { data, error } = await sb!.from('applications').select('*').eq('listing_id', listingId); fail(error); apps = data ?? [] }
+    const ps = await admin.profiles()
+    return apps.map((a) => ({ ...a, applicant: ps.find((p) => p.id === a.applicant_id) })).sort((a, b) => a.created_at.localeCompare(b.created_at))
+  },
+  /** Shortlist / accept / decline. Accepting gives a place on the gig; accept and decline email the person. */
+  async decideApplications(ids: string[], status: ApplicationStatus, note?: string): Promise<number> {
+    if (DEMO) {
+      const d = db(); let done = 0
+      for (const a of (d.applications ?? []).filter((x) => ids.includes(x.id) && x.status !== 'withdrawn')) {
+        if (a.status === status) continue
+        const l = must(d.listings.find((x) => x.id === a.listing_id), 'Gig not found')
+        const claim = d.claims.find((c) => c.listing_id === a.listing_id && c.student_id === a.applicant_id)
+        if (status === 'accepted') {
+          const taken = d.claims.filter((c) => c.listing_id === a.listing_id && ['active', 'completed'].includes(c.status) && c.student_id !== a.applicant_id).length
+          if (taken >= l.slots) throw new Error(`There are no places left on “${l.title}”. Increase the number of people needed on the gig, or decline someone first`)
+          if (claim) claim.status = 'active'; else d.claims.push({ id: uid(), listing_id: a.listing_id, student_id: a.applicant_id, status: 'active', created_at: now() })
+        } else if (a.status === 'accepted') {
+          if (d.submissions.some((s) => s.listing_id === a.listing_id && s.student_id === a.applicant_id && s.status !== 'rejected')) throw new Error('This person has already submitted work on this gig, so their place can’t be removed')
+          if (claim) claim.status = 'removed'
+        }
+        Object.assign(a, { status, admin_note: note?.trim() || a.admin_note, decided_at: ['accepted', 'declined'].includes(status) ? now() : a.decided_at }); done++
+      }
+      save(); return done
+    }
+    const { data, error } = await sb!.rpc('decide_applications', { p_ids: ids, p_status: status, p_note: note?.trim() || null })
+    fail(error); return data as number
   },
   /** Every recorded payment (admin), for totals like "Paid out". Empty if the payments table isn't set up yet. */
   async allPayments(): Promise<Payment[]> {

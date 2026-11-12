@@ -20,6 +20,8 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   const toast = useToast()
   const { user, profile, refresh } = useSession()
   const [f, setF] = useState({ name: '', email: '', password: '' })
+  // student-first, but anyone can join: /signup?type=general preselects "I'm not a student"
+  const [acct, setAcct] = useState<'student' | 'general'>(() => (new URLSearchParams(location.search).get('type') === 'general' ? 'general' : 'student'))
   const [show, setShow] = useState(false)
   const [busy, setBusy] = useState(false)
   const [check, setCheck] = useState(false)
@@ -55,7 +57,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
     if (needCaptcha()) return
     setBusy(true)
     try {
-      if (signup) await auth.signUp(f.email, f.password, f.name, captcha ?? undefined)
+      if (signup) await auth.signUp(f.email, f.password, f.name, captcha ?? undefined, acct)
       else { await auth.signIn(f.email, f.password, captcha ?? undefined); loginBackoff(email, false) }
       await refresh()
     } catch (err: any) {
@@ -130,11 +132,20 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
       <p className="mt-2 text-ink-muted">{signup ? 'Start earning from real work. Verification comes next.' : 'Log in to see your gigs and earnings.'}</p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         {signup && (
+          <div role="radiogroup" aria-label="Account type" className="grid grid-cols-2 gap-1 rounded-2xl bg-sand p-1">
+            {([['student', 'I’m a student'], ['general', 'I’m not a student']] as const).map(([k, l]) => (
+              <button type="button" role="radio" aria-checked={acct === k} key={k} onClick={() => setAcct(k)}
+                className={`rounded-xl px-3 py-2.5 text-sm font-medium transition ${acct === k ? 'bg-white text-ink shadow-soft' : 'text-ink-muted hover:text-ink'}`}>{l}</button>
+            ))}
+          </div>
+        )}
+        {signup && acct === 'general' && <p className="-mt-1 text-xs leading-relaxed text-ink-muted">You can join gigs that are open to everyone or to non-students. You’ll verify with your Ghana Card and a selfie.</p>}
+        {signup && (
           <div><label className="label">Full name <span className="font-normal text-ink-muted">(as on your ID)</span></label>
             <input className="input" required maxLength={120} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Abena Owusu" autoComplete="name" /></div>
         )}
         <div><label className="label">Email</label>
-          <input className="input" type="email" required maxLength={200} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder={signup ? 'you@st.ug.edu.gh' : 'you@email.com'} autoComplete="email" /></div>
+          <input className="input" type="email" required maxLength={200} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} placeholder={signup && acct === 'student' ? 'you@st.ug.edu.gh' : 'you@email.com'} autoComplete="email" /></div>
         <div><label className="label">Password</label>
           <div className="relative">
             <input className="input pr-12" type={show ? 'text' : 'password'} required minLength={8} maxLength={72} value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} placeholder={signup ? '8+ characters, letters and numbers' : 'Your password'} autoComplete={signup ? 'new-password' : 'current-password'} />
@@ -153,7 +164,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
         {signup ? <>Already have an account? <Link to={`/login${nextQs}`} className="font-medium text-ink underline underline-offset-2">Log in</Link></>
           : <>New here? <Link to={`/signup${nextQs}`} className="font-medium text-ink underline underline-offset-2">Start earning</Link></>}
       </p>
-      {signup && <p className="mt-4 text-center text-xs leading-relaxed text-ink-muted">By signing up you agree to our <Link to="/terms" className="underline underline-offset-2 hover:text-ink">Terms</Link> and <Link to="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy Policy</Link>, including verifying you’re a student.</p>}
+      {signup && <p className="mt-4 text-center text-xs leading-relaxed text-ink-muted">By signing up you agree to our <Link to="/terms" className="underline underline-offset-2 hover:text-ink">Terms</Link> and <Link to="/privacy" className="underline underline-offset-2 hover:text-ink">Privacy Policy</Link>, including verifying your identity.</p>}
     </Shell>
   )
 }

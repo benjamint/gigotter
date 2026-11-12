@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft } from '../lib/format'
 import { GIG_TYPES, type Listing } from '../lib/types'
 import Photo from './Photo'
+import { audienceOf, isApply } from '../lib/audience'
 import { useSpotlight } from './motion'
 
 export default function GigCard({ l, i = 0 }: { l: Listing; i?: number }) {
@@ -20,6 +21,8 @@ export default function GigCard({ l, i = 0 }: { l: Listing; i?: number }) {
           <Photo src={coverFor(l)} alt={l.title} label={GIG_TYPES[l.type].label} className="h-full w-full transition duration-700 group-hover:scale-[1.05]" />
           <div className="absolute left-3 top-3 flex gap-1.5">
             <span className="chip bg-white/95 text-ink shadow-sm backdrop-blur">{GIG_TYPES[l.type].label}</span>
+            {isApply(l) && <span className="chip bg-brand-600 text-white shadow-sm">Apply</span>}
+            {audienceOf(l) !== 'students' && <span className="chip bg-white/95 text-ink shadow-sm backdrop-blur">{audienceOf(l) === 'everyone' ? 'Open to everyone' : 'Non-students'}</span>}
             {l.status !== 'live' && <span className="chip bg-ink/80 capitalize text-white">{l.status}</span>}
           </div>
           <span className="absolute right-3 top-3 grid h-9 w-9 translate-y-1 place-items-center rounded-full bg-white text-ink opacity-0 shadow-sm transition duration-300 group-hover:translate-y-0 group-hover:opacity-100">

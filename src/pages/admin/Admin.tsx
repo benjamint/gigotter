@@ -7,7 +7,8 @@ import { admin, deleteListing, deleteTestimonial, fileUrl, listListings, listTes
 import Photo from '../../components/Photo'
 import { ago, coverFor, money, payLine, spotsLeft, timeLeft, plural } from '../../lib/format'
 import { useAsync, useSession } from '../../lib/session'
-import type { KycStatus, Listing, Payment, Profile, Submission } from '../../lib/types'
+import { GENDERS, WORK_STATUSES, type KycStatus, type Listing, type Payment, type Profile, type Submission } from '../../lib/types'
+import { accountOf, ageOf } from '../../lib/audience'
 import ListingForm from './ListingForm'
 import QrCodes from './QrCodes'
 import Briefs from './Briefs'
@@ -152,13 +153,17 @@ function Overview({ d, go }: { d: any; go: (t: Tab) => void }) {
 // ═════════════ students / KYC ═════════════
 function Students({ profiles, reload }: { profiles: Profile[]; reload: () => void }) {
   const [f, setF] = useState<KycStatus | 'all'>('pending')
+  const [t, setT] = useState<'all' | 'student' | 'general'>('all')
   const [q, setQ] = useState('')
   const [sel, setSel] = useState<Profile | null>(null)
-  const list = profiles.filter((p) => (f === 'all' || p.kyc_status === f) && (!q || `${p.full_name} ${p.email} ${p.school} ${p.phone}`.toLowerCase().includes(q.toLowerCase())))
+  const list = profiles.filter((p) => (f === 'all' || p.kyc_status === f) && (t === 'all' || accountOf(p) === t) && (!q || `${p.full_name} ${p.email} ${p.school} ${p.phone}`.toLowerCase().includes(q.toLowerCase())))
   return (
     <div>
       <div className="flex flex-col gap-3 md:flex-row">
         <input className="input md:max-w-xs" placeholder="Search name, school, phone…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <select value={t} onChange={(e) => setT(e.target.value as any)} aria-label="Account type" className="input md:w-44">
+          <option value="all">All account types</option><option value="student">Students</option><option value="general">Non-students</option>
+        </select>
         <div className="flex flex-wrap gap-2">
           {(['pending', 'verified', 'rejected', 'unverified', 'all'] as const).map((s) => (
             <button key={s} onClick={() => setF(s)} className={`rounded-full border px-4 py-2 text-sm font-medium capitalize ${f === s ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{s} ({s === 'all' ? profiles.length : profiles.filter((p) => p.kyc_status === s).length})</button>
@@ -167,12 +172,14 @@ function Students({ profiles, reload }: { profiles: Profile[]; reload: () => voi
       </div>
       <div className="card mt-4 overflow-x-auto">
         <table className="w-full min-w-[720px] text-sm">
-          <thead className="border-b-2 border-line text-left text-xs uppercase tracking-wider text-ink-muted"><tr><th className="p-4">Student</th><th>School</th><th>MoMo</th><th>Joined</th><th>Status</th><th className="p-4" /></tr></thead>
+          <thead className="border-b-2 border-line text-left text-xs uppercase tracking-wider text-ink-muted"><tr><th className="p-4">Student</th><th>School / work</th><th>MoMo</th><th>Joined</th><th>Status</th><th className="p-4" /></tr></thead>
           <tbody className="divide-y divide-line">
             {list.map((p) => (
               <tr key={p.id} className="hover:bg-paper">
-                <td className="p-4"><div className="font-semibold">{p.full_name || '—'}</div><div className="text-xs text-ink-muted">{p.email}</div></td>
-                <td><div>{p.school ?? '—'}</div><div className="text-xs text-ink-muted">{p.programme} {p.study_year}</div></td>
+                <td className="p-4"><div className="flex items-center gap-2 font-semibold">{p.full_name || '—'}{accountOf(p) === 'general' && <span className="chip bg-sky-50 py-0.5 text-[11px] text-sky-800">Non-student</span>}</div><div className="text-xs text-ink-muted">{p.email}</div></td>
+                <td>{accountOf(p) === 'general'
+                  ? <><div>{p.occupation || '—'}</div><div className="text-xs text-ink-muted">{[p.work_status && WORK_STATUSES[p.work_status], p.city].filter(Boolean).join(' · ')}</div></>
+                  : <><div>{p.school ?? '—'}</div><div className="text-xs text-ink-muted">{p.programme} {p.study_year}</div></>}</td>
                 <td><div>{p.momo_number ?? '—'}</div><div className="text-xs text-ink-muted">{p.momo_provider}</div></td>
                 <td className="text-ink-muted">{ago(p.created_at)}</td>
                 <td><KycPill s={p.kyc_status} />{(p.kyc_status === 'verified' || p.kyc_status === 'rejected') && <EmailNote at={p.kyc_email_sent_at} />}</td>
@@ -218,13 +225,14 @@ function KycReview({ p, onClose, onDone, onEmailed }: { p: Profile | null; onClo
     try { const at = await admin.resendKycEmail(p.id); toast(`${p.kyc_status === 'verified' ? 'Verification' : 'Fix-it'} email sent to ${p.email}`); onEmailed(at) }
     catch (e: any) { toast(e.message, 'err') } finally { setSending(false) }
   }
+  const general = accountOf(p) === 'general'
   const nameMismatch = p.momo_name && p.full_name && p.momo_name.trim().toLowerCase() !== p.full_name.trim().toLowerCase()
   return (
     <Modal open={!!p} onClose={onClose} wide>
-      <div className="flex items-center gap-3"><h2 className="text-2xl font-semibold">{p.full_name}</h2><KycPill s={p.kyc_status} /></div>
+      <div className="flex flex-wrap items-center gap-3"><h2 className="text-2xl font-semibold">{p.full_name}</h2><KycPill s={p.kyc_status} /><span className={`chip ${general ? 'bg-sky-50 text-sky-800' : 'bg-brand-50 text-brand-700'}`}>{general ? 'Non-student' : 'Student'}</span></div>
       <p className="text-sm text-ink-muted">{p.email} · {p.phone}</p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {([['Selfie', img.selfie], ['ID card', img.id], ['Student card', img.student]] as const).map(([k, u]) => (
+        {(general ? [['Selfie', img.selfie], ['Ghana Card', img.id]] as const : [['Selfie', img.selfie], ['ID card', img.id], ['Student card', img.student]] as const).map(([k, u]) => (
           <div key={k}><div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-muted">{k}</div>
             <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-2xl border border-line bg-white">
               {u ? <a href={u} target="_blank" rel="noreferrer" className="h-full w-full"><img src={u} alt={k} className="h-full w-full object-contain" /></a> : <span className="text-sm text-ink-muted">Not uploaded</span>}
@@ -233,12 +241,16 @@ function KycReview({ p, onClose, onDone, onEmailed }: { p: Profile | null; onClo
         ))}
       </div>
       <div className="mt-5 grid gap-x-6 gap-y-2 rounded-2xl bg-white p-4 text-sm sm:grid-cols-2">
-        {[['School', p.school], ['Programme', `${p.programme ?? ''} ${p.study_year ?? ''}`], ['Student ID #', p.student_id_number], ['City', p.city], ['MoMo', `${p.momo_provider ?? ''} ${p.momo_number ?? ''}`], ['Name on MoMo', p.momo_name], ['Referral code', p.referral_code], ['Submitted', p.kyc_submitted_at ? ago(p.kyc_submitted_at) : '—']].map(([k, v]) => (
+        {[...(general ? [['Occupation', p.occupation], ['Work', p.work_status ? WORK_STATUSES[p.work_status] : null]] : [['School', p.school], ['Programme', `${p.programme ?? ''} ${p.study_year ?? ''}`], ['Student ID #', p.student_id_number]]),
+          ['Age', ageOf(p.date_of_birth) != null ? `${ageOf(p.date_of_birth)} (born ${new Date(p.date_of_birth + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })})` : null],
+          ['Gender', p.gender ? GENDERS[p.gender] : null], ['City', p.city], ['MoMo', `${p.momo_provider ?? ''} ${p.momo_number ?? ''}`], ['Name on MoMo', p.momo_name], ['Referral code', p.referral_code], ['Submitted', p.kyc_submitted_at ? ago(p.kyc_submitted_at) : '—']].map(([k, v]) => (
           <div key={k as string} className="flex justify-between gap-3 border-b border-line py-1"><span className="text-ink-muted">{k}</span><span className="text-right font-semibold">{v || '—'}</span></div>
         ))}
       </div>
       {nameMismatch && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">MoMo account name “{p.momo_name}” doesn’t match ID name “{p.full_name}”.</p>}
-      <div className="mt-4 rounded-2xl bg-sand p-3 text-xs text-ink-muted"><b>Checklist:</b> face in selfie matches ID photo · names match across ID, student card & MoMo · student card not expired · images aren’t screenshots of screens.</div>
+      <div className="mt-4 rounded-2xl bg-sand p-3 text-xs text-ink-muted"><b>Checklist:</b> {general
+        ? 'face in selfie matches the Ghana Card photo · name and date of birth match the Ghana Card · names match on MoMo · Ghana Card not expired · images aren’t screenshots of screens.'
+        : 'face in selfie matches ID photo · names match across ID, student card & MoMo · student card not expired · images aren’t screenshots of screens.'}</div>
       <textarea className="input mt-4" placeholder="Note to student (required if rejecting) — e.g. ‘Student ID is blurry, please retake’" value={note} onChange={(e) => setNote(e.target.value)} />
       {emailable && (
         <div className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4 ${p.kyc_email_sent_at ? 'bg-paper' : 'bg-clay-50'}`}>

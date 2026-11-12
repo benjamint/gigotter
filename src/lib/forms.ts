@@ -37,6 +37,8 @@ export interface GigTemplate {
   fields: FormField[]
   requirements: string[]
   blurb: string
+  /** gigs where people apply and are selected */
+  apply?: FormField[]
 }
 
 export const TEMPLATES: Record<GigType, GigTemplate> = {
@@ -54,7 +56,12 @@ export const TEMPLATES: Record<GigType, GigTemplate> = {
   },
   focus_group: {
     unit: 'session', pay: 'fixed', photo: 'optional', photoHint: 'A photo at the venue or a screenshot of the call',
-    blurb: 'Students take part in a discussion themselves. Usually one submission per student.',
+    blurb: 'People apply, you pick who fits, and those selected take part and confirm they attended.',
+    apply: [
+      f('Why would you like to take part?', 'long', { placeholder: 'A sentence or two' }),
+      f('Which days and times can you attend?', 'text', { placeholder: 'e.g. Saturday morning' }),
+      f('Have you taken part in a focus group before?', 'yes_no'),
+    ],
     requirements: ['Arrive 10 minutes early', 'Stay for the full session'],
     fields: [
       f('Date you attended', 'date'),

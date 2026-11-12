@@ -29,6 +29,12 @@ export interface Profile {
   momo_name: string | null
   referral_code: string | null
   show_in_feed?: boolean
+  /** 'student' (student card) or 'general' (Ghana Card + selfie only) */
+  account_type?: AccountType
+  date_of_birth?: string | null
+  gender?: Gender | null
+  occupation?: string | null
+  work_status?: WorkStatus | null
   /** QR code they first arrived through (set at sign-up) */
   signup_source?: string | null
   created_at: string
@@ -54,6 +60,12 @@ export interface Listing {
   proof_fields: string[]
   form_schema: FormField[]
   photo_rule: PhotoRule
+  /** who can take part */
+  audience?: Audience
+  /** open = first come; apply = people apply and you select */
+  join_mode?: JoinMode
+  application_schema?: FormField[]
+  eligibility?: Eligibility
   photo_hint: string | null
   expires_at: string
   status: ListingStatus
@@ -192,6 +204,27 @@ export interface Payment {
   id: string; receipt_no: string; student_id: string; listing_id: string | null
   amount: number; currency: string; method: string | null; momo_number: string | null; momo_name: string | null
   reference: string | null; note: string | null; items: number; paid_at: string; email_sent_at: string | null; created_at: string
+}
+
+export type AccountType = 'student' | 'general'
+export type Gender = 'female' | 'male' | 'prefer_not'
+export type WorkStatus = 'student' | 'employed' | 'self_employed' | 'unemployed' | 'other'
+export type Audience = 'students' | 'general' | 'everyone'
+export type JoinMode = 'open' | 'apply'
+/** What a gig is looking for (shown to applicants, used to filter applicants). All optional. */
+export interface Eligibility { min_age?: number | null; max_age?: number | null; genders?: Gender[]; work_statuses?: WorkStatus[] }
+export type ApplicationStatus = 'applied' | 'shortlisted' | 'accepted' | 'declined' | 'withdrawn'
+export interface Application {
+  id: string; listing_id: string; applicant_id: string; answers: Record<string, string>
+  status: ApplicationStatus; admin_note: string | null; created_at: string; decided_at: string | null
+  applicant?: Profile; listing?: Pick<Listing, 'id' | 'title' | 'currency' | 'expires_at' | 'cover_url' | 'type'>
+}
+export const GENDERS: Record<Gender, string> = { female: 'Female', male: 'Male', prefer_not: 'Prefer not to say' }
+export const WORK_STATUSES: Record<WorkStatus, string> = { student: 'Student', employed: 'Employed', self_employed: 'Self-employed / business owner', unemployed: 'Not working right now', other: 'Other' }
+export const AUDIENCES: Record<Audience, { label: string; short: string }> = {
+  students: { label: 'Students only', short: 'Students only' },
+  general: { label: 'Non-students only', short: 'Non-students only' },
+  everyone: { label: 'Everyone', short: 'Open to everyone' },
 }
 
 export interface PayoutItem { name: string; school: string | null; amount: number; currency: string; gig: string; units: number; paid_at: string }

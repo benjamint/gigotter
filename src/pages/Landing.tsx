@@ -46,6 +46,9 @@ export default function Landing() {
             <Magnetic><Link to={cta} className="btn-primary px-7 py-3.5">Start earning <ArrowRight className="h-4 w-4" /></Link></Magnetic>
             <Link to="/gigs" className="btn-ghost px-7 py-3.5">Browse open gigs</Link>
           </motion.div>
+          {!user && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }} className="mt-4 text-sm text-ink-muted">
+            Not a student? <Link to="/signup?type=general" className="link-u font-medium text-ink">You can join too</Link>
+          </motion.p>}
           <motion.div initial="h" animate="s" variants={{ s: { transition: { staggerChildren: 0.08, delayChildren: 0.8 } } }} className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink-muted">
             {[[ShieldCheck, 'ID-verified students'], [Wallet, 'Paid to MoMo'], [BadgeCheck, 'No fees, ever']].map(([I, t]: any) => (
               <motion.span key={t} variants={{ h: { opacity: 0, y: 6 }, s: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }} className="flex items-center gap-2"><I className="h-4 w-4 text-brand-600" />{t}</motion.span>
@@ -193,7 +196,8 @@ function Calculator() {
 }
 
 const QA = [
-  ['Who can join?', 'Any student currently enrolled at a university, polytechnic or college. You’ll need a valid student ID and a national ID.'],
+  ['Who can join?', 'Gigotter is built for students at universities, polytechnics and colleges: you’ll verify with your student ID, a national ID and a selfie. Not a student? You can join too and verify with your Ghana Card and a selfie, then take part in gigs that are open to everyone.'],
+  ['How do gigs that need an application work?', 'Some gigs, like focus groups, look for particular people. You apply with a few answers, the Gigotter team selects who takes part, and you’re paid once you’ve taken part.'],
   ['Why do you need my ID and a selfie?', 'We pay out real money and represent real businesses, so every account must belong to a real, verified student. Your documents are stored privately and seen only by our verification team.'],
   ['When do I get paid?', 'Work is usually reviewed within 24 hours. Approved earnings are sent to your mobile money account in the weekly payout.'],
   ['Can I take more than one gig?', 'Yes — take on as many as you can manage. If you can’t complete one, withdraw from your dashboard so another student can take the spot.'],

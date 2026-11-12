@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Copy, Receipt, ShieldAlert, Sparkles } from 'lucide-react'
 import { Link, Navigate } from 'react-router-dom'
 import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from '../components/ui'
-import { myClaims, myPayments, updateMyProfile } from '../lib/api'
+import { myApplications, myClaims, myPayments, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'
 import { ago, coverFor, money, timeLeft, plural } from '../lib/format'
 import { subTitle } from '../lib/forms'
@@ -13,6 +13,7 @@ export default function Me() {
   const toast = useToast()
   const { data, loading: l2 } = useAsync(() => (user ? myClaims() : Promise.resolve([])), [user?.id])
   const pays = useAsync(() => (user ? myPayments() : Promise.resolve([])), [user?.id])
+  const apps = useAsync(() => (user ? myApplications() : Promise.resolve([])), [user?.id])
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login?next=/me" replace />
   if (!profile || l2) return <PageLoader />
@@ -98,6 +99,22 @@ export default function Me() {
                 <div className="text-right"><div className="font-semibold">{money(s.amount, s.cur)}</div><SubPill s={s.status} /></div>
               </div>
             ))}
+          </div>
+        </>
+      )}
+      {(apps.data ?? []).filter((a) => a.status !== 'withdrawn').length > 0 && (
+        <>
+          <h2 className="mt-12 text-3xl font-semibold tracking-tightest">Your <span className="em">applications</span></h2>
+          <div className="card mt-5 divide-y divide-line overflow-hidden">
+            {apps.data!.filter((a) => a.status !== 'withdrawn').map((a) => {
+              const st = ({ applied: ['Sent', 'bg-sand text-ink-soft'], shortlisted: ['Shortlisted', 'bg-amber-50 text-amber-800'], accepted: ['Selected', 'bg-brand-50 text-brand-700'], declined: ['Not selected', 'bg-sand text-ink-muted'], withdrawn: ['Withdrawn', 'bg-sand'] } as const)[a.status]
+              return (
+                <Link key={a.id} to={`/gigs/${a.listing_id}`} className="flex items-center gap-4 p-4 hover:bg-paper">
+                  <div className="min-w-0 flex-1"><div className="truncate font-semibold">{a.listing?.title ?? 'Gig'}</div><div className="text-xs text-ink-muted">Applied {ago(a.created_at)}{a.status === 'accepted' ? ' · open it from “Your gigs” above' : ''}</div></div>
+                  <span className={`chip ${st[1]}`}>{st[0]}</span>
+                </Link>
+              )
+            })}
           </div>
         </>
       )}

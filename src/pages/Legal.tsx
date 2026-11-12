@@ -62,12 +62,15 @@ export function Privacy() {
             <p><b className="font-medium text-ink">When you create an account:</b> your name, email address and password (stored only in encrypted form).</p>
             <p><b className="font-medium text-ink">When you get verified:</b></p>
             <UL items={[
-              'phone number, city, school, programme, year of study and student ID number;',
+              'phone number, city, date of birth and gender;',
+              'if you’re a student: your school, programme, year of study and student ID number; if you’re not: your occupation and work status;',
               'a photo of a government ID (for example a Ghana Card, NIN slip, passport or voter ID);',
-              'a photo of your student ID card;',
+              'if you’re a student, a photo of your student ID card;',
               'a selfie, which we compare with your ID photo to confirm it is really you;',
               'your mobile money provider, number and the name on that account, so we can pay you.',
             ]} />
+            <p><b className="font-medium text-ink">Why we ask for age, gender and occupation:</b> some gigs look for particular people (for example, a focus group of working women aged 25–35). We use these details to show you suitable gigs and to choose who takes part. They are seen only by the Gigotter team, never published.</p>
+            <p><b className="font-medium text-ink">When you apply for a gig:</b> your answers to that gig’s application questions, which the Gigotter team reviews together with your age, gender and school or occupation to decide who is selected.</p>
             <p><b className="font-medium text-ink">When you do gigs:</b> the gigs you join, the work you submit (such as a business name, the owner’s name and phone number, location and a photo), and your earnings and payout history.</p>
             <p><b className="font-medium text-ink">When a business sends us a brief:</b> the contact name, email, company and details of the request.</p>
             <p><b className="font-medium text-ink">Automatically:</b> basic technical information needed to run the site, such as your browser type and pages loaded, and an encrypted session so you stay logged in. If you open Gigotter by scanning one of our QR codes, we count the scan anonymously (the time, whether it was a phone or computer, and a random ID stored in your browser so the same device isn’t counted twice). We keep a note of which code you used for 30 days so we know which posters and flyers work; if you sign up in that time, it’s recorded on your account. We never record your IP address or link scans to anyone who hasn’t signed up. We do not use advertising trackers.</p>

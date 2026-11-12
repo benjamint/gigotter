@@ -21,8 +21,8 @@ export function toSchema(rows: Row[]): FormField[] {
     return out
   })
 }
-export function schemaProblem(rows: Row[], photo: PhotoRule): string | null {
-  if (!rows.length && photo === 'none') return 'Add at least one question or ask for a photo'
+export function schemaProblem(rows: Row[], photo: PhotoRule, what = 'question'): string | null {
+  if (!rows.length && photo === 'none') return what === 'question' ? 'Add at least one question or ask for a photo' : `Add at least one ${what}`
   if (rows.length > 30) return 'Keep it to 30 questions or fewer'
   for (const r of rows) {
     if (!r.label.trim()) return 'Every question needs a label'
@@ -34,9 +34,11 @@ export function schemaProblem(rows: Row[], photo: PhotoRule): string | null {
 
 const PHOTO: Record<PhotoRule, string> = { required: 'Required', optional: 'Optional', none: 'No photo' }
 
-export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint, setPhotoHint, unit, hasResponses }: {
+export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint, setPhotoHint, unit, hasResponses, heading, intro, noPhoto }: {
   rows: Row[]; setRows: (r: Row[]) => void; photo: PhotoRule; setPhoto: (p: PhotoRule) => void
   photoHint: string; setPhotoHint: (s: string) => void; unit: string; hasResponses: boolean
+  /** reuse for other forms (e.g. application questions) */
+  heading?: string; intro?: string; noPhoto?: boolean
 }) {
   const [preview, setPreview] = useState(false)
   const [pv, setPv] = useState<Record<string, string>>({})
@@ -47,8 +49,8 @@ export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint,
     <div className="rounded-3xl border border-line bg-white p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="font-semibold">What students submit for each {unit || 'unit'}</div>
-          <p className="text-sm text-ink-muted">Ask exactly what this gig needs. Drag to reorder.</p>
+          <div className="font-semibold">{heading ?? `What people submit for each ${unit || 'unit'}`}</div>
+          <p className="text-sm text-ink-muted">{intro ?? 'Ask exactly what this gig needs. Drag to reorder.'}</p>
         </div>
         <button type="button" onClick={() => setPreview(!preview)} className="btn-ghost btn-sm"><Eye className="h-4 w-4" />{preview ? 'Edit questions' : 'Preview'}</button>
       </div>
@@ -64,7 +66,7 @@ export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint,
               {f.hint && <p className="mt-1.5 text-xs text-ink-muted">{f.hint}</p>}
             </div>
           ))}
-          {photo !== 'none' && <div className="sm:col-span-2 rounded-2xl border border-dashed border-line bg-white p-4 text-sm text-ink-muted">Photo proof{photo === 'optional' ? ' (optional)' : ''} — {photoHint || 'a clear photo or screenshot'}</div>}
+          {!noPhoto && photo !== 'none' && <div className="sm:col-span-2 rounded-2xl border border-dashed border-line bg-white p-4 text-sm text-ink-muted">Photo proof{photo === 'optional' ? ' (optional)' : ''} — {photoHint || 'a clear photo or screenshot'}</div>}
         </div>
       ) : (
         <>
@@ -103,7 +105,7 @@ export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint,
         </>
       )}
 
-      <motion.div layout className="mt-5 grid gap-3 border-t border-line pt-4 sm:grid-cols-[auto_1fr] sm:items-center">
+      {!noPhoto && <motion.div layout className="mt-5 grid gap-3 border-t border-line pt-4 sm:grid-cols-[auto_1fr] sm:items-center">
         <div className="flex gap-1.5" role="radiogroup" aria-label="Photo proof">
           <span className="mr-1 self-center text-sm font-medium">Photo</span>
           {(Object.keys(PHOTO) as PhotoRule[]).map((p) => (
@@ -111,7 +113,7 @@ export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint,
           ))}
         </div>
         {photo !== 'none' && <input className="input py-2.5 text-sm" value={photoHint} onChange={(e) => setPhotoHint(e.target.value)} placeholder="What should the photo show? e.g. the shopfront" aria-label="Photo instructions" />}
-      </motion.div>
+      </motion.div>}
     </div>
   )
 }

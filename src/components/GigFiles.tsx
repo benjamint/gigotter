@@ -76,7 +76,7 @@ export function AttachmentsEditor({ saved, setSaved, pending, setPending }: {
     <div className="flex shrink-0 rounded-full border border-line bg-white p-0.5 text-xs font-medium" role="radiogroup" aria-label="Who can see this file">
       {(['public', 'joined'] as const).map((x) => (
         <button type="button" role="radio" aria-checked={v === x} key={x} onClick={() => onChange(x)}
-          className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 transition ${v === x ? 'bg-ink text-white' : 'text-ink-muted hover:text-ink'}`}>
+          className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 transition ${v === x ? 'bg-brand-700 text-white' : 'text-ink-muted hover:text-ink'}`}>
           {x === 'public' ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}{x === 'public' ? 'Everyone' : 'Joined only'}
         </button>
       ))}

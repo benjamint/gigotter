@@ -91,7 +91,7 @@ export default function Verify() {
   return (
     <div ref={topRef} className="mx-auto max-w-2xl px-4 py-10">
       <div className="eyebrow">Verification</div>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tightest md:text-5xl">Verify your <span className="em text-brand-600">identity</span></h1>
+      <h1 className="mt-4 text-[clamp(2.2rem,5vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.04em]">Verify your <span className="em">identity</span></h1>
       <p className="mt-3 flex items-center gap-2 text-sm text-ink-muted"><Lock className="h-4 w-4" />Your documents are encrypted and seen only by the Gigotter verification team.</p>
       {profile.kyc_status === 'rejected' && profile.kyc_note && (
         <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"><b className="font-medium">Please update your details:</b> {profile.kyc_note}</div>

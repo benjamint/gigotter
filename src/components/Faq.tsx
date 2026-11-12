@@ -17,7 +17,7 @@ export default function FAQ({ items, title = 'Questions, answered.', body = 'Can
             <button onClick={() => setO(o === i ? null : i)} aria-expanded={o === i} className="group flex w-full items-center justify-between gap-6 py-6 text-left">
               <span className="text-[17px] font-medium transition-transform duration-300 group-hover:translate-x-1">{q}</span>
               <motion.span animate={{ rotate: o === i ? 135 : 0 }} transition={{ duration: 0.4, ease: EASE }}
-                className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-colors duration-300 ${o === i ? 'border-ink bg-ink text-white' : 'border-line text-ink-muted group-hover:border-ink/40'}`}>
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-colors duration-300 ${o === i ? 'border-brand-700 bg-brand-700 text-white' : 'border-line text-ink-muted group-hover:border-ink/40'}`}>
                 <Plus className="h-4 w-4" />
               </motion.span>
             </button>

@@ -76,7 +76,7 @@ export default function BriefForm({ preset }: { preset?: BriefPreset }) {
           <div className="flex flex-wrap gap-2">
             {(Object.keys(GIG_TYPES) as GigType[]).map((k) => (
               <button type="button" key={k} onClick={() => setF({ ...f, work_type: f.work_type === k ? '' : k })}
-                className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${f.work_type === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink/40'}`}>{GIG_TYPES[k].label}</button>
+                className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${f.work_type === k ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white hover:border-ink/40'}`}>{GIG_TYPES[k].label}</button>
             ))}
           </div>
         </div>

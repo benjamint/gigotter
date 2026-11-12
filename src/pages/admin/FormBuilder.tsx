@@ -109,7 +109,7 @@ export default function FormBuilder({ rows, setRows, photo, setPhoto, photoHint,
         <div className="flex gap-1.5" role="radiogroup" aria-label="Photo proof">
           <span className="mr-1 self-center text-sm font-medium">Photo</span>
           {(Object.keys(PHOTO) as PhotoRule[]).map((p) => (
-            <button type="button" role="radio" aria-checked={photo === p} key={p} onClick={() => setPhoto(p)} className={`rounded-full border px-3 py-1.5 text-sm font-medium ${photo === p ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{PHOTO[p]}</button>
+            <button type="button" role="radio" aria-checked={photo === p} key={p} onClick={() => setPhoto(p)} className={`rounded-full border px-3 py-1.5 text-sm font-medium ${photo === p ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white'}`}>{PHOTO[p]}</button>
           ))}
         </div>
         {photo !== 'none' && <input className="input py-2.5 text-sm" value={photoHint} onChange={(e) => setPhotoHint(e.target.value)} placeholder="What should the photo show? e.g. the shopfront" aria-label="Photo instructions" />}

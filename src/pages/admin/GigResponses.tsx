@@ -93,7 +93,7 @@ export default function GigResponses() {
           <Photo src={coverFor(l)} alt="" className="h-14 w-14 shrink-0 rounded-xl" />
           <div>
             <div className="eyebrow">Responses</div>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tightest md:text-3xl">{l.title}</h1>
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] md:text-[2rem]">{l.title}</h1>
             <div className="mt-1 text-sm text-ink-muted">{l.client_name && `${l.client_name} · `}{payLine(l)} · {t.expired ? 'Closed' : t.label}</div>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function GigResponses() {
         <div className="mt-6 flex gap-1 border-b border-line">
           {([['applicants', 'Applicants'], ['work', 'Work & attendance']] as const).map(([k, t]) => (
             <button key={k} onClick={() => setView(k)} className={`relative px-4 pb-3 pt-1 text-sm ${view === k ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'}`}>
-              {t}{view === k && <motion.span layoutId="resp-view" className="absolute inset-x-0 -bottom-px h-0.5 bg-ink" />}
+              {t}{view === k && <motion.span layoutId="resp-view" className="absolute inset-x-0 -bottom-px h-0.5 bg-brand-700" />}
             </button>
           ))}
         </div>
@@ -147,7 +147,7 @@ export default function GigResponses() {
             <div className="flex flex-wrap gap-2">
               {STATUSES.map((s) => {
                 const n = s === 'all' ? d.subs.length : count(s)
-                return <button key={s} onClick={() => setStatus(s)} className={`rounded-full border px-3 py-1.5 text-sm capitalize ${status === s ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink-soft hover:border-ink/30'}`}>{s === 'pending' ? 'To review' : s} ({n})</button>
+                return <button key={s} onClick={() => setStatus(s)} className={`rounded-full border px-3 py-1.5 text-sm capitalize ${status === s ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white text-ink-soft hover:border-ink/30'}`}>{s === 'pending' ? 'To review' : s} ({n})</button>
               })}
             </div>
             {sessionsOf(l).length > 0 && (

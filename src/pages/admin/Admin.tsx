@@ -45,14 +45,14 @@ export default function Admin() {
   } : {}
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 pb-10 pt-10 sm:px-6 md:pt-14 lg:px-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><div className="eyebrow">Admin</div><h1 className="mt-2 text-4xl font-semibold tracking-tightest">Control <span className="em text-brand-600">room</span></h1></div>
+        <div><div className="eyebrow">Admin</div><h1 className="mt-4 text-[clamp(2.2rem,5vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.04em]">Control <span className="em">room</span></h1></div>
       </div>
       <div className="-mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-2">
         {TABS.map((t) => (
-          <button key={t.k} onClick={() => setTab(t.k)} className={`relative flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${tab === t.k ? 'border-ink text-white' : 'border-line bg-white hover:border-ink'}`}>
-            {tab === t.k && <motion.span layoutId="admin-tab" className="absolute inset-0 rounded-full bg-ink" />}
+          <button key={t.k} onClick={() => setTab(t.k)} className={`relative flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium ${tab === t.k ? 'border-brand-700 text-white' : 'border-line bg-white hover:border-ink'}`}>
+            {tab === t.k && <motion.span layoutId="admin-tab" className="absolute inset-0 rounded-full bg-brand-700" />}
             <t.i className="relative h-4 w-4" /><span className="relative">{t.l}</span>
             {!!badge[t.k] && <span className="relative grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-brand-600 px-1 text-[11px] text-white">{badge[t.k]}</span>}
           </button>
@@ -98,18 +98,18 @@ function Overview({ d, go }: { d: any; go: (t: Tab) => void }) {
     ...paid.filter((s) => !s.payment_id).map((s) => ({ currency: s.listing?.currency ?? 'GHS', amount: Number(s.amount ?? 0) }))])
 
   const tiles = [
-    { k: 'Total sign-ups', v: p.length, sub: `+${week} this week`, t: 'students' as Tab, bg: 'bg-brand-50' },
-    { k: 'Awaiting verification', v: p.filter((x) => x.kyc_status === 'pending').length, sub: 'review now', t: 'students' as Tab },
-    { k: 'Verified students', v: p.filter((x) => x.kyc_status === 'verified').length, sub: `${Math.round((p.filter((x) => x.kyc_status === 'verified').length / Math.max(p.length, 1)) * 100)}% of sign-ups`, t: 'students' as Tab },
-    { k: 'Live gigs', v: ls.filter((l) => l.status === 'live' && !timeLeft(l.expires_at).expired).length, sub: `${ls.length} total`, t: 'gigs' as Tab },
-    { k: 'Work to review', v: subs.filter((s) => s.status === 'pending').length, sub: `${subs.length} submitted all-time`, t: 'work' as Tab },
-    { k: 'Units approved', v: owed.length + paid.length, sub: `${paid.length} paid`, t: 'work' as Tab },
+    { k: 'Total sign-ups', v: p.length, sub: `+${week} this week`, t: 'students' as Tab, bg: 'bg-[#c9d6c8]' },
+    { k: 'Awaiting verification', v: p.filter((x) => x.kyc_status === 'pending').length, sub: 'review now', t: 'students' as Tab, bg: 'bg-[#efdcc6]' },
+    { k: 'Verified students', v: p.filter((x) => x.kyc_status === 'verified').length, sub: `${Math.round((p.filter((x) => x.kyc_status === 'verified').length / Math.max(p.length, 1)) * 100)}% of sign-ups`, t: 'students' as Tab, bg: 'bg-brand-50' },
+    { k: 'Live gigs', v: ls.filter((l) => l.status === 'live' && !timeLeft(l.expires_at).expired).length, sub: `${ls.length} total`, t: 'gigs' as Tab, bg: 'bg-[#d6e4d9]' },
+    { k: 'Work to review', v: subs.filter((s) => s.status === 'pending').length, sub: `${subs.length} submitted all-time`, t: 'work' as Tab, bg: 'bg-[#dce8df]' },
+    { k: 'Units approved', v: owed.length + paid.length, sub: `${paid.length} paid`, t: 'work' as Tab, bg: 'bg-brand-50' },
   ]
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tiles.map((x, i) => (
-          <motion.button key={x.k} onClick={() => go(x.t)} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className={`card p-5 text-left transition hover:-translate-y-1 ${x.bg ?? ''}`}>
+          <motion.button key={x.k} onClick={() => go(x.t)} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className={`rounded-3xl p-6 text-left transition duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 ${x.bg ?? ''}`}>
             <div className="text-sm font-medium text-ink-muted">{x.k}</div>
             <div className="figure mt-1 text-5xl leading-none"><CountUp to={x.v} /></div>
             <div className="mt-1 text-xs text-ink-muted">{x.sub}</div>
@@ -166,7 +166,7 @@ function Students({ profiles, reload }: { profiles: Profile[]; reload: () => voi
         </select>
         <div className="flex flex-wrap gap-2">
           {(['pending', 'verified', 'rejected', 'unverified', 'all'] as const).map((s) => (
-            <button key={s} onClick={() => setF(s)} className={`rounded-full border px-4 py-2 text-sm font-medium capitalize ${f === s ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{s} ({s === 'all' ? profiles.length : profiles.filter((p) => p.kyc_status === s).length})</button>
+            <button key={s} onClick={() => setF(s)} className={`rounded-full border px-4 py-2 text-sm font-medium capitalize ${f === s ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white'}`}>{s} ({s === 'all' ? profiles.length : profiles.filter((p) => p.kyc_status === s).length})</button>
           ))}
         </div>
       </div>
@@ -176,7 +176,7 @@ function Students({ profiles, reload }: { profiles: Profile[]; reload: () => voi
           <tbody className="divide-y divide-line">
             {list.map((p) => (
               <tr key={p.id} className="hover:bg-paper">
-                <td className="p-4"><div className="flex items-center gap-2 font-semibold">{p.full_name || '—'}{accountOf(p) === 'general' && <span className="chip bg-sky-50 py-0.5 text-[11px] text-sky-800">Non-student</span>}</div><div className="text-xs text-ink-muted">{p.email}</div></td>
+                <td className="p-4"><div className="flex items-center gap-2 font-semibold">{p.full_name || '—'}{accountOf(p) === 'general' && <span className="chip bg-[#e8eedd] py-0.5 text-[11px] text-[#46602c]">Non-student</span>}</div><div className="text-xs text-ink-muted">{p.email}</div></td>
                 <td>{accountOf(p) === 'general'
                   ? <><div>{p.occupation || '—'}</div><div className="text-xs text-ink-muted">{[p.work_status && WORK_STATUSES[p.work_status], p.city].filter(Boolean).join(' · ')}</div></>
                   : <><div>{p.school ?? '—'}</div><div className="text-xs text-ink-muted">{p.programme} {p.study_year}</div></>}</td>
@@ -229,7 +229,7 @@ function KycReview({ p, onClose, onDone, onEmailed }: { p: Profile | null; onClo
   const nameMismatch = p.momo_name && p.full_name && p.momo_name.trim().toLowerCase() !== p.full_name.trim().toLowerCase()
   return (
     <Modal open={!!p} onClose={onClose} wide>
-      <div className="flex flex-wrap items-center gap-3"><h2 className="text-2xl font-semibold">{p.full_name}</h2><KycPill s={p.kyc_status} /><span className={`chip ${general ? 'bg-sky-50 text-sky-800' : 'bg-brand-50 text-brand-700'}`}>{general ? 'Non-student' : 'Student'}</span></div>
+      <div className="flex flex-wrap items-center gap-3"><h2 className="text-2xl font-semibold">{p.full_name}</h2><KycPill s={p.kyc_status} /><span className={`chip ${general ? 'bg-[#e8eedd] text-[#46602c]' : 'bg-brand-50 text-brand-700'}`}>{general ? 'Non-student' : 'Student'}</span></div>
       <p className="text-sm text-ink-muted">{p.email} · {p.phone}</p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {(general ? [['Selfie', img.selfie], ['Ghana Card', img.id]] as const : [['Selfie', img.selfie], ['ID card', img.id], ['Student card', img.student]] as const).map(([k, u]) => (
@@ -344,7 +344,7 @@ function Work({ subs, reload }: { subs: Submission[]; reload: () => void }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {(['pending', 'approved', 'paid', 'rejected'] as const).map((s) => (
-            <button key={s} onClick={() => setF(s)} className={`rounded-full border px-4 py-2 text-sm font-medium capitalize ${f === s ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{s} ({subs.filter((x) => x.status === s).length})</button>
+            <button key={s} onClick={() => setF(s)} className={`rounded-full border px-4 py-2 text-sm font-medium capitalize ${f === s ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white'}`}>{s} ({subs.filter((x) => x.status === s).length})</button>
           ))}
         </div>
         <div className="flex gap-2">

@@ -55,7 +55,7 @@ export default function Applicants({ listing, onChanged }: { listing: Listing; o
         <div className="flex flex-wrap gap-2">
           {TABS.map((t) => {
             const n = t.k === 'all' ? apps.length : apps.filter((a) => a.status === t.k).length
-            return <button key={t.k} onClick={() => { setTab(t.k); setPicked([]) }} className={`rounded-full border px-3 py-1.5 text-sm ${tab === t.k ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink-soft hover:border-ink/30'}`}>{t.label} ({n})</button>
+            return <button key={t.k} onClick={() => { setTab(t.k); setPicked([]) }} className={`rounded-full border px-3 py-1.5 text-sm ${tab === t.k ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white text-ink-soft hover:border-ink/30'}`}>{t.label} ({n})</button>
           })}
         </div>
         <div className="text-sm text-ink-muted"><b className="text-ink">{selected}</b> of {listing.slots} places filled</div>
@@ -99,7 +99,7 @@ function ApplicantCard({ a, listing, qs, picked, busy, onPick, onDecide }: {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg font-semibold">{p?.full_name || 'Unknown'}</h3>
             <span className={`chip ${STYLE[a.status]}`}>{LABEL[a.status]}</span>
-            <span className={`chip ${general ? 'bg-sky-50 text-sky-800' : 'bg-white ring-1 ring-line'}`}>{general ? 'Non-student' : 'Student'}</span>
+            <span className={`chip ${general ? 'bg-[#e8eedd] text-[#46602c]' : 'bg-white ring-1 ring-line'}`}>{general ? 'Non-student' : 'Student'}</span>
             {misses.length > 0 && <span className="chip bg-amber-50 text-amber-800">Outside criteria: {misses.join(', ')}</span>}
           </div>
           <p className="mt-0.5 text-sm text-ink-muted">{facts.join(' · ') || '—'} · applied {ago(a.created_at)}</p>

@@ -9,7 +9,7 @@ type Vals = Record<string, string>
 export function FieldInput({ f, form, setForm }: { f: FormField; form: Vals; setForm: (v: Vals) => void }) {
   const v = form[f.key] ?? ''
   const set = (x: string) => setForm({ ...form, [f.key]: x })
-  const pill = (on: boolean) => `rounded-full border px-4 py-2 text-sm font-medium transition ${on ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink/40'}`
+  const pill = (on: boolean) => `rounded-full border px-4 py-2 text-sm font-medium transition ${on ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white hover:border-ink/40'}`
 
   switch (f.type) {
     case 'address':

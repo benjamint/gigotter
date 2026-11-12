@@ -100,7 +100,7 @@ export default function MyGig() {
           <Photo src={coverFor(l)} alt="" className="h-16 w-16 shrink-0 rounded-2xl" />
           <div className="min-w-0 flex-1">
             {l.client_name && <div className="text-xs font-medium text-ink-muted">{l.client_name}</div>}
-            <h1 className="text-2xl font-semibold leading-tight tracking-tightest md:text-3xl">{l.title}</h1>
+            <h1 className="text-2xl font-semibold leading-tight tracking-[-0.03em] md:text-[2rem]">{l.title}</h1>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
               <span className="flex items-center gap-1.5"><Wallet className="h-4 w-4" />{payLine(l)}</span>
               <span className={`flex items-center gap-1.5 ${t.urgent && !t.expired ? 'text-clay-600' : ''}`}><Calendar className="h-4 w-4" />{t.expired ? 'Closed' : `Closes in ${t.label.replace(' left', '')}`}</span>
@@ -136,8 +136,8 @@ export default function MyGig() {
         {tabs.map((x) => (
           <button key={x.k} onClick={() => setTab(x.k)} className={`relative flex shrink-0 items-center gap-2 px-4 pb-3 pt-1 text-sm transition ${tab === x.k ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'}`}>
             <x.icon className="h-4 w-4" />{x.label}
-            {x.count != null && <span className={`grid h-5 min-w-[1.25rem] place-items-center rounded-full px-1.5 text-[11px] font-semibold ${tab === x.k ? 'bg-ink text-white' : 'bg-sand text-ink-soft'}`}>{x.count}</span>}
-            {tab === x.k && <motion.span layoutId="gig-tab" className="absolute inset-x-0 -bottom-px h-0.5 bg-ink" />}
+            {x.count != null && <span className={`grid h-5 min-w-[1.25rem] place-items-center rounded-full px-1.5 text-[11px] font-semibold ${tab === x.k ? 'bg-brand-700 text-white' : 'bg-sand text-ink-soft'}`}>{x.count}</span>}
+            {tab === x.k && <motion.span layoutId="gig-tab" className="absolute inset-x-0 -bottom-px h-0.5 bg-brand-700" />}
           </button>
         ))}
       </div>
@@ -231,7 +231,7 @@ function Submitted({ subs, schema, currency, unit, onLog }: { subs: Submission[]
         {FILTERS.map((x) => {
           const n = x === 'all' ? subs.length : subs.filter((s) => s.status === x).length
           if (x !== 'all' && !n) return null
-          return <button key={x} onClick={() => setF(x)} className={`rounded-full border px-3 py-1.5 text-sm capitalize ${f === x ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink-soft hover:border-ink/30'}`}>{x} ({n})</button>
+          return <button key={x} onClick={() => setF(x)} className={`rounded-full border px-3 py-1.5 text-sm capitalize ${f === x ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white text-ink-soft hover:border-ink/30'}`}>{x} ({n})</button>
         })}
       </div>
       <ul className="mt-5 divide-y divide-line border-y border-line">
@@ -279,7 +279,7 @@ const STATE: Record<DayState, { label: string; cls: string; dot: string }> = {
   redo: { label: 'Needs a redo today', cls: 'bg-red-50 text-red-700', dot: 'bg-red-500' },
   missed: { label: 'Missed', cls: 'bg-sand text-ink-muted', dot: 'bg-ink-muted/40' },
   pending: { label: 'In review', cls: 'bg-amber-50 text-amber-800', dot: 'bg-amber-500' },
-  approved: { label: 'Approved', cls: 'bg-sky-50 text-sky-800', dot: 'bg-sky-500' },
+  approved: { label: 'Approved', cls: 'bg-[#e8eedd] text-[#46602c]', dot: 'bg-[#7d9a55]' },
   paid: { label: 'Paid', cls: 'bg-brand-50 text-brand-700', dot: 'bg-brand-600' },
   rejected: { label: 'Not accepted', cls: 'bg-red-50 text-red-700', dot: 'bg-red-500' },
 }
@@ -310,10 +310,10 @@ function CheckIns({ days, subs, active, perDay, schema, photo, photoHint, form, 
           const locked = state === 'upcoming'
           return (
             <li key={i} className="relative pl-11">
-              <span className={`absolute left-0 top-4 grid h-8 w-8 place-items-center rounded-full ring-4 ring-white ${isOpen ? 'bg-brand-600 text-white' : ['pending', 'approved', 'paid'].includes(state) ? 'bg-brand-50 text-brand-700' : 'bg-sand text-ink-muted'}`}>
+              <span className={`absolute left-0 top-4 grid h-8 w-8 place-items-center rounded-full ring-4 ring-white ${isOpen ? 'bg-white text-brand-700 ring-2 ring-brand-700' : ['pending', 'approved', 'paid'].includes(state) ? 'bg-[#1f7a4d] text-white' : 'bg-sand text-ink-muted'}`}>
                 {locked ? <Lock className="h-3.5 w-3.5" /> : ['pending', 'approved', 'paid'].includes(state) ? <Check className="h-4 w-4" /> : state === 'missed' ? <X className="h-4 w-4" /> : <span className="text-xs font-semibold">{i + 1}</span>}
               </span>
-              <div className={`rounded-2xl border p-4 sm:p-5 ${isOpen ? 'border-brand-200 bg-white shadow-soft' : 'border-line bg-paper/60'} ${locked ? 'opacity-70' : ''}`}>
+              <div className={`rounded-2xl border p-4 sm:p-5 ${isOpen ? 'border-brand-700 bg-white shadow-[0_0_0_4px_rgba(28,70,53,.08)]' : 'border-line bg-sand/60'} ${locked ? 'opacity-70' : ''}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="font-semibold">{dayLabel(d, i)} <span className="font-normal text-ink-muted">· {formatDay(d.date)}{timeRange(d) ? ` · ${timeRange(d)}` : ''}</span></div>

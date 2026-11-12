@@ -51,7 +51,7 @@ const KYC_STYLE: Record<KycStatus, [string, string]> = {
 export const KycPill = ({ s }: { s: KycStatus }) => <span className={`chip ${KYC_STYLE[s][0]}`}><Dot />{KYC_STYLE[s][1]}</span>
 
 const SUB_STYLE: Record<SubmissionStatus, string> = {
-  pending: 'bg-amber-50 text-amber-800', approved: 'bg-sky-50 text-sky-800',
+  pending: 'bg-amber-50 text-amber-800', approved: 'bg-[#e8eedd] text-[#46602c]',
   rejected: 'bg-red-50 text-red-700', paid: 'bg-brand-50 text-brand-700',
 }
 export const SubPill = ({ s }: { s: SubmissionStatus }) => <span className={`chip capitalize ${SUB_STYLE[s]}`}><Dot />{s}</span>

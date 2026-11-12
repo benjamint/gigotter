@@ -125,7 +125,7 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
         <label className="label">Kind of work</label>
         <div className="flex flex-wrap gap-2">
           {Object.entries(GIG_TYPES).map(([k, v]) => (
-            <button type="button" key={k} onClick={() => pickType(k as GigType)} className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${l.type === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink/40'}`}>{v.label}</button>
+            <button type="button" key={k} onClick={() => pickType(k as GigType)} className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${l.type === k ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white hover:border-ink/40'}`}>{v.label}</button>
           ))}
         </div>
         <p className="mt-2 text-sm text-ink-muted">
@@ -202,7 +202,7 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
         <div className="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Who can take part">
           {(Object.keys(AUDIENCES) as Audience[]).map((a) => (
             <button type="button" role="radio" aria-checked={audience === a} key={a} onClick={() => setAudience(a)}
-              className={`rounded-2xl border px-3 py-2.5 text-sm font-medium ${audience === a ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink/40'}`}>{AUDIENCES[a].label}</button>
+              className={`rounded-2xl border px-3 py-2.5 text-sm font-medium ${audience === a ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white hover:border-ink/40'}`}>{AUDIENCES[a].label}</button>
           ))}
         </div>
         <div className="mt-5 font-semibold">How people join</div>
@@ -225,7 +225,7 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
                 {(['female', 'male'] as Gender[]).map((g) => {
                   const on = elig.genders?.includes(g)
                   return <button type="button" key={g} onClick={() => setElig({ ...elig, genders: on ? elig.genders!.filter((x) => x !== g) : [...(elig.genders ?? []), g] })}
-                    className={`rounded-full border px-3 py-1.5 ${on ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{GENDERS[g]}</button>
+                    className={`rounded-full border px-3 py-1.5 ${on ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white'}`}>{GENDERS[g]}</button>
                 })}
                 <span className="text-xs text-ink-muted">(none = anyone)</span>
               </div>
@@ -234,7 +234,7 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
               {(Object.keys(WORK_STATUSES) as WorkStatus[]).map((w) => {
                 const on = elig.work_statuses?.includes(w)
                 return <button type="button" key={w} onClick={() => setElig({ ...elig, work_statuses: on ? elig.work_statuses!.filter((x) => x !== w) : [...(elig.work_statuses ?? []), w] })}
-                  className={`rounded-full border px-3 py-1.5 ${on ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>{WORK_STATUSES[w]}</button>
+                  className={`rounded-full border px-3 py-1.5 ${on ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white'}`}>{WORK_STATUSES[w]}</button>
               })}
             </div>
           </div>

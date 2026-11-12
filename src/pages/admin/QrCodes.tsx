@@ -121,7 +121,7 @@ function QrForm({ edit, onClose, onSaved }: { edit: { code: string; label: strin
           <div>
             <label className="label">Where it opens</label>
             <div className="grid grid-cols-2 gap-2">
-              {TARGETS.map(([t, l]) => <button type="button" key={t} onClick={() => setF({ ...f, target: t })} className={`rounded-xl border px-3 py-2.5 text-left text-sm ${f.target === t ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink/30'}`}>{l}</button>)}
+              {TARGETS.map(([t, l]) => <button type="button" key={t} onClick={() => setF({ ...f, target: t })} className={`rounded-xl border px-3 py-2.5 text-left text-sm ${f.target === t ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white hover:border-ink/30'}`}>{l}</button>)}
             </div>
           </div>
           <button className="btn-brand w-full" disabled={busy}>{busy ? <Spinner /> : f.isNew ? 'Create QR code' : 'Save'}</button>

@@ -10,7 +10,7 @@ import { GIG_TYPES, type ClientRequest, type GigType, type Listing, type Listing
 import ListingForm from './ListingForm'
 
 const STATUSES = ['new', 'contacted', 'converted', 'declined'] as const
-const STATUS_STYLE: Record<string, string> = { new: 'bg-clay-50 text-clay-600', contacted: 'bg-sky-50 text-sky-800', converted: 'bg-brand-50 text-brand-700', declined: 'bg-sand text-ink-soft' }
+const STATUS_STYLE: Record<string, string> = { new: 'bg-clay-50 text-clay-600', contacted: 'bg-[#e8eedd] text-[#46602c]', converted: 'bg-brand-50 text-brand-700', declined: 'bg-sand text-ink-soft' }
 const typeOf = (r: ClientRequest): GigType => (r.work_type && r.work_type in GIG_TYPES ? (r.work_type as GigType) : 'other')
 /** International format for WhatsApp/tel links; Ghana numbers like 024… become 23324… */
 const intl = (phone: string) => { const d = phone.replace(/\D/g, ''); return d.startsWith('0') && d.length === 10 ? '233' + d.slice(1) : d }
@@ -40,7 +40,7 @@ export default function Briefs({ reqs, reload }: { reqs: ClientRequest[]; reload
     <div>
       <div className="flex flex-wrap gap-2">
         {(['all', ...STATUSES] as const).map((s) => (
-          <button key={s} onClick={() => setF(s)} className={`rounded-full border px-4 py-2 text-sm font-medium capitalize ${f === s ? 'border-ink bg-ink text-white' : 'border-line bg-white'}`}>
+          <button key={s} onClick={() => setF(s)} className={`rounded-full border px-4 py-2 text-sm font-medium capitalize ${f === s ? 'border-brand-700 bg-brand-700 text-white' : 'border-line bg-white'}`}>
             {s} ({s === 'all' ? reqs.length : reqs.filter((r) => r.status === s).length})
           </button>
         ))}

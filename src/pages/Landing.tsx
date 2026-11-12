@@ -44,7 +44,7 @@ export default function Landing() {
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap gap-3">
             <Magnetic><Link to={cta} className="btn-primary px-7 py-3.5">Start earning <ArrowRight className="h-4 w-4" /></Link></Magnetic>
-            <Link to="/gigs" className="btn-ghost px-7 py-3.5">Browse open gigs</Link>
+            <a href="#gigs" className="btn-ghost px-7 py-3.5">Browse open gigs</a>
           </motion.div>
           {!user && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }} className="mt-4 text-sm text-ink-muted">
             Not a student? <Link to="/signup?type=general" className="link-u font-medium text-ink">You can join too</Link>
@@ -76,6 +76,30 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ───────── OPEN GIGS (the main event, straight after the hero) ───────── */}
+      <section id="gigs" className="scroll-mt-20 bg-sand/60 py-16">
+        <div className="container-x">
+          <Reveal className="flex flex-wrap items-end justify-between gap-6">
+            <SectionHead eyebrow={live.length ? `${live.length} open now` : 'Open now'} title="Gigs you can start this week" />
+            <Link to="/gigs" className="group inline-flex items-center gap-2 text-sm font-medium">View all gigs <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link>
+          </Reveal>
+          {gigs.loading && !gigs.data ? (
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
+              {[0, 1, 2].map((i) => <div key={i} className={`h-72 animate-pulse rounded-3xl bg-white/60 ${i ? 'hidden sm:block' : ''}`} />)}
+            </div>
+          ) : live.length ? (
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {live.slice(0, 6).map((l, i) => <div key={l.id} className={i >= 3 ? 'hidden sm:block' : ''}><GigCard l={l} i={i} /></div>)}
+            </div>
+          ) : (
+            <div className="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-line bg-white p-6 md:p-8">
+              <p className="text-ink-muted">New gigs are added every week. Sign up to be first to hear about them.</p>
+              <Link to={cta} className="btn-primary">{user ? 'Browse gigs' : 'Sign up free'} <ArrowRight className="h-4 w-4" /></Link>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* ───────── STATS ───────── */}
       <section className="container-x">
         <div className="grid grid-cols-2 divide-line border-y border-line md:grid-cols-4 md:divide-x">
@@ -96,19 +120,6 @@ export default function Landing() {
       <section className="container-x py-28">
         <Reveal><SectionHead eyebrow="How it works" title={<SplitReveal inView>Three steps between you and your <span className="em">first payout.</span></SplitReveal>} /></Reveal>
         <Steps />
-      </section>
-
-      {/* ───────── OPEN GIGS ───────── */}
-      <section className="bg-sand/60 py-24">
-        <div className="container-x">
-          <Reveal className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHead eyebrow="Open now" title="Gigs you can start this week" />
-            <Link to="/gigs" className="group inline-flex items-center gap-2 text-sm font-medium">View all gigs <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link>
-          </Reveal>
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {live.slice(0, 3).map((l, i) => <GigCard key={l.id} l={l} i={i} />)}
-          </div>
-        </div>
       </section>
 
       {/* ───────── KINDS OF WORK ───────── */}

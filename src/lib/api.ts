@@ -353,6 +353,21 @@ export const qr = {
   },
 }
 
+/**
+ * Retries a save without columns the database doesn't have yet (Supabase error PGRST204), so a newer website
+ * keeps working against an older database until its migration is run. Only optional new fields are ever dropped.
+ */
+async function withoutMissingColumns<T extends { error: { code?: string; message: string } | null }>(row: Record<string, unknown>, run: (row: Record<string, unknown>) => PromiseLike<T>): Promise<T> {
+  let r = { ...row }
+  for (let i = 0; i < 12; i++) {
+    const res = await run(r)
+    const col = res.error?.code === 'PGRST204' ? /'([^']+)' column/.exec(res.error.message)?.[1] : undefined
+    if (!col || !(col in r)) return res
+    const { [col]: _dropped, ...rest } = r; r = rest
+  }
+  return run(r)
+}
+
 // ═══════════════════════════ profile ═══════════════════════════
 export async function myProfile(): Promise<Profile | null> {
   const u = await auth.user()
@@ -370,7 +385,7 @@ export async function updateMyProfile(patch: Partial<Profile>) {
     Object.assign(p, safe)
     return save()
   }
-  const { error } = await sb!.from('profiles').update(safe).eq('id', u.id)
+  const { error } = await withoutMissingColumns(safe, (row) => sb!.from('profiles').update(row).eq('id', u.id))
   fail(error)
 }
 
@@ -408,10 +423,9 @@ export async function saveListing(l: Partial<Listing>): Promise<Listing> {
     d.listings.push(created); save(); return created
   }
   const u = await auth.user()
-  const q = row.id
-    ? sb!.from('listings').update(row).eq('id', row.id).select().single()
-    : sb!.from('listings').insert({ ...row, created_by: u?.id }).select().single()
-  const { data, error } = await q
+  const { data, error } = await withoutMissingColumns(row as Record<string, unknown>, (r) => row.id
+    ? sb!.from('listings').update(r).eq('id', row.id).select().single()
+    : sb!.from('listings').insert({ ...r, created_by: u?.id }).select().single())
   fail(error)
   return data
 }

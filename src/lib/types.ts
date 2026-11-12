@@ -66,6 +66,8 @@ export interface Listing {
   join_mode?: JoinMode
   application_schema?: FormField[]
   eligibility?: Eligibility
+  /** set dates; each day opens its own check-in on that date */
+  sessions?: SessionDay[]
   photo_hint: string | null
   expires_at: string
   status: ListingStatus
@@ -108,6 +110,8 @@ export interface Submission {
   payout_ref: string | null
   /** set when paid through Record payment (has a receipt) */
   payment_id?: string | null
+  /** which session day this check-in is for (1-based) */
+  session_day?: number | null
   created_at: string
   listing?: Pick<Listing, 'title' | 'currency' | 'unit_label'>
   student?: Pick<Profile, 'full_name' | 'momo_number' | 'momo_provider' | 'momo_name'>
@@ -206,6 +210,8 @@ export interface Payment {
   reference: string | null; note: string | null; items: number; paid_at: string; email_sent_at: string | null; created_at: string
 }
 
+/** One day of a scheduled gig. date is YYYY-MM-DD (Ghana time); start/end are HH:MM. */
+export interface SessionDay { date: string; label?: string; start?: string; end?: string }
 export type AccountType = 'student' | 'general'
 export type Gender = 'female' | 'male' | 'prefer_not'
 export type WorkStatus = 'student' | 'employed' | 'self_employed' | 'unemployed' | 'other'

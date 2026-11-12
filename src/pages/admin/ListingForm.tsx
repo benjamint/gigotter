@@ -6,8 +6,10 @@ import { AttachmentsEditor, type PendingFile } from '../../components/GigFiles'
 import { Spinner, useToast } from '../../components/ui'
 import { listingFiles, saveListing, uploadCover, uploadListingFile } from '../../lib/api'
 import { coverFor, money } from '../../lib/format'
-import { AUDIENCES, CURRENCIES, GENDERS, GIG_TYPES, WORK_STATUSES, type Audience, type Eligibility, type Gender, type GigType, type JoinMode, type Listing, type ListingFile, type PhotoRule, type WorkStatus } from '../../lib/types'
-import { TEMPLATES, photoRuleOf, schemaOf } from '../../lib/forms'
+import { Calendar, Trash2 } from 'lucide-react'
+import { formatDay, todayGhana } from '../../lib/sessions'
+import { AUDIENCES, CURRENCIES, GENDERS, GIG_TYPES, WORK_STATUSES, type Audience, type Eligibility, type Gender, type GigType, type JoinMode, type Listing, type ListingFile, type PhotoRule, type SessionDay, type WorkStatus } from '../../lib/types'
+import { TEMPLATES, keyFor, photoRuleOf, schemaOf } from '../../lib/forms'
 import FormBuilder, { schemaProblem, toRows, toSchema } from './FormBuilder'
 
 const toLocal = (iso?: string) => { const d = iso ? new Date(iso) : new Date(Date.now() + 14 * 864e5); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16) }
@@ -51,6 +53,28 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
     set('type', t)
   }
   const [exp, setExp] = useState(toLocal(initial.expires_at))
+  // scheduled sessions: one check-in per day, each open only on its date
+  const [days, setDays] = useState<SessionDay[]>(initial.sessions ?? [])
+  const scheduled = days.length > 0
+  const nextDate = (after?: string) => { const d = new Date((after ?? todayGhana()) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + (after ? 1 : 7)); return d.toISOString().slice(0, 10) }
+  const syncDays = (next: SessionDay[]) => {
+    const sorted = [...next].sort((a, b) => a.date.localeCompare(b.date))
+    setDays(sorted)
+    if (sorted.length) {
+      setL((x) => ({ ...x, units_per_student: sorted.length }))
+      const last = new Date(sorted[sorted.length - 1].date + 'T23:59:00'); last.setDate(last.getDate() + 1)
+      setExp(toLocal(last.toISOString()))
+    }
+  }
+  const turnOnSessions = () => {
+    syncDays([{ date: nextDate() }])
+    set('unit_label', 'day')
+    // default daily check-in: a photo + short report, unless the questions were already customised
+    if (!touched) {
+      setRows(toRows([{ key: keyFor('Brief report of today’s session'), label: 'Brief report of today’s session', type: 'long', required: true, placeholder: 'What happened, what you did, anything notable' }]))
+      setPhoto('required'); setPhotoHint('A photo from today’s session')
+    }
+  }
   const [req, setReq] = useState('')
   const [cover, setCover] = useState<File | null>(null)
   const set = <K extends keyof Listing>(k: K, v: Listing[K]) => setL((x) => ({ ...x, [k]: v }))
@@ -66,6 +90,8 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
     if (problem) return toast(problem, 'err')
     if (joinMode === 'apply') { const p2 = schemaProblem(appRows, 'none', 'application question'); if (p2) return toast(p2, 'err') }
     if (elig.min_age && elig.max_age && elig.min_age > elig.max_age) return toast('The minimum age is higher than the maximum', 'err')
+    if (scheduled && days.some((d) => !d.date)) return toast('Pick a date for every session day', 'err')
+    if (scheduled && new Set(days.map((d) => d.date)).size !== days.length) return toast('Two session days have the same date', 'err')
     setBusy(true)
     try {
       const cover_url = cover ? await uploadCover(cover) : l.cover_url ?? null
@@ -73,6 +99,8 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
       const saved = await saveListing({ ...l, cover_url, form_schema, photo_rule: photo, photo_hint: photo === 'none' ? null : photoHint.trim() || null,
         proof_fields: form_schema.map((f) => f.key), expires_at: new Date(exp).toISOString(),
         audience, join_mode: joinMode, application_schema: joinMode === 'apply' ? toSchema(appRows) : [],
+        sessions: days.map((d) => ({ date: d.date, ...(d.label?.trim() ? { label: d.label.trim() } : {}), ...(d.start ? { start: d.start } : {}), ...(d.end ? { end: d.end } : {}) })),
+        ...(scheduled ? { units_per_student: days.length } : {}),
         eligibility: Object.fromEntries(Object.entries(elig).filter(([, v]) => (Array.isArray(v) ? v.length : v != null && v !== ''))) })
       // the gig exists now, so its files can be attached
       const failed: string[] = []
@@ -122,15 +150,45 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
         <label className="flex items-center gap-2 self-end pb-3 text-sm font-medium"><input type="checkbox" className="h-4 w-4 accent-brand-600" checked={!!l.is_remote} onChange={(e) => set('is_remote', e.target.checked)} />Remote / anywhere</label>
       </div>
 
+      <div className="rounded-3xl border border-line bg-white p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 font-semibold"><Calendar className="h-4 w-4 text-ink-muted" />Scheduled sessions</div>
+            <p className="text-sm text-ink-muted">For gigs on set dates. Each day gets its own check-in that opens only on that date.</p>
+          </div>
+          <button type="button" role="switch" aria-checked={scheduled} aria-label="Scheduled sessions" onClick={() => (scheduled ? syncDays([]) : turnOnSessions())}
+            className={`relative h-7 w-12 shrink-0 rounded-full transition ${scheduled ? 'bg-brand-600' : 'bg-line'}`}>
+            <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${scheduled ? 'left-6' : 'left-1'}`} />
+          </button>
+        </div>
+        {scheduled && (
+          <div className="mt-4 space-y-2">
+            {days.map((d, i) => (
+              <div key={i} className="grid items-center gap-2 rounded-2xl bg-paper p-3 sm:grid-cols-[70px_1fr_1fr_auto_auto_auto]">
+                <span className="text-sm font-semibold">Day {i + 1}</span>
+                <input className="input bg-white py-2" type="date" required value={d.date} onChange={(e) => syncDays(days.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)))} aria-label={`Day ${i + 1} date`} />
+                <input className="input bg-white py-2" value={d.label ?? ''} maxLength={40} placeholder={`Label (optional), e.g. Prototype day`} onChange={(e) => setDays(days.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} aria-label={`Day ${i + 1} label`} />
+                <input className="input bg-white py-2" type="time" value={d.start ?? ''} onChange={(e) => setDays(days.map((x, j) => (j === i ? { ...x, start: e.target.value } : x)))} aria-label={`Day ${i + 1} start time`} />
+                <input className="input bg-white py-2" type="time" value={d.end ?? ''} onChange={(e) => setDays(days.map((x, j) => (j === i ? { ...x, end: e.target.value } : x)))} aria-label={`Day ${i + 1} end time`} />
+                <button type="button" onClick={() => syncDays(days.filter((_, j) => j !== i))} aria-label={`Remove day ${i + 1}`} className="grid h-9 w-9 place-items-center rounded-full text-ink-muted hover:bg-white hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+              </div>
+            ))}
+            <button type="button" onClick={() => syncDays([...days, { date: nextDate(days[days.length - 1]?.date) }])} disabled={days.length >= 30}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-line py-2.5 text-sm font-medium text-ink-soft hover:border-ink/40">+ Add a day</button>
+            <p className="text-xs text-ink-muted">{days.length} day{days.length === 1 ? '' : 's'}: {days.map((d) => formatDay(d.date)).join(', ')}. Each person checks in once per day; pay is per approved day.</p>
+          </div>
+        )}
+      </div>
+
       <div className="rounded-3xl border border-line bg-white p-4">
         <div className="mb-3 flex gap-2">
-          {(['per_unit', 'fixed'] as const).map((m) => <button type="button" key={m} onClick={() => set('pay_model', m)} className={`flex-1 rounded-2xl border p-3 text-left text-sm ${l.pay_model === m ? 'border-ink bg-brand-50' : 'border-line'}`}><b>{m === 'per_unit' ? `Pay per ${l.unit_label || 'unit'}` : 'Fixed per student'}</b><div className="text-xs text-ink-muted">{m === 'per_unit' ? `e.g. ₵50 per ${l.unit_label || 'salon'}` : 'e.g. ₵80 to attend, ₵300 for the whole job'}</div></button>)}
+          {(['per_unit', 'fixed'] as const).map((m) => <button type="button" key={m} onClick={() => set('pay_model', m)} className={`flex-1 rounded-2xl border p-3 text-left text-sm ${l.pay_model === m ? 'border-ink bg-brand-50' : 'border-line'}`}><b>{scheduled ? (m === 'per_unit' ? 'Pay per day' : 'Total for all days') : m === 'per_unit' ? `Pay per ${l.unit_label || 'unit'}` : 'Fixed per person'}</b><div className="text-xs text-ink-muted">{scheduled ? (m === 'per_unit' ? 'e.g. ₵60 for each day attended' : 'Split equally across the days; each approved day is paid') : m === 'per_unit' ? `e.g. ₵50 per ${l.unit_label || 'salon'}` : 'e.g. ₵80 to attend, ₵300 for the whole job'}</div></button>)}
         </div>
         <div className="grid gap-3 sm:grid-cols-4">
           <div><label className="label">Currency</label><select className="input" value={l.currency} onChange={(e) => set('currency', e.target.value)}>{Object.keys(CURRENCIES).map((c) => <option key={c}>{c}</option>)}</select></div>
-          <div><label className="label">{l.pay_model === 'per_unit' ? 'Rate / unit' : 'Pay / student'}</label><input className="input" type="number" min={0} step="0.01" value={l.rate ?? ''} onChange={(e) => set('rate', Number(e.target.value))} /></div>
+          <div><label className="label">{scheduled ? (l.pay_model === 'per_unit' ? 'Pay per day' : 'Total pay') : l.pay_model === 'per_unit' ? 'Rate / unit' : 'Pay / person'}</label><input className="input" type="number" min={0} step="0.01" value={l.rate ?? ''} onChange={(e) => set('rate', Number(e.target.value))} /></div>
           <div><label className="label">Unit name</label><input className="input" value={l.unit_label ?? ''} onChange={(e) => set('unit_label', e.target.value)} placeholder="salon, session, test…" /></div>
-          <div><label className="label">Units / student</label><input className="input" type="number" min={1} value={l.units_per_student ?? ''} onChange={(e) => set('units_per_student', num(e.target.value))} placeholder="∞" /></div>
+          <div><label className="label">{scheduled ? 'Days' : 'Units / person'}</label><input className="input" type="number" min={1} disabled={scheduled} value={scheduled ? days.length : l.units_per_student ?? ''} onChange={(e) => set('units_per_student', num(e.target.value))} placeholder="∞" title={scheduled ? 'Set by the number of session days' : undefined} /></div>
           <div><label className="label">Students needed</label><input className="input" type="number" min={1} value={l.slots ?? 1} onChange={(e) => set('slots', Number(e.target.value))} /></div>
           <div><label className="label">Budget cap</label><input className="input" type="number" min={0} value={l.total_budget ?? ''} onChange={(e) => set('total_budget', num(e.target.value))} placeholder="optional" /></div>
           <div className="sm:col-span-2"><label className="label">Expires</label><input className="input" type="datetime-local" value={exp} onChange={(e) => setExp(e.target.value)} /></div>
@@ -189,7 +247,8 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
       )}
 
       <FormBuilder rows={rows} setRows={editRows} photo={photo} setPhoto={(p) => { setTouched(true); setPhoto(p) }} photoHint={photoHint} setPhotoHint={setPhotoHint}
-        unit={l.unit_label ?? ''} hasResponses={hasResponses} />
+        unit={l.unit_label ?? ''} hasResponses={hasResponses}
+        {...(scheduled ? { heading: 'Daily check-in', intro: 'What each person submits on every session day. Each day’s check-in opens only on its date.' } : {})} />
 
       <AttachmentsEditor saved={files} setSaved={setFiles} pending={pending} setPending={setPending} />
 

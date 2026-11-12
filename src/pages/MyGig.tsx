@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Check, ChevronDown, ClipboardList, Copy, FileText, MapPin, Paperclip, Send, Wallet } from 'lucide-react'
+import { ArrowLeft, Calendar, Camera, Check, ChevronDown, ClipboardList, Copy, FileText, Lock, MapPin, Paperclip, Send, Wallet, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { mapsUrl } from '../components/AddressField'
@@ -7,7 +7,8 @@ import { FieldInput, isWide } from '../components/FormFields'
 import Photo from '../components/Photo'
 import { FileDrop } from '../components/Upload'
 import { Empty, PageLoader, Progress, Spinner, SubPill, useToast } from '../components/ui'
-import { listingFiles, myClaims, submitWork, withdrawClaim } from '../lib/api'
+import { listingFiles, myClaims, submitCheckin, submitWork, withdrawClaim } from '../lib/api'
+import { dayLabel, dayState, formatDay, hasSessions, sessionsOf, timeRange, todayGhana, type DayState } from '../lib/sessions'
 import { GigFileList } from '../components/GigFiles'
 import { ago, coverFor, money, payLine, timeLeft, plural } from '../lib/format'
 import { friendlyError } from '../lib/security'
@@ -49,9 +50,24 @@ export default function MyGig() {
   const earned = c.subs.filter((s) => s.status === 'approved' || s.status === 'paid').reduce((a, s) => a + (s.amount ?? 0), 0)
   const pending = c.subs.filter((s) => s.status === 'pending').reduce((a, s) => a + (s.amount ?? 0), 0)
   const perUnit = l.pay_model === 'per_unit' ? l.rate : l.rate / (goal || 1)
-  const unit = l.unit_label
+  const unit = hasSessions(l) ? 'day' : l.unit_label
   const schema = schemaOf(l)
   const photo = photoRuleOf(l)
+  const scheduled = hasSessions(l)
+
+  const checkIn = async (day: number) => {
+    if (busy) return
+    const problem = validateAnswers(schema, form)
+    if (problem) return toast(problem, 'err')
+    if (photo === 'required' && !proof) return toast('Add a photo from today as proof', 'err')
+    setBusy(true)
+    try {
+      await submitCheckin(c.id, day, form, photo === 'none' ? null : proof)
+      toast(`Day ${day} checked in. ${money(perUnit, l.currency)} once it’s approved`)
+      setForm({}); setProof(null); setFormKey((k) => k + 1)
+      reload()
+    } catch (err: any) { toast(friendlyError(err.message), 'err') } finally { setBusy(false) }
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -69,7 +85,7 @@ export default function MyGig() {
   }
 
   const tabs: { k: Tab; label: string; icon: typeof Send; count?: number }[] = [
-    { k: 'log', label: `Log a ${unit}`, icon: ClipboardList },
+    { k: 'log', label: scheduled ? 'Check-ins' : `Log a ${unit}`, icon: scheduled ? Calendar : ClipboardList },
     { k: 'submitted', label: 'Submitted', icon: Check, count: c.subs.length },
     { k: 'details', label: 'Gig details', icon: FileText },
   ]
@@ -129,7 +145,12 @@ export default function MyGig() {
       <div className="card mt-6 p-5 sm:p-8">
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25, ease: EASE }}>
-            {tab === 'log' && (canSubmit ? (
+            {tab === 'log' && scheduled && (
+              <CheckIns days={sessionsOf(l)} subs={c.subs} active={c.status === 'active' && l.status === 'live'} perDay={money(perUnit, l.currency)}
+                schema={schema} photo={photo} photoHint={l.photo_hint} form={form} setForm={setForm} proof={proof} setProof={setProof}
+                busy={busy} formKey={formKey} onSubmit={checkIn} />
+            )}
+            {tab === 'log' && !scheduled && (canSubmit ? (
               <form key={formKey} onSubmit={submit} className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold">Log a {unit}</h2>
@@ -248,6 +269,87 @@ function Submitted({ subs, schema, currency, unit, onLog }: { subs: Submission[]
           )
         })}
       </ul>
+    </div>
+  )
+}
+
+const STATE: Record<DayState, { label: string; cls: string; dot: string }> = {
+  upcoming: { label: 'Upcoming', cls: 'bg-sand text-ink-muted', dot: 'bg-line' },
+  open: { label: 'Open today', cls: 'bg-brand-600 text-white', dot: 'bg-brand-500' },
+  redo: { label: 'Needs a redo today', cls: 'bg-red-50 text-red-700', dot: 'bg-red-500' },
+  missed: { label: 'Missed', cls: 'bg-sand text-ink-muted', dot: 'bg-ink-muted/40' },
+  pending: { label: 'In review', cls: 'bg-amber-50 text-amber-800', dot: 'bg-amber-500' },
+  approved: { label: 'Approved', cls: 'bg-sky-50 text-sky-800', dot: 'bg-sky-500' },
+  paid: { label: 'Paid', cls: 'bg-brand-50 text-brand-700', dot: 'bg-brand-600' },
+  rejected: { label: 'Not accepted', cls: 'bg-red-50 text-red-700', dot: 'bg-red-500' },
+}
+
+/** One card per session day: locked until its date, open only on the day, then marked done with its review status. */
+function CheckIns({ days, subs, active, perDay, schema, photo, photoHint, form, setForm, proof, setProof, busy, formKey, onSubmit }: {
+  days: { date: string; label?: string; start?: string; end?: string }[]; subs: Submission[]; active: boolean; perDay: string
+  schema: FormField[]; photo: 'required' | 'optional' | 'none'; photoHint: string | null
+  form: Record<string, string>; setForm: (f: Record<string, string>) => void; proof: File | null; setProof: (f: File | null) => void
+  busy: boolean; formKey: number; onSubmit: (day: number) => void
+}) {
+  const today = todayGhana()
+  const states = days.map((d, i) => dayState(d, i, subs, today))
+  const doneCount = states.filter((x) => ['pending', 'approved', 'paid'].includes(x.state)).length
+  return (
+    <div>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="text-xl font-semibold">Daily check-ins</h2>
+          <p className="mt-1 text-sm text-ink-muted">Each day opens only on its date. Check in with {photo !== 'none' ? 'a photo and ' : ''}a short report. You earn <b className="font-medium text-ink">{perDay}</b> for each approved day.</p>
+        </div>
+        <span className="text-sm font-medium text-ink-muted">{doneCount} of {days.length} days checked in</span>
+      </div>
+      <ol className="relative mt-6 space-y-4 before:absolute before:bottom-4 before:left-[15px] before:top-4 before:w-px before:bg-line">
+        {days.map((d, i) => {
+          const { state, sub } = states[i], st = STATE[state]
+          const isOpen = active && (state === 'open' || state === 'redo')
+          const locked = state === 'upcoming'
+          return (
+            <li key={i} className="relative pl-11">
+              <span className={`absolute left-0 top-4 grid h-8 w-8 place-items-center rounded-full ring-4 ring-white ${isOpen ? 'bg-brand-600 text-white' : ['pending', 'approved', 'paid'].includes(state) ? 'bg-brand-50 text-brand-700' : 'bg-sand text-ink-muted'}`}>
+                {locked ? <Lock className="h-3.5 w-3.5" /> : ['pending', 'approved', 'paid'].includes(state) ? <Check className="h-4 w-4" /> : state === 'missed' ? <X className="h-4 w-4" /> : <span className="text-xs font-semibold">{i + 1}</span>}
+              </span>
+              <div className={`rounded-2xl border p-4 sm:p-5 ${isOpen ? 'border-brand-200 bg-white shadow-soft' : 'border-line bg-paper/60'} ${locked ? 'opacity-70' : ''}`}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="font-semibold">{dayLabel(d, i)} <span className="font-normal text-ink-muted">· {formatDay(d.date)}{timeRange(d) ? ` · ${timeRange(d)}` : ''}</span></div>
+                    {locked && <div className="text-xs text-ink-muted">Opens on {formatDay(d.date, { weekday: 'long', day: 'numeric', month: 'long' })}</div>}
+                    {state === 'missed' && <div className="text-xs text-ink-muted">No check-in for this day</div>}
+                    {sub && ['pending', 'approved', 'paid'].includes(state) && <div className="text-xs text-ink-muted">Checked in {ago(sub.created_at)}</div>}
+                  </div>
+                  <span className={`chip ${st.cls}`}>{st.label}</span>
+                </div>
+                {state === 'redo' && sub?.admin_note && <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800"><b className="font-medium">What to fix:</b> {sub.admin_note}</p>}
+                {state === 'missed' && sub?.admin_note && <p className="mt-3 text-sm text-ink-muted">Note: {sub.admin_note}</p>}
+                {isOpen && (
+                  <form key={formKey} onSubmit={(e) => { e.preventDefault(); onSubmit(i + 1) }} className="mt-4 space-y-5">
+                    {photo !== 'none' && (
+                      <div>
+                        <label className="label flex items-center gap-1.5"><Camera className="h-4 w-4 text-ink-muted" />Photo from today{photo === 'optional' && <span className="font-normal text-ink-muted"> (optional)</span>}</label>
+                        <FileDrop label="Add a photo" hint={photoHint || 'A clear photo from today’s session'} capture="environment" file={proof} onFile={setProof} />
+                      </div>
+                    )}
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      {schema.map((f) => (
+                        <div key={f.key} className={isWide(f) ? 'sm:col-span-2' : ''}>
+                          <label className="label">{f.label}{!f.required && <span className="font-normal text-ink-muted"> (optional)</span>}</label>
+                          <FieldInput f={f} form={form} setForm={setForm} />
+                          {f.hint && <p className="mt-1.5 text-xs text-ink-muted">{f.hint}</p>}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-end"><button className="btn-brand px-7" disabled={busy}>{busy ? <Spinner /> : <>Check in for {dayLabel(d, i)} <Send className="h-4 w-4" /></>}</button></div>
+                  </form>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { claimListing, getListing, listingFiles, myApplications, myClaims, withd
 import ApplyForm from '../components/ApplyForm'
 import { accountOf, audienceAllows, audienceOf, eligibilityText, isApply } from '../lib/audience'
 import { AUDIENCES } from '../lib/types'
+import { dayLabel, formatDay, sessionsOf, timeRange } from '../lib/sessions'
 import { GigFileList } from '../components/GigFiles'
 import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft, plural } from '../lib/format'
 import { useAsync, useSession } from '../lib/session'
@@ -104,6 +105,20 @@ export default function GigDetail() {
                   <li key={i} className="flex gap-3 py-4 text-ink-soft"><Check className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />{r}</li>
                 ))}
               </ul>
+            </section>
+          )}
+          {sessionsOf(l).length > 0 && (
+            <section className="mt-12">
+              <h2 className="text-xl font-semibold">Schedule</h2>
+              <p className="mt-2 text-ink-muted">Check in on each day with {l.photo_rule !== 'none' ? 'a photo and ' : ''}a short report. Each day’s check-in opens only on that date, and you’re paid for every approved day.</p>
+              <ol className="mt-4 divide-y divide-line border-y border-line">
+                {sessionsOf(l).map((sd, i) => (
+                  <li key={i} className="flex items-center gap-4 py-3.5">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-50 text-sm font-semibold text-brand-700">{i + 1}</span>
+                    <div><div className="font-medium">{dayLabel(sd, i)}</div><div className="text-sm text-ink-muted">{formatDay(sd.date, { weekday: 'long', day: 'numeric', month: 'long' })}{timeRange(sd) ? ` · ${timeRange(sd)}` : ''}</div></div>
+                  </li>
+                ))}
+              </ol>
             </section>
           )}
           <section className="mt-12">

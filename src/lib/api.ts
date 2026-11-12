@@ -3,6 +3,7 @@ import type { AccountType, Application, ApplicationStatus, Claim, ClientRequest,
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { accountOf, audienceAllows, audienceMessage, audienceOf } from './audience'
+import { dayLabel, sessionsOf, todayGhana } from './sessions'
 import { checkDoc, checkImage, safeExt } from './security'
 
 const URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
@@ -409,7 +410,7 @@ export async function getListing(id: string): Promise<Listing | null> {
 }
 /** Columns that actually exist on the listings table — anything else (e.g. joined stats) is dropped before saving. */
 const LISTING_COLUMNS = ['id', 'title', 'type', 'summary', 'description', 'requirements', 'location', 'is_remote', 'pay_model', 'rate',
-  'unit_label', 'units_per_student', 'total_budget', 'currency', 'slots', 'proof_fields', 'form_schema', 'photo_rule', 'photo_hint', 'audience', 'join_mode', 'application_schema', 'eligibility', 'expires_at', 'status', 'accent', 'emoji',
+  'unit_label', 'units_per_student', 'total_budget', 'currency', 'slots', 'proof_fields', 'form_schema', 'photo_rule', 'photo_hint', 'audience', 'join_mode', 'application_schema', 'eligibility', 'sessions', 'expires_at', 'status', 'accent', 'emoji',
   'client_name', 'cover_url'] as const
 export async function saveListing(l: Partial<Listing>): Promise<Listing> {
   const row = Object.fromEntries(LISTING_COLUMNS.filter((k) => k in l).map((k) => [k, (l as any)[k]])) as Partial<Listing>
@@ -490,6 +491,7 @@ export async function submitWork(claimId: string, data: Record<string, string>, 
     const c = must(d.claims.find((x) => x.id === claimId && x.student_id === u.id), 'Gig not active')
     const l = must(d.listings.find((x) => x.id === c.listing_id), 'Gig gone')
     if (new Date(l.expires_at) < new Date()) throw new Error('This gig has expired')
+    if (sessionsOf(l).length) throw new Error('This gig uses daily check-ins. Use the check-in for today')
     const mine = d.submissions.filter((s) => s.claim_id === c.id && s.status !== 'rejected')
     if (l.units_per_student && mine.length >= l.units_per_student) throw new Error('You’ve reached the limit for this gig')
     const amount = l.pay_model === 'per_unit' ? l.rate : Math.round((l.rate / Math.max(l.units_per_student ?? 1, 1)) * 100) / 100
@@ -516,6 +518,33 @@ export async function submitWork(claimId: string, data: Record<string, string>, 
     d.submissions.push(s); save(); return s
   }
   const { data: s, error } = await sb!.rpc('submit_work', { p_claim: claimId, p_data: data, p_proof: proofPath })
+  fail(error)
+  return s
+}
+
+/** Check in for one day of a scheduled gig. Only works on that day (Ghana time). */
+export async function submitCheckin(claimId: string, day: number, data: Record<string, string>, proof: File | null): Promise<Submission> {
+  if (DEMO) {
+    const u = must(demoUser(), 'Sign in first'), d = db()
+    const c = must(d.claims.find((x) => x.id === claimId && x.student_id === u.id && x.status === 'active'), 'Gig not active')
+    const l = must(d.listings.find((x) => x.id === c.listing_id), 'Gig gone')
+    const days = sessionsOf(l), sd = days[day - 1]
+    if (!sd) throw new Error('That day isn’t part of this gig')
+    const today = todayGhana()
+    if (today < sd.date) throw new Error(`Day ${day}’s check-in opens on ${sd.date}`)
+    if (today > sd.date) throw new Error(`Day ${day}’s check-in closed on ${sd.date}`)
+    const problem = validateAnswers(schemaOf(l), data); if (problem) throw new Error(problem)
+    if (photoRuleOf(l) === 'required' && !proof) throw new Error('Add a photo from today as proof')
+    if (d.submissions.some((s) => s.claim_id === c.id && s.session_day === day && s.status !== 'rejected')) throw new Error(`You’ve already checked in for day ${day}`)
+    const proofPath = proof && photoRuleOf(l) !== 'none' ? await uploadFile('proofs', proof, 'proof') : null
+    const clean: Record<string, string> = {}; for (const f of schemaOf(l)) { const v = (data[f.key] ?? '').trim(); if (v) clean[f.key] = v }
+    const amount = l.pay_model === 'per_unit' ? l.rate : Math.round((l.rate / days.length) * 100) / 100
+    const s: Submission = { id: uid(), claim_id: c.id, listing_id: l.id, student_id: u.id, data: clean, summary: `${dayLabel(sd, day - 1)} · ${new Date(sd.date + 'T12:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' })}`,
+      proof_path: proofPath, status: 'pending', amount, admin_note: null, reviewed_at: null, paid_at: null, payout_ref: null, created_at: now(), session_day: day }
+    d.submissions.push(s); save(); return s
+  }
+  const proofPath = proof ? await uploadFile('proofs', proof, 'proof') : null
+  const { data: s, error } = await sb!.rpc('submit_checkin', { p_claim: claimId, p_day: day, p_data: data, p_proof: proofPath })
   fail(error)
   return s
 }

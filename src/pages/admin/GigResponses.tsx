@@ -13,6 +13,7 @@ import { displayValue, labelFor, schemaOf, subTitle } from '../../lib/forms'
 import PaymentPanel from './PaymentPanel'
 import Applicants from './Applicants'
 import { isApply } from '../../lib/audience'
+import { dayLabel, formatDay, sessionsOf } from '../../lib/sessions'
 import { type Listing, type Profile, type Submission, type SubmissionStatus } from '../../lib/types'
 
 const STATUSES: (SubmissionStatus | 'all')[] = ['all', 'pending', 'approved', 'paid', 'rejected']
@@ -29,6 +30,7 @@ export default function GigResponses() {
   const [student, setStudent] = useState<string | 'all'>('all')
   const [view, setView] = useState<'applicants' | 'work'>('applicants')
   const [status, setStatus] = useState<SubmissionStatus | 'all'>('all')
+  const [day, setDay] = useState<number | 'all'>('all')
   const [q, setQ] = useState('')
   const [proof, setProof] = useState<string | null>(null)
 
@@ -52,6 +54,7 @@ export default function GigResponses() {
   const list = d.subs.filter((s) =>
     (student === 'all' || s.student_id === student) &&
     (status === 'all' || s.status === status) &&
+    (day === 'all' || s.session_day === day) &&
     (!q || JSON.stringify(s.data).toLowerCase().includes(q.toLowerCase()) || (s.student?.full_name ?? '').toLowerCase().includes(q.toLowerCase())))
   const count = (st: SubmissionStatus) => d.subs.filter((s) => s.status === st).length
   const used = d.subs.filter((s) => s.status !== 'rejected').reduce((a, s) => a + (s.amount ?? 0), 0)
@@ -147,6 +150,16 @@ export default function GigResponses() {
                 return <button key={s} onClick={() => setStatus(s)} className={`rounded-full border px-3 py-1.5 text-sm capitalize ${status === s ? 'border-ink bg-ink text-white' : 'border-line bg-white text-ink-soft hover:border-ink/30'}`}>{s === 'pending' ? 'To review' : s} ({n})</button>
               })}
             </div>
+            {sessionsOf(l).length > 0 && (
+              <select value={day} onChange={(e) => setDay(e.target.value === 'all' ? 'all' : Number(e.target.value))} aria-label="Session day" className="input py-2 text-sm md:w-56">
+                <option value="all">All days</option>
+                {sessionsOf(l).map((sd, i) => {
+                  const ins = d.subs.filter((x) => x.session_day === i + 1 && x.status !== 'rejected').length
+                  const people = d.claims.filter((c) => c.status === 'active' || c.status === 'completed').length
+                  return <option key={i} value={i + 1}>{dayLabel(sd, i)} · {formatDay(sd.date)} ({ins}/{people} checked in)</option>
+                })}
+              </select>
+            )}
             <div className="relative md:w-64">
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
               <input className="input py-2 pl-10 text-sm" placeholder="Search responses…" value={q} onChange={(e) => setQ(e.target.value)} />

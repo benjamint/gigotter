@@ -62,7 +62,7 @@ export default function Landing() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.8, ease: EASE }}
               className="absolute bottom-0 left-3 w-[min(300px,82%)] motion-safe:animate-float rounded-[22px] border border-line bg-white p-4 shadow-[0_18px_50px_-24px_rgba(16,41,31,.35)] md:-left-8">
               <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#efdcc6] font-display text-[10px] font-bold text-[#3b2a12]">MoMo</span>
+                <img src="/images/mtn.jpg" alt="MTN MoMo" width={40} height={40} className="h-10 w-10 shrink-0 rounded-xl object-cover" />
                 <div><div className="text-xs text-ink-muted">Payment sent · MTN MoMo</div><div className="font-display text-[28px] font-semibold leading-tight tracking-[-0.03em]"><Ticker to={450} delay={1.2} decimals={2} /></div></div>
               </div>
               <div className="mt-3 flex justify-between border-t border-line pt-3 text-xs text-ink-muted"><span>9 salons onboarded</span><span>Example payout</span></div>
@@ -221,7 +221,7 @@ const STEPS = [
   { img: IMG.step2, alt: 'Student talking with a shop owner', t: 'Pick work that fits.', d: 'Browse open gigs near you or remote. Each one says exactly what to do, what proof to collect and how much it pays.',
     tag: 'Clear pay, clear steps', sub: 'Before you join any gig', tagBg: 'bg-[#c9d6c8]', icon: <MessagesSquare className="h-4 w-4" /> },
   { img: IMG.step3, alt: 'Student checking a mobile money payment', t: 'Submit, then get paid.', d: 'Log each piece of work with a photo. Once it’s approved, the money goes to your MoMo and you get a receipt by email.',
-    tag: 'Paid to MoMo', sub: 'With an emailed receipt', tagBg: 'bg-[#efdcc6] text-[#3b2a12] font-display text-[9px] font-bold', icon: <>MoMo</> },
+    tag: 'Paid to MoMo', sub: 'With an emailed receipt', tagBg: 'overflow-hidden', icon: <img src="/images/mtn.jpg" alt="MTN MoMo" className="h-full w-full object-cover" /> },
 ]
 
 function WorkTile({ I, t, d, bg, i }: { I: any; t: string; d: string; bg: string; i: number }) {

@@ -34,7 +34,7 @@ export function PayoutFeed({ items, title = 'Recently paid' }: { items: PayoutIt
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="truncate text-sm font-medium">{p.name}</span>
-                  <span className="shrink-0 font-serif text-lg italic leading-none text-brand-700">{money(p.amount, p.currency)}</span>
+                  <span className="shrink-0 font-display text-lg font-semibold leading-none text-brand-700">{money(p.amount, p.currency)}</span>
                 </div>
                 <div className="mt-0.5 flex items-center gap-1 truncate text-xs text-ink-muted">
                   <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-brand-600" />
@@ -58,7 +58,7 @@ export function TestimonialStrip({ items }: { items: Testimonial[] }) {
       {items.map((t) => (
         <figure key={t.id} className={`flex flex-col rounded-3xl border border-line bg-white shadow-soft ${items.length === 1 ? 'p-8 text-center md:p-12' : 'p-7'}`}>
           <Quote className={`h-6 w-6 text-brand-200 ${items.length === 1 ? 'mx-auto' : ''}`} />
-          <blockquote className={`mt-4 flex-1 font-serif italic leading-snug text-ink ${items.length === 1 ? 'text-2xl md:text-3xl' : 'text-xl'}`}>“{t.quote}”</blockquote>
+          <blockquote className={`mt-4 flex-1 font-display font-medium leading-snug tracking-tight text-ink ${items.length === 1 ? 'text-2xl md:text-3xl' : 'text-xl'}`}>“{t.quote}”</blockquote>
           <figcaption className="mt-6 text-sm"><b className="font-medium">{t.name}</b>{t.school && <span className="text-ink-muted"> · {t.school}</span>}</figcaption>
         </figure>
       ))}
@@ -70,7 +70,7 @@ export function TestimonialStrip({ items }: { items: Testimonial[] }) {
         {items.map((t) => (
           <figure key={t.id} className="flex w-[340px] shrink-0 flex-col rounded-3xl border border-line bg-white p-6 shadow-soft">
             <Quote className="h-5 w-5 text-brand-200" />
-            <blockquote className="mt-3 flex-1 font-serif text-xl italic leading-snug text-ink">“{t.quote}”</blockquote>
+            <blockquote className="mt-3 flex-1 font-display text-xl font-medium leading-snug tracking-tight text-ink">“{t.quote}”</blockquote>
             <figcaption className="mt-5 text-sm"><b className="font-medium">{t.name}</b>{t.school && <span className="text-ink-muted"> · {t.school}</span>}</figcaption>
           </figure>
         ))}

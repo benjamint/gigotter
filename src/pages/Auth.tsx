@@ -181,7 +181,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }} className="relative hidden overflow-hidden rounded-4xl lg:block">
         <Photo src={IMG.auth} alt="Students on campus" label="auth.jpg" tone="dark" className="absolute inset-0" />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-10 text-white">
-          <p className="font-serif text-4xl italic leading-tight">Real work. Real businesses.<br />Paid to your mobile money.</p>
+          <p className="font-display text-4xl font-semibold leading-tight tracking-tight">Real work. Real businesses.<br />Paid to your mobile money.</p>
           <p className="mt-4 text-sm text-white/70">Verified students across Ghana and Nigeria</p>
         </div>
       </motion.div>

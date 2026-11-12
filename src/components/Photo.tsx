@@ -1,18 +1,20 @@
 import { ImageIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 /** Image with a graceful, on-brand fallback when the file isn't there yet. */
 export default function Photo({ src, alt, className = '', tone = 'sand', label, hideIfMissing }: {
   src?: string | null; alt: string; className?: string; tone?: 'sand' | 'brand' | 'dark'; label?: string; hideIfMissing?: boolean
 }) {
   const [ok, setOk] = useState<boolean | null>(src ? null : false)
-  useEffect(() => { setOk(src ? null : false) }, [src])
+  const img = useRef<HTMLImageElement>(null)
+  // a cached image can finish loading before this runs, so check it rather than waiting for onLoad
+  useEffect(() => { const el = img.current; setOk(!src ? false : el?.complete && el.naturalWidth > 0 ? true : null) }, [src])
   if (hideIfMissing && ok === false) return null
   const bg = tone === 'brand' ? 'bg-brand-100' : tone === 'dark' ? 'bg-brand-900' : 'bg-sand'
   return (
     <div className={`${/\b(absolute|fixed)\b/.test(className) ? '' : 'relative'} overflow-hidden ${bg} ${className}`}>
       {src && ok !== false && (
-        <img src={src} alt={alt} loading="lazy" onLoad={() => setOk(true)} onError={() => setOk(false)}
+        <img ref={img} src={src} alt={alt} loading="lazy" onLoad={() => setOk(true)} onError={() => setOk(false)}
           className={`h-full w-full object-cover transition-opacity duration-700 ${ok ? 'opacity-100' : 'opacity-0'}`} />
       )}
       {ok === false && (

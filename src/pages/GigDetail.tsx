@@ -70,7 +70,7 @@ export default function GigDetail() {
   return (
     <div className="container-x py-8">
       <Link to="/gigs" className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-ink"><ArrowLeft className="h-4 w-4" />All gigs</Link>
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, ease: EASE }} className="mt-6 overflow-hidden rounded-4xl">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, ease: EASE }} className="mt-6 overflow-hidden rounded-[28px]">
         <Photo src={coverFor(l)} alt={l.title} label={GIG_TYPES[l.type].label} className="aspect-[21/8] min-h-[12rem] w-full" />
       </motion.div>
       <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_360px]">
@@ -79,10 +79,10 @@ export default function GigDetail() {
             <span className="chip bg-brand-50 text-brand-700">{GIG_TYPES[l.type].label}</span>
             {l.client_name && <span>for <b className="font-medium text-ink">{l.client_name}</b></span>}
           </div>
-          <h1 className="mt-4 text-4xl font-semibold leading-[1.08] tracking-tightest md:text-5xl">{l.title}</h1>
+          <h1 className="mt-5 text-[clamp(2.2rem,4.6vw,3.6rem)] font-semibold leading-[1.04] tracking-[-0.04em]">{l.title}</h1>
           <p className="mt-5 text-lg leading-relaxed text-ink-muted">{l.summary}</p>
 
-          <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-4">
+          <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-line bg-line md:grid-cols-4">
             {[
               [Wallet, 'Pay', payLine(l)],
               [Users, 'Spots left', `${spotsLeft(l)} of ${l.slots}`],
@@ -96,10 +96,10 @@ export default function GigDetail() {
             ))}
           </dl>
 
-          {l.description && (<section className="mt-12"><h2 className="text-xl font-semibold">About the work</h2><p className="mt-3 whitespace-pre-line leading-relaxed text-ink-soft">{l.description}</p></section>)}
+          {l.description && (<section className="mt-12"><h2 className="text-2xl font-semibold tracking-[-0.025em]">About the work</h2><p className="mt-3 whitespace-pre-line leading-relaxed text-ink-soft">{l.description}</p></section>)}
           {l.requirements.length > 0 && (
             <section className="mt-12">
-              <h2 className="text-xl font-semibold">Requirements</h2>
+              <h2 className="text-2xl font-semibold tracking-[-0.025em]">Requirements</h2>
               <ul className="mt-4 divide-y divide-line border-y border-line">
                 {l.requirements.map((r, i) => (
                   <li key={i} className="flex gap-3 py-4 text-ink-soft"><Check className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />{r}</li>
@@ -109,7 +109,7 @@ export default function GigDetail() {
           )}
           {sessionsOf(l).length > 0 && (
             <section className="mt-12">
-              <h2 className="text-xl font-semibold">Schedule</h2>
+              <h2 className="text-2xl font-semibold tracking-[-0.025em]">Schedule</h2>
               <p className="mt-2 text-ink-muted">Check in on each day with {l.photo_rule !== 'none' ? 'a photo and ' : ''}a short report. Each day’s check-in opens only on that date, and you’re paid for every approved day.</p>
               <ol className="mt-4 divide-y divide-line border-y border-line">
                 {sessionsOf(l).map((sd, i) => (
@@ -122,7 +122,7 @@ export default function GigDetail() {
             </section>
           )}
           <section className="mt-12">
-            <h2 className="text-xl font-semibold">What you’ll submit</h2>
+            <h2 className="text-2xl font-semibold tracking-[-0.025em]">What you’ll submit</h2>
             <p className="mt-2 text-ink-muted">For each {l.unit_label} you complete:</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {schemaOf(l).map((f) => <span key={f.key} className="chip border border-line bg-white px-3 py-1.5 text-sm text-ink-soft">{f.label}</span>)}
@@ -135,9 +135,9 @@ export default function GigDetail() {
         </motion.div>
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.7, ease: EASE }} className="card p-7">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.7, ease: EASE }} className="card rounded-[28px] p-7">
             <div className="text-sm text-ink-muted">You can earn up to</div>
-            <div className="figure mt-1 text-6xl leading-none">{money(maxEarn(l), l.currency)}</div>
+            <div className="figure mt-1.5 text-[52px] leading-none">{money(maxEarn(l), l.currency)}</div>
             <div className="mt-1.5 text-sm text-ink-muted">{payLine(l)}{l.units_per_student ? ` · up to ${l.units_per_student} ${plural(l.unit_label, l.units_per_student)}` : ''}</div>
             <div className="mt-5 flex flex-wrap gap-1.5">
               <span className="chip bg-sand text-ink-soft">{AUDIENCES[aud].short}</span>

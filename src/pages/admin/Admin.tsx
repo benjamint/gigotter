@@ -412,7 +412,7 @@ function Testimonials() {
         {(list.data ?? []).map((t) => (
           <div key={t.id} className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-start">
             <div className="min-w-0 flex-1">
-              <p className="font-serif text-lg italic leading-snug">“{t.quote}”</p>
+              <p className="font-display text-lg font-medium leading-snug">“{t.quote}”</p>
               <p className="mt-2 text-sm"><b className="font-medium">{t.name}</b>{t.school && <span className="text-ink-muted"> · {t.school}</span>}</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">

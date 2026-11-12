@@ -27,10 +27,10 @@ export default function Me() {
   const first = profile.full_name?.split(' ')[0] || 'friend'
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto max-w-6xl px-4 pb-10 pt-10 md:pt-14">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-semibold tracking-tightest md:text-5xl">Welcome back, <span className="em text-brand-600">{first}</span></motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-[clamp(2.2rem,5vw,3.75rem)] font-semibold leading-[1.02] tracking-[-0.04em]">Welcome back, <span className="em text-brand-600">{first}</span></motion.h1>
           <div className="mt-2 flex items-center gap-2"><KycPill s={profile.kyc_status} />{profile.school && <span className="text-sm text-ink-muted">{profile.school}</span>}</div>
         </div>
         {profile.referral_code && (
@@ -52,19 +52,19 @@ export default function Me() {
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
         {[
-          ['Paid out', sum(['paid']), 'bg-brand-50'],
-          ['Approved, payout coming', sum(['approved']), 'bg-white'],
-          ['In review', sum(['pending']), 'bg-white'],
+          ['Paid out', sum(['paid']), 'bg-[#c9d6c8]'],
+          ['Approved, payout coming', sum(['approved']), 'bg-[#efdcc6]'],
+          ['In review', sum(['pending']), 'bg-brand-50'],
         ].map(([k, v, bg], i) => (
-          <motion.div key={k as string} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className={`card p-6 ${bg}`}>
+          <motion.div key={k as string} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className={`rounded-3xl p-6 ${bg}`}>
             <div className="text-sm font-medium text-ink-muted">{k}</div>
-            <div className="figure mt-2 text-5xl leading-none"><CountUp to={v as number} prefix={money(0, cur).replace(/0$/, '')} /></div>
+            <div className="figure mt-3 text-[44px] leading-none"><CountUp to={v as number} prefix={money(0, cur).replace(/0$/, '')} /></div>
           </motion.div>
         ))}
       </div>
 
       <div className="mt-12 flex items-end justify-between">
-        <h2 className="text-3xl font-semibold tracking-tightest">Your <span className="em">gigs</span></h2>
+        <h2 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold tracking-[-0.03em]">Your <span className="em">gigs</span></h2>
         <Link to="/gigs" className="btn-ghost btn-sm">Find more <ArrowRight className="h-4 w-4" /></Link>
       </div>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -90,7 +90,7 @@ export default function Me() {
 
       {subs.length > 0 && (
         <>
-          <h2 className="mt-12 text-3xl font-semibold tracking-tightest">Recent <span className="em">activity</span></h2>
+          <h2 className="mt-12 text-[clamp(1.75rem,3vw,2.25rem)] font-semibold tracking-[-0.03em]">Recent <span className="em">activity</span></h2>
           <div className="card mt-5 divide-y divide-line overflow-hidden">
             {subs.slice(0, 12).map((s) => (
               <div key={s.id} className="flex items-center gap-4 p-4">
@@ -104,7 +104,7 @@ export default function Me() {
       )}
       {(apps.data ?? []).filter((a) => a.status !== 'withdrawn').length > 0 && (
         <>
-          <h2 className="mt-12 text-3xl font-semibold tracking-tightest">Your <span className="em">applications</span></h2>
+          <h2 className="mt-12 text-[clamp(1.75rem,3vw,2.25rem)] font-semibold tracking-[-0.03em]">Your <span className="em">applications</span></h2>
           <div className="card mt-5 divide-y divide-line overflow-hidden">
             {apps.data!.filter((a) => a.status !== 'withdrawn').map((a) => {
               const st = ({ applied: ['Sent', 'bg-sand text-ink-soft'], shortlisted: ['Shortlisted', 'bg-amber-50 text-amber-800'], accepted: ['Selected', 'bg-brand-50 text-brand-700'], declined: ['Not selected', 'bg-sand text-ink-muted'], withdrawn: ['Withdrawn', 'bg-sand'] } as const)[a.status]
@@ -120,7 +120,7 @@ export default function Me() {
       )}
       {(pays.data?.length ?? 0) > 0 && (
         <>
-          <h2 className="mt-12 text-3xl font-semibold tracking-tightest">Payments <span className="em">received</span></h2>
+          <h2 className="mt-12 text-[clamp(1.75rem,3vw,2.25rem)] font-semibold tracking-[-0.03em]">Payments <span className="em">received</span></h2>
           <div className="card mt-5 divide-y divide-line overflow-hidden">
             {pays.data!.map((p) => (
               <div key={p.id} className="flex items-center gap-4 p-4">

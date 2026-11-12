@@ -15,9 +15,9 @@ export default function GigCard({ l, i = 0 }: { l: Listing; i?: number }) {
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
       transition={{ duration: 0.6, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}>
-      <Link to={`/gigs/${l.id}`} {...spot.handlers} className={`card group relative flex h-full flex-col overflow-hidden transition duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1.5 hover:border-ink/15 hover:shadow-lift ${!open ? 'opacity-60' : ''}`}>
+      <Link to={`/gigs/${l.id}`} {...spot.handlers} className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-white p-2.5 transition duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1.5 hover:border-ink/15 hover:shadow-[0_30px_60px_-36px_rgba(16,41,31,.35)] ${!open ? 'opacity-60' : ''}`}>
         {spot.layer}
-        <div className="relative aspect-[16/10] overflow-hidden">
+        <div className="relative aspect-[16/10] overflow-hidden rounded-2xl">
           <Photo src={coverFor(l)} alt={l.title} label={GIG_TYPES[l.type].label} className="h-full w-full transition duration-700 group-hover:scale-[1.05]" />
           <div className="absolute left-3 top-3 flex gap-1.5">
             <span className="chip bg-white/95 text-ink shadow-sm backdrop-blur">{GIG_TYPES[l.type].label}</span>
@@ -29,9 +29,9 @@ export default function GigCard({ l, i = 0 }: { l: Listing; i?: number }) {
             <ArrowUpRight className="h-4 w-4" />
           </span>
         </div>
-        <div className="relative z-10 flex flex-1 flex-col p-5">
+        <div className="relative z-10 flex flex-1 flex-col px-3 pb-3 pt-4">
           {l.client_name && <div className="text-xs font-medium text-ink-muted">{l.client_name}</div>}
-          <h3 className="mt-1 text-lg font-semibold leading-snug">{l.title}</h3>
+          <h3 className="mt-1 text-[19px] font-semibold leading-snug tracking-[-0.02em]">{l.title}</h3>
           <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-muted">{l.summary}</p>
           <div className="mb-5 mt-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-ink-muted">
             <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /><span className="max-w-[11rem] truncate">{l.is_remote ? 'Remote' : l.location}</span></span>

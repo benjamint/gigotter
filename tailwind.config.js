@@ -4,15 +4,17 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Inter Tight"', 'Inter', 'system-ui', 'sans-serif'],
-        serif: ['"Instrument Serif"', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Onest', 'system-ui', '-apple-system', 'sans-serif'],
+        // v2 design has no serif: anything still asking for it gets the display face
+        serif: ['Onest', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['"Inter Tight"', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
-        paper: '#F7F6F2',
-        sand: '#EFECE4',
-        line: '#E4E1D8',
-        ink: { DEFAULT: '#15171A', soft: '#3A3E44', muted: '#6B7077' },
+        paper: '#FFFFFF',
+        sand: '#F1F5F2',
+        line: '#E3E9E4',
+        olive: { 1: '#F6F8F4', 2: '#E7EDE4' },
+        ink: { DEFAULT: '#131317', soft: '#3A3E44', muted: '#5C625E' },
         brand: { 50: '#EEF3EF', 100: '#DCE7DF', 200: '#B7CDBE', 500: '#2F6B52', 600: '#245A44', 700: '#1C4635', 900: '#10291F' },
         clay: { 50: '#FBF1EA', 500: '#C2703D', 600: '#A85C2F' },
       },

@@ -121,7 +121,7 @@ export function Progress({ value, max, className = '' }: { value: number; max: n
 export const SectionHead = ({ eyebrow, title, body, className = '' }: { eyebrow?: string; title: ReactNode; body?: string; className?: string }) => (
   <div className={className}>
     {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-    <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tightest md:text-[2.75rem]">{title}</h2>
-    {body && <p className="mt-4 max-w-xl text-[17px] leading-relaxed text-ink-muted">{body}</p>}
+    <h2 className="mt-4 text-[clamp(2.1rem,4.8vw,3.6rem)] font-semibold leading-[1.04] tracking-[-0.035em]">{title}</h2>
+    {body && <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-ink-muted md:text-lg">{body}</p>}
   </div>
 )

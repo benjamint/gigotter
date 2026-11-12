@@ -55,13 +55,15 @@ export default function Layout() {
         </div>
       )}
       <ScrollProgress />
-      <header className={`sticky top-0 z-40 transition-[transform,background-color,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${hide ? '-translate-y-full' : 'translate-y-0'} ${scrolled ? 'border-b border-line bg-paper/85 backdrop-blur-xl' : 'border-b border-transparent bg-paper'}`}>
-        <div className="container-x flex h-16 items-center justify-between">
+      {/* floating frosted pill header; hides while reading down, returns on scroll up */}
+      <header className={`sticky top-0 z-40 pt-3 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${hide ? '-translate-y-[120%]' : 'translate-y-0'}`}>
+        <div className="container-x">
+        <div className={`flex h-16 items-center justify-between rounded-full border pl-4 pr-2.5 backdrop-blur-xl backdrop-saturate-150 transition-[background-color,box-shadow,border-color] duration-500 ${scrolled || open ? 'border-line bg-white/85 shadow-[0_10px_30px_-20px_rgba(16,41,31,.35)]' : 'border-ink/[.07] bg-white/70'}`}>
           <Logo />
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-1 md:flex">
             {links.map((l) => (
-              <NavLink key={l.to} to={l.to} className={({ isActive }) => `relative py-1 text-sm transition ${isActive ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'}`}>
-                {({ isActive }) => (<>{l.label}{isActive && <motion.span layoutId="nav-line" className="absolute -bottom-[21px] left-0 right-0 h-[2px] bg-ink" />}</>)}
+              <NavLink key={l.to} to={l.to} className={({ isActive }) => `relative isolate rounded-full px-4 py-2 text-sm transition ${isActive ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'}`}>
+                {({ isActive }) => (<>{isActive && <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-brand-50" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />}{l.label}</>)}
               </NavLink>
             ))}
           </nav>
@@ -73,17 +75,18 @@ export default function Layout() {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-sm font-medium text-ink-soft hover:text-ink">Log in</Link>
+                <Link to="/login" className="btn-ghost btn-sm">Log in</Link>
                 <Link to="/signup" className="btn-primary btn-sm">Get started</Link>
               </>
             )}
           </div>
-          <button className="grid h-10 w-10 place-items-center rounded-full md:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+          <button className="grid h-11 w-11 place-items-center rounded-full border border-ink/10 md:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+        </div>
         </div>
         <AnimatePresence>
           {open && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-line bg-paper md:hidden">
-              <div className="container-x flex flex-col py-4">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="container-x overflow-hidden md:hidden">
+              <div className="mt-2 flex flex-col rounded-3xl border border-line bg-white px-5 py-3 shadow-[0_20px_40px_-28px_rgba(16,41,31,.4)]">
                 {links.map((l, i) => (
                   <motion.div key={l.to} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 + i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
                     <NavLink to={l.to} className="block border-b border-line py-4 text-lg font-medium">{l.label}</NavLink>
@@ -100,32 +103,32 @@ export default function Layout() {
         </AnimatePresence>
       </header>
       <main className="flex-1"><Outlet /></main>
-      <footer className="mt-28 bg-brand-900 text-white">
+      <footer className="mt-28 border-t border-line bg-white">
         <div className="container-x grid gap-10 py-16 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
-            <Logo light />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-white/60">Verified students doing real work for businesses across Africa. Paid to mobile money.</p>
+            <Logo />
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted">Verified students doing real work for real businesses in Ghana. Paid to mobile money.</p>
           </div>
           <div className="text-sm">
-            <div className="mb-3 font-medium">Students</div>
-            <div className="space-y-2.5 text-white/60">
-              <Link to="/gigs" className="link-u block w-fit hover:text-white">Find work</Link>
-              <Link to="/signup" className="link-u block w-fit hover:text-white">Get verified</Link>
-              <Link to="/me" className="link-u block w-fit hover:text-white">Dashboard</Link>
+            <div className="mb-4 text-ink-muted">Students</div>
+            <div className="space-y-3">
+              <Link to="/gigs" className="link-u block w-fit">Find work</Link>
+              <Link to="/signup" className="link-u block w-fit">Get verified</Link>
+              <Link to="/me" className="link-u block w-fit">Dashboard</Link>
             </div>
           </div>
           <div className="text-sm">
-            <div className="mb-3 font-medium">Businesses</div>
-            <div className="space-y-2.5 text-white/60">
-              <Link to="/business" className="link-u block w-fit hover:text-white">What we do</Link>
-              <Link to="/business#pricing" className="link-u block w-fit hover:text-white">Pricing</Link>
-              <Link to="/brief" className="link-u block w-fit hover:text-white">Post a brief</Link>
+            <div className="mb-4 text-ink-muted">Businesses</div>
+            <div className="space-y-3">
+              <Link to="/business" className="link-u block w-fit">What we do</Link>
+              <Link to="/business#pricing" className="link-u block w-fit">Pricing</Link>
+              <Link to="/brief" className="link-u block w-fit">Post a brief</Link>
             </div>
           </div>
         </div>
-        <div className="container-x flex flex-col gap-2 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row sm:justify-between">
+        <div className="container-x flex flex-col gap-2 border-t border-line py-6 text-xs text-ink-muted sm:flex-row sm:justify-between">
           <span>© {new Date().getFullYear()} Gigotter. Accra, Ghana.</span>
-          <span className="flex gap-5"><Link to="/privacy" className="link-u hover:text-white">Privacy</Link><Link to="/terms" className="link-u hover:text-white">Terms</Link><span className="hidden sm:inline">ID documents are stored privately and used only for verification.</span></span>
+          <span className="flex gap-5"><Link to="/privacy" className="link-u hover:text-ink">Privacy</Link><Link to="/terms" className="link-u hover:text-ink">Terms</Link><span className="hidden sm:inline">ID documents are stored privately and used only for verification.</span></span>
         </div>
       </footer>
     </div>

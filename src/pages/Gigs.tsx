@@ -24,18 +24,18 @@ export default function Gigs() {
   const types = (['all', ...Object.keys(GIG_TYPES)] as (GigType | 'all')[]).filter((t) => t === 'all' || all.some((l) => l.type === t))
 
   return (
-    <div className="container-x py-14">
+    <div className="container-x pb-16 pt-10 md:pt-16">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
         <div className="eyebrow">Find work</div>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tightest md:text-5xl">Open <span className="em text-brand-600">gigs</span></h1>
-        <p className="mt-3 max-w-lg text-lg text-ink-muted">Paid, clearly scoped work from businesses that need people on the ground.</p>
+        <h1 className="mt-5 text-[clamp(2.6rem,6vw,4.75rem)] font-semibold leading-[1] tracking-[-0.045em]">Open <span className="em">gigs.</span></h1>
+        <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Paid, clearly scoped work from businesses that need people on the ground.</p>
       </motion.div>
       {(paid.data?.length ?? 0) >= 3 && <div className="mt-10"><PayoutFeed items={paid.data!} /></div>}
-      <div className="mt-10 flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-center md:justify-between">
+      <div className="mt-10 flex flex-col gap-4 border-y border-line py-4 md:flex-row md:items-center md:justify-between">
         <div className="-mx-4 flex gap-1 overflow-x-auto px-4 md:mx-0 md:px-0">
           {types.map((t) => (
             <button key={t} onClick={() => setType(t)} className={`relative shrink-0 rounded-full px-4 py-2 text-sm transition ${type === t ? 'font-medium text-white' : 'text-ink-muted hover:text-ink'}`}>
-              {type === t && <motion.span layoutId="type-pill" className="absolute inset-0 rounded-full bg-ink" transition={{ duration: 0.3 }} />}
+              {type === t && <motion.span layoutId="type-pill" className="absolute inset-0 rounded-full bg-brand-700" transition={{ duration: 0.3 }} />}
               <span className="relative">{t === 'all' ? 'All' : GIG_TYPES[t].label}</span>
             </button>
           ))}
@@ -54,7 +54,7 @@ export default function Gigs() {
         {loading ? <PageLoader /> : list.length ? (
           <>
             <p className="mb-6 text-sm text-ink-muted">{list.length} gig{list.length > 1 ? 's' : ''}</p>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{list.map((l, i) => <GigCard key={l.id} l={l} i={i} />)}</div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{list.map((l, i) => <GigCard key={l.id} l={l} i={i} />)}</div>
           </>
         ) : <Empty icon={<SearchX className="h-5 w-5" />} title="No gigs match" body="New work is posted every week. Get verified now so you’re ready when it drops." />}
       </div>

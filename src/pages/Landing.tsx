@@ -1,17 +1,17 @@
-import { animate, motion, useMotionValue, useReducedMotion, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, BadgeCheck, ClipboardList, Handshake, MessagesSquare, Package, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
+import { ArrowRight, BadgeCheck, Check, ClipboardList, Handshake, MessagesSquare, Package, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import GigCard from '../components/GigCard'
-import Photo from '../components/Photo'
-import { CountUp, Reveal, SectionHead } from '../components/ui'
+import { Reveal, SectionHead } from '../components/ui'
 import { PayoutFeed, TestimonialStrip } from '../components/Feeds'
 import FAQ from '../components/Faq'
+import { HeroOlive, StackCards, StatStrip, ZoomPhoto } from '../components/v2'
 import { listListings, listTestimonials, payoutFeed } from '../lib/api'
 import { isOpen } from '../lib/format'
 import { IMG } from '../lib/images'
 import { useAsync, useSession } from '../lib/session'
-import { ImageReveal, Magnetic, Parallax, SplitReveal, useDrawLine, useSpotlight } from '../components/motion'
+import { Magnetic, SplitReveal, useSpotlight } from '../components/motion'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -22,86 +22,73 @@ export default function Landing() {
   const paid = useAsync(() => payoutFeed(20), [])
   const quotes = useAsync(() => listTestimonials(), [])
   const cta = user ? '/gigs' : '/signup'
-  const hero = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({ target: hero, offset: ['start start', 'end start'] })
-  const y = useTransform(scrollYProgress, [0, 1], [0, 60])
 
   return (
     <>
       {/* ───────── HERO ───────── */}
-      <section ref={hero} className="container-x grid items-center gap-12 pb-20 pt-10 md:grid-cols-[1.05fr_.95fr] md:gap-16 md:pt-16">
-        <div>
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-xs font-medium text-ink-soft">
-            <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-40" /><span className="relative h-2 w-2 rounded-full bg-brand-500" /></span>
-            {live.length ? `${live.length} paid gig${live.length === 1 ? "" : "s"} open now` : 'Now live in Accra'}
-          </motion.div>
-          <h1 className="mt-6 text-[clamp(2.6rem,6.2vw,4.75rem)] font-semibold leading-[1.02] tracking-tightest">
-            <SplitReveal delay={0.1}>Get paid to do <span className="em text-brand-600">real work</span> for real businesses.</SplitReveal>
-          </h1>
-          <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7, ease: EASE }}
-            className="mt-6 max-w-[30rem] text-lg leading-relaxed text-ink-muted">
-            Gigotter connects verified students with companies that need people on the ground — signing up customers, running focus groups and gathering research. Pick a gig, do the work, get paid to mobile money.
-          </motion.p>
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap gap-3">
-            <Magnetic><Link to={cta} className="btn-primary px-7 py-3.5">Start earning <ArrowRight className="h-4 w-4" /></Link></Magnetic>
-            <a href="#gigs" className="btn-ghost px-7 py-3.5">Browse open gigs</a>
-          </motion.div>
-          {!user && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }} className="mt-4 text-sm text-ink-muted">
-            Not a student? <Link to="/signup?type=general" className="link-u font-medium text-ink">You can join too</Link>
-          </motion.p>}
-          <motion.div initial="h" animate="s" variants={{ s: { transition: { staggerChildren: 0.08, delayChildren: 0.8 } } }} className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink-muted">
-            {[[ShieldCheck, 'ID-verified students'], [Wallet, 'Paid to MoMo'], [BadgeCheck, 'No fees, ever']].map(([I, t]: any) => (
-              <motion.span key={t} variants={{ h: { opacity: 0, y: 6 }, s: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }} className="flex items-center gap-2"><I className="h-4 w-4 text-brand-600" />{t}</motion.span>
-            ))}
-          </motion.div>
-        </div>
-
-        <div className="relative">
-          <motion.div style={{ y }}>
-            <motion.div initial={{ clipPath: 'inset(12% 12% 12% 12% round 2rem)', opacity: 0 }} animate={{ clipPath: 'inset(0% 0% 0% 0% round 2rem)', opacity: 1 }}
-              transition={{ delay: 0.15, duration: 1.3, ease: EASE }} className="overflow-hidden rounded-4xl">
-              <motion.div initial={{ scale: 1.18 }} animate={{ scale: 1 }} transition={{ delay: 0.15, duration: 1.8, ease: EASE }}>
-                <Photo src={IMG.hero} alt="Student working in the city" label="hero.jpg" className="aspect-[4/5] w-full" />
-              </motion.div>
+      <HeroOlive>
+        <div className="grid items-center gap-12 md:grid-cols-[1.05fr_.95fr] md:gap-16">
+          <div>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}
+              className="inline-flex items-center gap-2 rounded-full border border-ink/[.07] bg-white/80 px-3 py-1.5 text-xs font-medium text-ink-soft backdrop-blur">
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-40" /><span className="relative h-2 w-2 rounded-full bg-brand-500" /></span>
+              {live.length ? `${live.length} paid gig${live.length === 1 ? '' : 's'} open now` : 'Paid gigs for students in Ghana'}
             </motion.div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.8, ease: EASE }}
-            className="absolute -left-4 bottom-10 w-60 motion-safe:animate-float rounded-2xl border border-line bg-white/95 p-4 shadow-lift backdrop-blur md:-left-10">
-            <div className="flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-50 text-brand-600"><Smartphone className="h-4 w-4" /></span>
-              <div><div className="text-xs text-ink-muted">Payment sent</div><div className="font-display text-lg font-semibold"><Ticker to={450} delay={1.3} decimals={2} /></div></div>
-            </div>
-            <div className="mt-3 border-t border-line pt-3 text-xs text-ink-muted">9 salons onboarded · MTN MoMo</div>
-          </motion.div>
+            <h1 className="mt-6 text-[clamp(2.75rem,7vw,5.75rem)] font-semibold leading-[.98] tracking-[-0.045em]">
+              <SplitReveal delay={0.1}>Real work. Real pay. <span className="em">Straight to MoMo.</span></SplitReveal>
+            </h1>
+            <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 0.7, ease: EASE }}
+              className="mt-6 max-w-[34rem] text-lg leading-relaxed text-ink-muted md:text-xl">
+              Pick a paid gig from a real business, do the work between lectures, and get paid to your mobile money. Onboarding, surveys, focus groups and field research.
+            </motion.p>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap gap-3">
+              <Magnetic><Link to={cta} className="btn-primary px-7 py-3.5">Find paid work <ArrowRight className="h-4 w-4" /></Link></Magnetic>
+              <Link to="/business" className="btn-ghost px-7 py-3.5">Hire verified people</Link>
+            </motion.div>
+            {!user && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }} className="mt-4 text-sm text-ink-muted">
+              Not a student? <Link to="/signup?type=general" className="link-u font-medium text-ink">You can join too</Link>
+            </motion.p>}
+            <motion.div initial="h" animate="s" variants={{ s: { transition: { staggerChildren: 0.08, delayChildren: 0.8 } } }} className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink-muted">
+              {[[ShieldCheck, 'ID and selfie verified'], [Wallet, 'Paid to MoMo'], [BadgeCheck, 'No fees for students']].map(([I, t]: any) => (
+                <motion.span key={t} variants={{ h: { opacity: 0, y: 6 }, s: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }} className="flex items-center gap-2"><I className="h-4 w-4 text-brand-600" />{t}</motion.span>
+              ))}
+            </motion.div>
+          </div>
+
+          <div className="relative pb-9">
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 1.1, ease: EASE }}>
+              <ZoomPhoto src={IMG.hero} alt="Students in Accra, smiling, phones in hand" eager className="aspect-[4/5] max-h-[640px] w-full" />
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.8, ease: EASE }}
+              className="absolute bottom-0 left-3 w-[min(300px,82%)] motion-safe:animate-float rounded-[22px] border border-line bg-white p-4 shadow-[0_18px_50px_-24px_rgba(16,41,31,.35)] md:-left-8">
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#efdcc6] font-display text-[10px] font-bold text-[#3b2a12]">MoMo</span>
+                <div><div className="text-xs text-ink-muted">Payment sent · MTN MoMo</div><div className="font-display text-[28px] font-semibold leading-tight tracking-[-0.03em]"><Ticker to={450} delay={1.2} decimals={2} /></div></div>
+              </div>
+              <div className="mt-3 flex justify-between border-t border-line pt-3 text-xs text-ink-muted"><span>9 salons onboarded</span><span>Example payout</span></div>
+            </motion.div>
+          </div>
         </div>
-      </section>
+      </HeroOlive>
 
       {/* ───────── STATS ───────── */}
-      <section className="container-x">
-        <div className="grid grid-cols-2 divide-line border-y border-line md:grid-cols-4 md:divide-x">
-          {[[24, 'h', 'Typical review time'], [100, '%', 'Paid to mobile money'], [0, '', 'Fees for students'], [5, ' min', 'To get verified']].map(([n, s, l], i) => (
-            <Reveal key={l as string} delay={i * 0.05} className="px-2 py-8 md:px-8">
-              <div className="font-display text-4xl font-semibold tracking-tight"><CountUp to={n as number} suffix={s as string} /></div>
-              <div className="mt-1 text-sm text-ink-muted">{l}</div>
-            </Reveal>
-          ))}
-        </div>
+      <section className="container-x pt-14">
+        <StatStrip items={[[24, 'h', 'Typical review time'], [100, '%', 'Paid to mobile money'], [0, '', 'Fees for students', '₵'], [5, ' min', 'To get verified']]} />
       </section>
 
-      {/* ───────── OPEN GIGS (the main event, right after the stats) ───────── */}
-      <section id="gigs" className="mt-12 scroll-mt-20 bg-sand/60 py-16">
+      {/* ───────── OPEN GIGS ───────── */}
+      <section id="gigs" className="mt-16 scroll-mt-24 bg-sand py-20 md:py-24">
         <div className="container-x">
           <Reveal className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHead eyebrow={live.length ? `${live.length} open now` : 'Open now'} title="Gigs you can start this week" />
-            <Link to="/gigs" className="group inline-flex items-center gap-2 text-sm font-medium">View all gigs <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link>
+            <SectionHead eyebrow={live.length ? `${live.length} open now` : 'Open now'} title={<SplitReveal inView>Gigs you can start this week.</SplitReveal>} />
+            <Link to="/gigs" className="group inline-flex items-center gap-2 text-sm font-medium">See all gigs <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></Link>
           </Reveal>
           {gigs.loading && !gigs.data ? (
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
-              {[0, 1, 2].map((i) => <div key={i} className={`h-72 animate-pulse rounded-3xl bg-white/60 ${i ? 'hidden sm:block' : ''}`} />)}
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-hidden>
+              {[0, 1, 2].map((i) => <div key={i} className={`h-80 animate-pulse rounded-3xl bg-white/70 ${i ? 'hidden sm:block' : ''}`} />)}
             </div>
           ) : live.length ? (
-            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {live.slice(0, 6).map((l, i) => <div key={l.id} className={i >= 3 ? 'hidden sm:block' : ''}><GigCard l={l} i={i} /></div>)}
             </div>
           ) : (
@@ -110,100 +97,103 @@ export default function Landing() {
               <Link to={cta} className="btn-primary">{user ? 'Browse gigs' : 'Sign up free'} <ArrowRight className="h-4 w-4" /></Link>
             </div>
           )}
+          {(paid.data?.length ?? 0) >= 3 && <div className="mt-12"><PayoutFeed items={paid.data!} /></div>}
         </div>
       </section>
 
-      {(paid.data?.length ?? 0) >= 3 && (
-        <section className="container-x pt-12"><PayoutFeed items={paid.data!} /></section>
-      )}
+      {/* ───────── TWO SIDES ───────── */}
+      <section className="container-x py-24 md:py-32">
+        <Reveal><SectionHead eyebrow="Two sides, one platform" title={<SplitReveal inView>Earn on your schedule. Or get work done on the ground.</SplitReveal>} /></Reveal>
+        <div className="mt-12 grid gap-4 md:grid-cols-2">
+          <Audience to={cta} tone="bg-[#c9d6c8]" tag="For students and earners" title="Paid work that fits around lectures."
+            points={['Verify once with your student ID and a selfie', 'Every gig shows the pay, the steps and the proof needed', 'Approved work is paid to your MoMo']}
+            cta="Find paid work" img={IMG.auth} alt="Students on campus" />
+          <Audience to="/business" tone="bg-brand-50" tag="For businesses and researchers" title="Verified people for sales, research and focus groups."
+            points={['Customer sign-ups, surveys, price checks, focus groups', 'Photo, GPS and answers as proof for every result', 'Pay only for results that meet your brief']}
+            cta="Post a brief" img={IMG.business} alt="A founder at work" delay={0.08} />
+        </div>
+      </section>
 
-      {/* ───────── HOW ───────── */}
-      <section className="container-x py-28">
-        <Reveal><SectionHead eyebrow="How it works" title={<SplitReveal inView>Three steps between you and your <span className="em">first payout.</span></SplitReveal>} /></Reveal>
-        <Steps />
+      {/* ───────── HOW IT WORKS ───────── */}
+      <section className="container-x pb-24 md:pb-32">
+        <Reveal><SectionHead eyebrow="How it works" title={<SplitReveal inView>Three steps to your <span className="em">first payout.</span></SplitReveal>} /></Reveal>
+        <StackCards>
+          {STEPS.map((s, i) => (
+            <article key={s.t} className={`grid items-center gap-8 rounded-[28px] border border-line p-6 md:grid-cols-2 md:gap-14 md:p-12 ${['bg-white', 'bg-[#c9d6c8]', 'bg-brand-50'][i]}`}>
+              <div>
+                <div className="text-sm font-medium tracking-[0.08em] text-ink-muted">Step {i + 1} of 3</div>
+                <h3 className="mt-4 text-[clamp(1.9rem,3.6vw,3rem)] leading-[1.04] tracking-[-0.035em]">{s.t}</h3>
+                <p className="mt-4 max-w-md text-[17px] leading-relaxed text-ink-muted">{s.d}</p>
+              </div>
+              <div className="relative w-full md:max-w-[460px] md:justify-self-end">
+                <ZoomPhoto src={s.img} alt={s.alt} className="aspect-[4/3.2] w-full !rounded-[20px]" />
+                <Reveal delay={0.2} className="absolute bottom-3.5 left-3.5 max-w-[calc(100%-28px)]">
+                  <div className="glass-tag">
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${s.tagBg}`}>{s.icon}</span>
+                    <span><b className="block font-display text-[15px] font-semibold leading-tight tracking-[-0.01em]">{s.tag}</b><span className="mt-0.5 block text-xs text-ink-muted">{s.sub}</span></span>
+                  </div>
+                </Reveal>
+              </div>
+            </article>
+          ))}
+        </StackCards>
       </section>
 
       {/* ───────── KINDS OF WORK ───────── */}
-      <section className="container-x grid gap-14 py-28 md:grid-cols-[.9fr_1.1fr]">
-        <Reveal>
-          <SectionHead eyebrow="The work" title={<SplitReveal inView>Flexible work that <span className="em">builds</span> real experience.</SplitReveal>}
-            body="Every gig is paid, clearly scoped and done on your own schedule — between lectures, on weekends or from home. And it all goes on your Gigotter record." />
-          <Magnetic className="mt-8"><Link to={cta} className="btn-primary">Create your profile <ArrowRight className="h-4 w-4" /></Link></Magnetic>
-        </Reveal>
-        <div className="grid gap-px overflow-hidden rounded-3xl border border-line bg-line sm:grid-cols-2">
+      <section className="container-x pb-24 md:pb-32">
+        <Reveal><SectionHead eyebrow="The work" title={<SplitReveal inView>Flexible work that builds <span className="em">real experience.</span></SplitReveal>}
+          body="Every gig is paid, clearly scoped and done on your own schedule: between lectures, on weekends or from home. And it all goes on your Gigotter record." /></Reveal>
+        <div className="mt-12 grid gap-px overflow-hidden rounded-[28px] border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
           {[
-            [Handshake, 'Customer onboarding', 'Introduce businesses to a product and help them sign up.'],
-            [MessagesSquare, 'Focus groups', 'Bring the right people into a room and keep the conversation flowing.'],
-            [Search, 'Field research', 'Visit shops and markets to collect prices, photos and insight.'],
-            [ClipboardList, 'Surveys', 'Gather genuine responses from people who match the brief.'],
-            [Smartphone, 'App testing', 'Try new apps and websites and say honestly what works.'],
-            [Package, 'Errands', 'Deliveries, drop-offs and quick checks around town.'],
-          ].map(([I, t, d]: any, i) => <WorkTile key={t} I={I} t={t} d={d} i={i} />)}
+            [Handshake, 'Customer onboarding', 'Introduce businesses to a product and help them sign up.', 'bg-[#c9d6c8]'],
+            [MessagesSquare, 'Focus groups', 'Share your view in a room with others, paid for your time.', 'bg-[#d6e4d9]'],
+            [Search, 'Field research', 'Visit shops and markets to collect prices, photos and insight.', 'bg-brand-50'],
+            [ClipboardList, 'Surveys', 'Gather genuine answers from people who match the brief.', 'bg-[#dce8df]'],
+            [Smartphone, 'App testing', 'Try new apps and websites and say honestly what works.', 'bg-brand-200'],
+            [Package, 'Errands', 'Deliveries, drop-offs and quick checks around town.', 'bg-[#c9d6c8]'],
+          ].map(([I, t, d, bg]: any, i) => <WorkTile key={t} I={I} t={t} d={d} bg={bg} i={i} />)}
         </div>
       </section>
 
       {(quotes.data?.length ?? 0) >= 1 && (
-        <section className="py-24">
+        <section className="pb-24 md:pb-32">
           <Reveal className="container-x"><SectionHead eyebrow="From students" title={<>In their <span className="em">own words.</span></>} /></Reveal>
           <div className="mt-10"><TestimonialStrip items={quotes.data!} /></div>
         </section>
       )}
 
-      <Calculator />
-
-      {/* ───────── FOR BUSINESSES ───────── */}
-      <section className="container-x py-28">
-        <Reveal>
-          <div className="grid overflow-hidden rounded-4xl bg-brand-900 text-white md:grid-cols-2">
-            <div className="flex flex-col justify-center p-10 md:p-16">
-              <div className="eyebrow text-brand-200">For businesses</div>
-              <h2 className="mt-4 text-3xl font-semibold leading-[1.1] tracking-tightest text-white md:text-[2.6rem]"><SplitReveal inView>Need people on the ground? <span className="em text-brand-200">Send in the otters.</span></SplitReveal></h2>
-              <p className="mt-5 max-w-md leading-relaxed text-white/65">Tell us what you need — customer sign-ups, market research, product sampling. We scope it, match verified students and you only pay for approved results.</p>
-              <div className="mt-8"><Magnetic><Link to="/business" className="btn bg-white px-7 py-3.5 text-ink hover:bg-brand-50">See how it works <ArrowRight className="h-4 w-4" /></Link></Magnetic></div>
-            </div>
-            <Parallax className="min-h-[22rem] md:min-h-full" amount={30}><Photo src={IMG.business} alt="Founder at work" label="business.jpg" tone="dark" className="h-full min-h-[22rem] w-full" /></Parallax>
-          </div>
-        </Reveal>
-      </section>
-
       <FAQ items={QA} />
 
       {/* ───────── CTA ───────── */}
-      <section className="container-x pt-8 text-center">
+      <section className="mx-2 rounded-[clamp(28px,4vw,44px)] bg-brand-900 px-4 py-20 text-center text-white md:mx-3 md:py-32">
         <Reveal>
-          <h2 className="mx-auto max-w-3xl text-[clamp(2.4rem,5.5vw,4.25rem)] font-semibold leading-[1.04] tracking-tightest"><SplitReveal inView stagger={0.08}>Your next payout starts <span className="em text-brand-600">today.</span></SplitReveal></h2>
-          <p className="mx-auto mt-5 max-w-md text-lg text-ink-muted">Sign up in two minutes. Get verified. Pick your first gig.</p>
-          <div className="mt-9 flex justify-center gap-3"><Magnetic strength={0.35}><Link to={cta} className="btn-primary px-8 py-4">Get started <ArrowRight className="h-4 w-4" /></Link></Magnetic></div>
+          <h2 className="mx-auto max-w-4xl text-[clamp(2.5rem,6.4vw,5.25rem)] leading-[1] tracking-[-0.045em] text-white"><SplitReveal inView stagger={0.08}>Your next payout <span className="text-brand-200">starts today.</span></SplitReveal></h2>
+          <p className="mx-auto mt-6 max-w-md text-lg text-white/65">Sign up in two minutes. Get verified. Pick your first gig.</p>
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
+            <Magnetic strength={0.35}><Link to={cta} className="btn bg-white px-8 py-4 text-ink hover:bg-brand-50">Start earning <ArrowRight className="h-4 w-4" /></Link></Magnetic>
+            <Link to="/business" className="btn border border-white/20 px-8 py-4 text-white hover:bg-white/10">I'm a business</Link>
+          </div>
         </Reveal>
       </section>
     </>
   )
 }
 
-function Calculator() {
-  const [n, setN] = useState(12)
-  const pct = ((n - 1) / 29) * 100
+function Audience({ to, tone, tag, title, points, cta, img, alt, delay = 0 }: {
+  to: string; tone: string; tag: string; title: string; points: string[]; cta: string; img: string; alt: string; delay?: number
+}) {
   return (
-    <section className="container-x">
-      <Reveal>
-        <div className="card grid items-center gap-10 p-8 md:grid-cols-[1.2fr_1fr] md:p-14">
-          <div>
-            <div className="eyebrow">Earnings estimate</div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tightest">What could a month look like?</h2>
-            <p className="mt-2 text-ink-muted">Based on an onboarding gig paying ₵50 per business.</p>
-            <input type="range" min={1} max={30} value={n} onChange={(e) => setN(+e.target.value)} aria-label="Businesses onboarded"
-              style={{ background: `linear-gradient(to right, #245A44 ${pct}%, #EFECE4 ${pct}%)` }}
-              className="mt-10 h-1.5 w-full cursor-pointer appearance-none rounded-full accent-brand-600" />
-            <div className="mt-3 flex justify-between text-sm text-ink-muted"><span><b className="font-semibold text-ink">{n}</b> business{n > 1 ? 'es' : ''} onboarded</span><span>30</span></div>
-          </div>
-          <div className="rounded-3xl bg-paper p-8 text-center md:text-left">
-            <div className="text-sm text-ink-muted">Estimated earnings</div>
-            <div className="mt-1 font-display text-6xl font-semibold tracking-tightest"><Ticker to={n * 50} duration={0.5} /></div>
-            <div className="mt-2 text-sm text-ink-muted">About {Math.ceil(n / 4)} afternoon{n > 4 ? 's' : ''} of work</div>
-          </div>
-        </div>
-      </Reveal>
-    </section>
+    <Reveal delay={delay} className="h-full">
+      <Link to={to} className={`group flex h-full flex-col rounded-[28px] p-7 transition duration-700 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 md:p-12 ${tone}`}>
+        <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-medium">{tag}</span>
+        <h3 className="mt-5 text-[clamp(1.75rem,3.2vw,2.6rem)] leading-[1.05] tracking-[-0.035em]">{title}</h3>
+        <ul className="mt-6 grid gap-2.5 text-[15px]">
+          {points.map((p) => <li key={p} className="flex gap-2.5"><Check className="mt-0.5 h-4 w-4 shrink-0" />{p}</li>)}
+        </ul>
+        <span className="btn-primary mt-8 w-fit">{cta} <ArrowRight className="h-4 w-4" /></span>
+        <ZoomPhoto src={img} alt={alt} className="mt-8 h-56 !rounded-[20px] md:h-60" />
+      </Link>
+    </Reveal>
   )
 }
 
@@ -212,10 +202,11 @@ const QA: [string, string][] = [
   ['How do gigs that need an application work?', 'Some gigs, like focus groups, look for particular people. You apply with a few answers, the Gigotter team selects who takes part, and you’re paid once you’ve taken part.'],
   ['Why do you need my ID and a selfie?', 'We pay out real money and represent real businesses, so every account must belong to a real, verified student. Your documents are stored privately and seen only by our verification team.'],
   ['When do I get paid?', 'Work is usually reviewed within 24 hours. Approved earnings are sent to your mobile money account in the weekly payout.'],
-  ['Can I take more than one gig?', 'Yes — take on as many as you can manage. If you can’t complete one, withdraw from your dashboard so another student can take the spot.'],
-  ['What counts as completed work?', 'Each gig lists exactly what to submit — usually the business name, contact and a photo. We only pay for work that meets the brief.'],
+  ['Can I take more than one gig?', 'Yes. Take on as many as you can manage. If you can’t complete one, withdraw from your dashboard so another student can take the spot.'],
+  ['What counts as completed work?', 'Each gig lists exactly what to submit, usually the business name, contact and a photo. We only pay for work that meets the brief.'],
 ]
-/** Number that rolls to its new value (₵ formatted). */
+
+/** Number that rolls to its value (₵ formatted). */
 function Ticker({ to, duration = 1.2, delay = 0, decimals = 0 }: { to: number; duration?: number; delay?: number; decimals?: number }) {
   const reduce = useReducedMotion()
   const v = useMotionValue(reduce ? to : 0)
@@ -225,54 +216,26 @@ function Ticker({ to, duration = 1.2, delay = 0, decimals = 0 }: { to: number; d
 }
 
 const STEPS = [
-            { img: IMG.step1, n: '01', t: 'Get verified once', d: 'Add your student ID, national ID and a quick selfie, plus the mobile money number you want paid to. Most people are approved within a day.' },
-            { img: IMG.step2, n: '02', t: 'Pick work that fits', d: 'Browse open gigs near you or remote. Each one tells you exactly what to do, what proof to collect and how much it pays.' },
-            { img: IMG.step3, n: '03', t: 'Submit and get paid', d: 'Log each completed unit with a photo. Once we approve it, the money goes straight to your MoMo in the weekly payout.' },
+  { img: IMG.step1, alt: 'Student taking a selfie for verification', t: 'Get verified once.', d: 'Add your student ID, a national ID and a quick selfie, plus the MoMo number you want paid to. Not a student? Join with your Ghana Card.',
+    tag: 'Verified', sub: 'ID, selfie and MoMo added', tagBg: 'bg-[#1f7a4d] text-white', icon: <Check className="h-4 w-4" /> },
+  { img: IMG.step2, alt: 'Student talking with a shop owner', t: 'Pick work that fits.', d: 'Browse open gigs near you or remote. Each one says exactly what to do, what proof to collect and how much it pays.',
+    tag: 'Clear pay, clear steps', sub: 'Before you join any gig', tagBg: 'bg-[#c9d6c8]', icon: <MessagesSquare className="h-4 w-4" /> },
+  { img: IMG.step3, alt: 'Student checking a mobile money payment', t: 'Submit, then get paid.', d: 'Log each piece of work with a photo. Once it’s approved, the money goes to your MoMo and you get a receipt by email.',
+    tag: 'Paid to MoMo', sub: 'With an emailed receipt', tagBg: 'bg-[#efdcc6] text-[#3b2a12] font-display text-[9px] font-bold', icon: <>MoMo</> },
 ]
 
-function Steps() {
-  const [ref, progress] = useDrawLine()
+function WorkTile({ I, t, d, bg, i }: { I: any; t: string; d: string; bg: string; i: number }) {
+  const spot = useSpotlight('rgba(255,255,255,.06)')
   return (
-    <div ref={ref} className="relative mt-14">
-      {/* line that draws across the three steps as you scroll (desktop) */}
-      <div aria-hidden className="absolute inset-x-0 top-0 hidden md:block">
-        <div className="h-px w-full bg-line" />
-        <motion.div className="absolute inset-x-0 top-0 h-px origin-left bg-brand-500" style={{ scaleX: progress }} />
-      </div>
-      <div className="grid gap-12 pt-0 md:grid-cols-3 md:gap-8 md:pt-10">
-        {STEPS.map((s, i) => (
-          <div key={s.n} className="group relative">
-            <motion.span aria-hidden initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true, margin: '-80px' }} transition={{ delay: 0.2 + i * 0.25, type: 'spring', stiffness: 300, damping: 18 }}
-              className="absolute -top-10 left-0 hidden h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-brand-500 ring-4 ring-paper md:block" />
-            <ImageReveal delay={i * 0.12} className="overflow-hidden rounded-3xl">
-              <Photo src={s.img} alt={s.t} label={s.img.split('/').pop()} className="aspect-[4/3] w-full transition duration-700 group-hover:scale-[1.04]" />
-            </ImageReveal>
-            <Reveal delay={0.15 + i * 0.12}>
-              <div className="mt-6 flex items-baseline gap-3"><span className="font-display text-sm font-semibold text-brand-600">{s.n}</span><h3 className="text-xl font-semibold">{s.t}</h3></div>
-              <p className="mt-2 leading-relaxed text-ink-muted">{s.d}</p>
-            </Reveal>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function WorkTile({ I, t, d, i }: { I: any; t: string; d: string; i: number }) {
-  const spot = useSpotlight()
-  return (
-    <Reveal delay={i * 0.06} className="h-full">
-      <div {...spot.handlers} className="group relative h-full overflow-hidden bg-white p-7">
+    <Reveal delay={(i % 3) * 0.06} className="h-full">
+      <div {...spot.handlers} className="group relative flex h-full min-h-[220px] flex-col overflow-hidden bg-white p-7 transition-colors duration-500 hover:bg-brand-900">
         {spot.layer}
-        <div className="relative z-10">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600 transition-all duration-500 group-hover:-rotate-6 group-hover:scale-110 group-hover:bg-brand-600 group-hover:text-white">
-            <I className="h-5 w-5" strokeWidth={1.6} />
-          </span>
-          <h3 className="mt-5 font-semibold">{t}</h3>
-          <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">{d}</p>
-        </div>
+        <span className={`relative z-10 grid h-12 w-12 place-items-center rounded-2xl text-ink transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-105 ${bg}`}>
+          <I className="h-5 w-5" strokeWidth={1.6} />
+        </span>
+        <h3 className="relative z-10 mt-auto pt-10 text-xl tracking-[-0.02em] transition-colors duration-500 group-hover:text-white">{t}</h3>
+        <p className="relative z-10 mt-2 text-[15px] leading-relaxed text-ink-muted transition-colors duration-500 group-hover:text-white/65">{d}</p>
       </div>
     </Reveal>
   )
 }
-

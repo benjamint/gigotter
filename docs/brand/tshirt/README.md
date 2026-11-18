@@ -1,6 +1,6 @@
 # Gigotter T-shirt: DTF print files
 
-Shirts: **deep green** and **white**. Front: otter logo (left chest). Back: "Ask me how I GET PAID." + QR code to **https://gigotter.com**.
+Shirts: **deep green** and **white**. Front: otter logo (left chest). Back: a tilted "ASK ME HOW I" sticker over a 3D "GET PAID." with sparkles, + QR code to **https://gigotter.com**.
 
 ## Files for the print shop
 All PNGs have a **transparent background**, **300 dpi**, sRGB, solid colours only (no gradients or see-through areas).
@@ -9,8 +9,8 @@ All PNGs have a **transparent background**, **300 dpi**, sRGB, solid colours onl
 |---|---|---|
 | `dtf-front-logo-9cm.png` | 9 × 11 cm | Front, **wearer's left chest**. Top about 8 cm below the collar seam, centre about 10 cm from the middle of the shirt |
 | `dtf-front-logo-12cm.png` | 12 × 14.7 cm | Same, if you want the logo bigger |
-| `dtf-back-green-shirt.png` (+ `.pdf`) | 28 × 29.5 cm | **Back, green shirts.** Centred, top about 8 cm below the collar seam |
-| `dtf-back-white-shirt.png` (+ `.pdf`) | 28 × 29.7 cm | **Back, white shirts.** Same placement |
+| `dtf-back-green-shirt.png` (+ `.pdf`) | 28 × 30.0 cm | **Back, green shirts.** Centred, top about 8 cm below the collar seam |
+| `dtf-back-white-shirt.png` (+ `.pdf`) | 28 × 30.3 cm | **Back, white shirts.** Same placement |
 
 Use the back file that matches the shirt colour. The green one uses white and yellow text, the white one uses dark green.
 

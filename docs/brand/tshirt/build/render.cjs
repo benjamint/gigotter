@@ -9,7 +9,7 @@ const [work, out] = process.argv.slice(2);
     await p.goto(`file://${work}/back-${name}.html`); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(400);
     const fonts = await p.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => `${f.family} ${f.weight}`));
     const box = await p.locator('#art').boundingBox();
-    const headW = await p.evaluate(() => document.querySelector('.head').getBoundingClientRect().width);
+    const headW = await p.evaluate(() => document.querySelector('.hl').getBoundingClientRect().width);
     await p.locator('#art').screenshot({ path: `${out}/dtf-back-${name}.png`, omitBackground: true });
     // PDF at the same physical size (300 px = 1 inch)
     const wIn = box.width / 300, hIn = box.height / 300;

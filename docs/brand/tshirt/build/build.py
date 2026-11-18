@@ -81,7 +81,7 @@ def back(name, top, head, sub, url, tab_bg, tab_ink, tile_line, hl):
 {hl}
 <div class="tab">SCAN ME <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v15M5 12l7 7 7-7"/></svg></div>
 <div class="tile"><img src="{QR}" alt=""></div>
-<div class="sub">Paid gigs for students in Ghana</div>
+<div class="sub">Paid gigs for students &amp; everyone in Ghana</div>
 <div class="url">gigotter.com</div>
 </div></body></html>"""
     (WORK / f'back-{name}.html').write_text(html)

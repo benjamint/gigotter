@@ -16,13 +16,14 @@ ART, ART_R = uri(OUT / 'dtf-tote-canvas.png', 1300)
 U = 20                                   # units per cm: tote body 38 cm = 760 units
 X0, Y0, BW, BH = 120, 300, 38 * U, 42 * U
 CANVAS, SHADE, HI, STITCH = '#ECE2CB', '#D6C9AB', '#F7F1E2', '#B9AB8B'
+H_GREEN, H_SHADE, H_STITCH = '#1C4635', '#10291F', '#4E7A63'   # green handles
 
 def tote(uid):
     aw = 26 * U; ah = aw * ART_R; ax = X0 + (BW - aw) / 2; ay = Y0 + (BH - ah) / 2 + 8
     strap = lambda x1, x2: f'M{x1} {Y0 + 30} C{x1} {Y0 - 300} {x2} {Y0 - 300} {x2} {Y0 + 30}'
-    straps = ''.join(f'<path d="{strap(a, b)}" stroke="{SHADE}" stroke-width="54" fill="none" stroke-linecap="round"/>'
-                     f'<path d="{strap(a, b)}" stroke="{CANVAS}" stroke-width="44" fill="none" stroke-linecap="round"/>'
-                     f'<path d="{strap(a, b)}" stroke="{STITCH}" stroke-width="2" stroke-dasharray="7 6" fill="none" transform="translate(0 0)"/>'
+    straps = ''.join(f'<path d="{strap(a, b)}" stroke="{H_SHADE}" stroke-width="54" fill="none" stroke-linecap="round"/>'
+                     f'<path d="{strap(a, b)}" stroke="{H_GREEN}" stroke-width="44" fill="none" stroke-linecap="round"/>'
+                     f'<path d="{strap(a, b)}" stroke="{H_STITCH}" stroke-width="2" stroke-dasharray="7 6" fill="none" transform="translate(0 0)"/>'
                      for a, b in ((X0 + 170, X0 + 300), (X0 + BW - 300, X0 + BW - 170)))
     return f"""<svg viewBox="0 0 1000 1250" xmlns="http://www.w3.org/2000/svg">
 <defs>

@@ -1,6 +1,6 @@
 # Gigotter tote bag: DTF print file
 
-Natural canvas tote, printed on **one side**. Design: a tilted "CARRYING MY" sticker over a 3D "NEXT GIG.", the big otter logo, and a "SCAN ME" QR code to **https://gigotter.com** with www.gigotter.com and "Paid gigs for students & everyone in Ghana".
+Natural canvas tote with **deep green handles** (order the bag with green handles; the print is the same), printed on **one side**. Design: a tilted "CARRYING MY" sticker over a 3D "NEXT GIG.", the big otter logo, and a "SCAN ME" QR code to **https://gigotter.com** with www.gigotter.com and "Paid gigs for students & everyone in Ghana".
 
 ## Files for the print shop
 | File | Print size | Placement |

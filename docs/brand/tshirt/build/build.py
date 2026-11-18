@@ -91,3 +91,25 @@ back('green-shirt', top=WHITE, head=YELLOW, sub=SAGE, url=WHITE, tab_bg=YELLOW, 
 back('white-shirt', top=INK, head=LGREEN, sub=LGREEN, url=INK, tab_bg=YELLOW, tab_ink=INK, tile_line=INK,
      hl=headline(sticker_bg=INK, sticker_ink=WHITE, ext=INK, outline=INK, ping=INK, sparkle=YELLOW, sparkle_line=INK))
 print('back pages written; width', W, 'px =', 28, 'cm')
+
+# ── 3. front: logo + www.gigotter.com underneath (text sized to match the logo width) ──
+def front(name, ink, w_cm):
+    w = cm(w_cm)
+    logo = 'data:image/png;base64,' + base64.b64encode((OUT / f'dtf-front-logo-{w_cm}cm.png').read_bytes()).decode()
+    html = f"""<!doctype html><html><head><meta charset="utf-8"><style>{faces}
+*{{margin:0;padding:0;box-sizing:border-box}} html,body{{background:transparent}}
+#art{{width:{w}px;display:flex;flex-direction:column;align-items:center}}
+#art img{{display:block;width:{w}px}}
+.url{{margin-top:{cm(w_cm * .045)}px;font:700 100px/1 Onest;letter-spacing:-0.01em;color:{ink};white-space:nowrap}}
+</style></head><body><div id="art"><img src="{logo}" alt=""><div class="url">www.gigotter.com</div></div>
+<script>
+  // fit the address to the logo width, so the lockup stays one clean block
+  document.fonts.ready.then(() => {{ const u = document.querySelector('.url'); const r = {w} / u.getBoundingClientRect().width;
+    u.style.fontSize = (100 * r * 0.98) + 'px'; document.body.dataset.ready = 1; }});
+</script></body></html>"""
+    (WORK / f'front-{name}-{w_cm}cm.html').write_text(html)
+
+for w_cm in (9, 12):
+    front('green-shirt', WHITE, w_cm)
+    front('white-shirt', INK, w_cm)
+print('front lockups written')

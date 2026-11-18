@@ -12,7 +12,7 @@ def uri(p, w):
     b = io.BytesIO(); im.save(b, 'PNG'); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode(), im.height / im.width
 def font(pkg, f): return 'data:font/woff;base64,' + base64.b64encode((FONTS / pkg / 'package/files' / f).read_bytes()).decode()
 
-LOGO, LOGO_R = uri(ART / 'dtf-front-logo-9cm.png', 600)
+FRONTS = {k: uri(ART / f'dtf-front-{k}-shirt-9cm.png', 600) for k in ('green', 'white')}   # logo + www.gigotter.com
 BACKS = {k: uri(ART / f'dtf-back-{k}-shirt.png', 1400) for k in ('green', 'white')}
 
 # shirt geometry (viewBox units). Chest = 580 units ≈ 52 cm (size M) → 11.15 units per cm
@@ -26,8 +26,8 @@ def shirt(color, side):
     d = BODY.format(neck=NECK[side]); neck = f'M380 95 {NECK[side]}'
     stitch = '#0b2018' if color == 'green' else '#d3d6cf'
     if side == 'front':
-        w = 9 * U; h = w * LOGO_R
-        art = f'<image href="{LOGO}" x="{640 - w / 2:.1f}" y="{158 + 8 * U - 30:.1f}" width="{w:.1f}" height="{h:.1f}"/>'
+        src, r = FRONTS[color]; w = 9 * U; h = w * r
+        art = f'<image href="{src}" x="{640 - w / 2:.1f}" y="{158 + 8 * U - 30:.1f}" width="{w:.1f}" height="{h:.1f}"/>'
     else:
         src, r = BACKS[color]; w = 28 * U; h = w * r
         art = f'<image href="{src}" x="{500 - w / 2:.1f}" y="{122 + 7 * U:.1f}" width="{w:.1f}" height="{h:.1f}"/>'

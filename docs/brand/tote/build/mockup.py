@@ -12,13 +12,14 @@ def uri(p, w):
     b = io.BytesIO(); im.save(b, 'PNG'); return 'data:image/png;base64,' + base64.b64encode(b.getvalue()).decode(), im.height / im.width
 def font(pkg, f): return 'data:font/woff;base64,' + base64.b64encode((FONTS / pkg / 'package/files' / f).read_bytes()).decode()
 
-ART, ART_R = uri(OUT / 'dtf-tote-canvas.png', 1300)
+ARTS = {k: uri(OUT / f'dtf-tote-{k}.png', 1300) for k in ('canvas', 'green')}
 U = 20                                   # units per cm: tote body 38 cm = 760 units
 X0, Y0, BW, BH = 120, 300, 38 * U, 42 * U
-CANVAS, SHADE, HI, STITCH = '#ECE2CB', '#D6C9AB', '#F7F1E2', '#B9AB8B'
+BAGS = {'canvas': ('#ECE2CB', '#D6C9AB', '#F7F1E2', '#B9AB8B'), 'green': ('#173a2b', '#0f2a1f', '#2a5340', '#4E7A63')}  # body, shade, highlight, stitch
 H_GREEN, H_SHADE, H_STITCH = '#1C4635', '#10291F', '#4E7A63'   # green handles
 
-def tote(uid):
+def tote(uid, bag='green'):
+    CANVAS, SHADE, HI, STITCH = BAGS[bag]; ART, ART_R = ARTS[bag]
     aw = 26 * U; ah = aw * ART_R; ax = X0 + (BW - aw) / 2; ay = Y0 + (BH - ah) / 2 + 8
     strap = lambda x1, x2: f'M{x1} {Y0 + 30} C{x1} {Y0 - 300} {x2} {Y0 - 300} {x2} {Y0 + 30}'
     straps = ''.join(f'<path d="{strap(a, b)}" stroke="{H_SHADE}" stroke-width="54" fill="none" stroke-linecap="round"/>'
@@ -60,10 +61,11 @@ h1{{font:700 120px/1 Onest;letter-spacing:-0.04em;color:#131317}} h1 span{{color
 .card img,.card svg{{width:100%;display:block}} .card p{{margin-top:10px;font:500 34px Tight;color:#3A3E44}}
 .tote{{grid-row:span 2;display:flex;flex-direction:column;justify-content:center}}
 </style></head><body>
-<div class="single" id="tote-single">{tote('a')}<p>Natural canvas tote · 38 × 42 cm</p></div>
+<div class="single" id="tote-single">{tote('a', 'green')}<p>Deep green tote · 38 × 42 cm</p></div>
+<div class="single" id="tote-single-canvas">{tote('c', 'canvas')}<p>Natural canvas tote · 38 × 42 cm</p></div>
 <div id="sheet"><h1>Gigotter <span>merch.</span></h1><div class="sub">Tote bag · green and white tees · scan to visit gigotter.com</div>
 <div class="grid">
-  <div class="card tote">{tote('b')}<p>Tote bag</p></div>
+  <div class="card tote">{tote('b', 'green')}<p>Tote bag</p></div>
   <div class="card"><img src="{tees['green-front']}" alt=""></div><div class="card"><img src="{tees['green-back']}" alt=""></div>
   <div class="card"><img src="{tees['white-front']}" alt=""></div><div class="card"><img src="{tees['white-back']}" alt=""></div>
 </div></div>

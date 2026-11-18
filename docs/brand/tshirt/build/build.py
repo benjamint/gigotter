@@ -98,9 +98,9 @@ def front(name, ink, w_cm):
     logo = 'data:image/png;base64,' + base64.b64encode((OUT / f'dtf-front-logo-{w_cm}cm.png').read_bytes()).decode()
     html = f"""<!doctype html><html><head><meta charset="utf-8"><style>{faces}
 *{{margin:0;padding:0;box-sizing:border-box}} html,body{{background:transparent}}
-#art{{width:{w}px;display:flex;flex-direction:column;align-items:center}}
+#art{{width:{w}px;display:flex;flex-direction:column;align-items:center;padding-bottom:{cm(.15)}px}}
 #art img{{display:block;width:{w}px}}
-.url{{margin-top:{cm(w_cm * .045)}px;font:700 100px/1 Onest;letter-spacing:-0.01em;color:{ink};white-space:nowrap}}
+.url{{margin-top:{cm(w_cm * .045)}px;font:700 100px/1.3 Onest;letter-spacing:-0.01em;color:{ink};white-space:nowrap}}
 </style></head><body><div id="art"><img src="{logo}" alt=""><div class="url">www.gigotter.com</div></div>
 <script>
   // fit the address to the logo width, so the lockup stays one clean block

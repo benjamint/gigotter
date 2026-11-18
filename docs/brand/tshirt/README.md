@@ -7,9 +7,9 @@ All PNGs have a **transparent background**, **300 dpi**, sRGB, solid colours onl
 
 | File | Print size | Placement |
 |---|---|---|
-| `dtf-front-green-shirt-9cm.png` | 9 × 12.5 cm | **Front, green shirts:** logo + "www.gigotter.com" in white. **Wearer's left chest**, top about 8 cm below the collar seam, centre about 10 cm from the middle of the shirt |
-| `dtf-front-white-shirt-9cm.png` | 9 × 12.5 cm | **Front, white shirts:** logo + "www.gigotter.com" in dark green. Same placement |
-| `dtf-front-*-shirt-12cm.png` | 12 × 16.6 cm | Same two designs, bigger |
+| `dtf-front-green-shirt-9cm.png` | 9 × 12.9 cm | **Front, green shirts:** logo + "www.gigotter.com" in white. **Wearer's left chest**, top about 8 cm below the collar seam, centre about 10 cm from the middle of the shirt |
+| `dtf-front-white-shirt-9cm.png` | 9 × 12.9 cm | **Front, white shirts:** logo + "www.gigotter.com" in dark green. Same placement |
+| `dtf-front-*-shirt-12cm.png` | 12 × 17.2 cm | Same two designs, bigger |
 | `dtf-front-logo-9cm.png` / `-12cm.png` | 9 × 11 / 12 × 14.7 cm | Logo only, without the website (spare option) |
 | `dtf-back-green-shirt.png` (+ `.pdf`) | 28 × 30.0 cm | **Back, green shirts.** Centred, top about 8 cm below the collar seam |
 | `dtf-back-white-shirt.png` (+ `.pdf`) | 28 × 30.3 cm | **Back, white shirts.** Same placement |

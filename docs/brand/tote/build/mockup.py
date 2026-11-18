@@ -16,7 +16,7 @@ ARTS = {k: uri(OUT / f'dtf-tote-{k}.png', 1300) for k in ('canvas', 'green')}
 U = 20                                   # units per cm: tote body 38 cm = 760 units
 X0, Y0, BW, BH = 120, 300, 38 * U, 42 * U
 BAGS = {'canvas': ('#ECE2CB', '#D6C9AB', '#F7F1E2', '#B9AB8B'), 'green': ('#173a2b', '#0f2a1f', '#2a5340', '#4E7A63')}  # body, shade, highlight, stitch
-H_GREEN, H_SHADE, H_STITCH = '#F7F6F2', '#D9DCD5', '#B9BDB4'   # white handles
+H_GREEN, H_SHADE, H_STITCH = '#FBCA3B', '#D9A821', '#A8801A'   # yellow handles
 
 def tote(uid, bag='green'):
     CANVAS, SHADE, HI, STITCH = BAGS[bag]; ART, ART_R = ARTS[bag]

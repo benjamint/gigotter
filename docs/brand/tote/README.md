@@ -1,6 +1,6 @@
 # Gigotter tote bag: DTF print files
 
-**Recommended: deep green tote** (hides dirt, matches the green T-shirt) with **white handles**. Order "bottle green / dark green cotton canvas totes with white (contrast) handles". A natural canvas version is kept as an option.
+**Recommended: deep green tote** (hides dirt, matches the green T-shirt) with **yellow handles**. Order "bottle green / dark green cotton canvas totes with yellow (contrast) handles", as close to the logo yellow (#FBCA3B) as the supplier has. A natural canvas version is kept as an option.
 
 Printed on **one side**. Design: a tilted "CARRYING MY" sticker over a 3D "NEXT GIG.", the big otter logo, and a "SCAN ME" QR code to **https://gigotter.com** with www.gigotter.com and "Paid gigs for students & everyone in Ghana".
 

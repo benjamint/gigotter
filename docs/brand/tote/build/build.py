@@ -14,7 +14,7 @@ cm = lambda x: round(x * SCALE / 2.54 * DPI)
 YELLOW, LGREEN, INK, WHITE, SAGE = '#FBCA3B', '#235845', '#10291F', '#FFFFFF', '#C9D6C8'
 PAL = {  # sticker bg/ink, 3D block, pings, QR tile outline, url, sub line
   'canvas': dict(st_bg=INK, st_ink=WHITE, ext=INK, ping=INK, tile=f'border:{{b}}px solid {INK};', url=INK, sub=LGREEN),
-  'green':  dict(st_bg=WHITE, st_ink=INK, ext=WHITE, ping=WHITE, tile='', url=WHITE, sub=SAGE),
+  'green':  dict(st_bg=WHITE, st_ink=INK, ext=WHITE, ping=WHITE, tile='', url=WHITE, sub=WHITE),
 }
 
 W = cm(30)           # print width

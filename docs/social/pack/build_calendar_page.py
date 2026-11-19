@@ -13,7 +13,7 @@ def thumb(rel, w=360):
     return 'media/' + dst.name, im.width, im.height
 
 SOC = pathlib.Path(__file__).resolve().parent.parent
-COVERS = {'ping': SOC / 'emotion-01/video/cover.png', 'snail': SOC / 'emotion-02/video/cover.png', 'pigeons': SOC / 'emotion-02/video-pigeons/cover.png'}
+COVERS = {'ping': SOC / 'emotion-01/video/cover.png', 'snail': SOC / 'emotion-02/video/cover.png', 'pigeons': SOC / 'emotion-02/video-pigeons/cover.png', 'fridge': SOC / 'emotion-02/video-fridge/cover.png'}
 PLAT = {'Instagram + Facebook feed': 'feed', 'TikTok + Instagram Reels': 'video', 'TikTok carousel': 'carousel'}
 weeks, cards = {}, []
 for r in rows:

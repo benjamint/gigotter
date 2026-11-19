@@ -45,6 +45,7 @@ VIDEOS = {
   'v-ping': (SOC / 'emotion-01/video/gigotter-earned-ping.mp4', 'ping-video', 'Turn the volume up. 🔔', '#StudentLife #Accra #GhanaJobs'),
   'v-snail': (SOC / 'emotion-02/video/gigotter-earned-snail.mp4', 'snail-video', 'Still waiting? 🐌', '#Relatable #Ghana #StudentLife'),
   'v-pigeons': (SOC / 'emotion-02/video-pigeons/gigotter-earned-pigeons.mp4', 'pigeons-video', 'Get your own bread. 🍞', '#Accra #GhanaJobs #StudentLife'),
+  'v-fridge': (SOC / 'emotion-02/video-fridge/gigotter-earned-fridge.mp4', 'fridge-video', 'Tag the friend who “just checks” the fridge at 11pm. 😅', '#Relatable #StudentLife #Ghana'),
 }
 CAROUSELS = {  # TikTok photo carousels from the Story versions
   'c1': (['a1', 'a2', 'a3'], 'odd-ones', 'Which one is you? 🐌🐠👀', '#Relatable #Ghana #StudentLife'),
@@ -88,7 +89,7 @@ CAL = [
   (D(12, 20), '12:00', 'Instagram + Facebook feed', 'a5', ''),
   # week 5: Christmas
   (D(12, 21), '19:30', 'Instagram + Facebook feed', 'p7', ''),
-  (D(12, 22), '19:00', 'TikTok + Instagram Reels', 'repost', 'Repost the best video so far (most shares in TikTok analytics).'),
+  (D(12, 22), '19:00', 'TikTok + Instagram Reels', 'v-fridge', 'Cover: the frame with all three labels ("1 milk.", "A jar of… something.", "Hope.").'),
   (D(12, 23), '19:30', 'Instagram + Facebook feed', 'b8', 'Christmas week.'),
   (D(12, 26), '12:00', 'Instagram + Facebook feed', 'a7', 'Boxing Day.'),
   (D(12, 27), '12:00', 'Instagram + Facebook feed', 'p9', 'Optional bold post: only if it tested well with members.'),

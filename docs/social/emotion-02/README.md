@@ -39,3 +39,11 @@ Rebuild: `python3 video/build.py PHOTODIR/31280238.jpg /tmp/snail.html && node v
 "Everyone's fighting for the same crumbs." → punch-ins: "Pocket money." / "Leftover transport money." / "'Something small.'" → "Stop fighting for crumbs." → "Get your own bread." → "Earned."
 
 Rebuild: `python3 video-pigeons/build.py PHOTODIR/18132498.jpg /tmp/p.html && node video-pigeons/render.cjs /tmp/p.html /tmp/frames && video-pigeons/encode.sh /tmp/frames video-pigeons/gigotter-earned-pigeons.mp4`
+
+## TikTok video: the fridge
+
+`video-fridge/gigotter-earned-fridge.mp4`: 1080×1920, 13.5 s, 30 fps, original sound (door-seal click, fridge hum, a pop per label, door thud, the "Earned." chime). `video-fridge/cover.png` shows all three labels.
+
+"POV: it's 11pm and you're 'just checking'" → the fridge opens with a cold flash → labels pop up on the contents: "1 milk." / "A jar of… something." / "Hope." → "This fridge deserves better." → door shuts → "So do you." → "Earned."
+
+Rebuild: `python3 video-fridge/build.py PHOTODIR/4058699.jpg /tmp/f.html && node video-fridge/render.cjs /tmp/f.html /tmp/frames && video-fridge/encode.sh /tmp/frames video-fridge/gigotter-earned-fridge.mp4` (use the badge-free photo, see above).

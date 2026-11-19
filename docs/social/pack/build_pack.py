@@ -45,6 +45,9 @@ VIDEOS = {
   'v-ping': (SOC / 'emotion-01/video/gigotter-earned-ping.mp4', 'ping-video', 'Turn the volume up. 🔔', '#StudentLife #Accra #GhanaJobs'),
   'v-snail': (SOC / 'emotion-02/video/gigotter-earned-snail.mp4', 'snail-video', 'Still waiting? 🐌', '#Relatable #Ghana #StudentLife'),
   'v-pigeons': (SOC / 'emotion-02/video-pigeons/gigotter-earned-pigeons.mp4', 'pigeons-video', 'Get your own bread. 🍞', '#Accra #GhanaJobs #StudentLife'),
+  'v-goldfish': (SOC / 'video-kit/out/gigotter-earned-goldfish.mp4', 'goldfish-video', '“It’s coming.” 🐠', '#Relatable #StudentLife #Ghana'),
+  'v-ostrich': (SOC / 'video-kit/out/gigotter-earned-ostrich.mp4', 'ostrich-video', 'We’ve all been there. 👀', '#Relatable #Ghana #StudentLife'),
+  'v-icecream': (SOC / 'video-kit/out/gigotter-earned-icecream.mp4', 'icecream-video', 'Week 12 hits different. 🍦', '#Vacation #StudentLife #Ghana'),
   'v-fridge': (SOC / 'emotion-02/video-fridge/gigotter-earned-fridge.mp4', 'fridge-video', 'Tag the friend who “just checks” the fridge at 11pm. 😅', '#Relatable #StudentLife #Ghana'),
 }
 CAROUSELS = {  # TikTok photo carousels from the Story versions
@@ -91,11 +94,13 @@ CAL = [
   (D(12, 21), '19:30', 'Instagram + Facebook feed', 'p7', ''),
   (D(12, 22), '19:00', 'TikTok + Instagram Reels', 'v-fridge', 'Cover: the frame with all three labels ("1 milk.", "A jar of… something.", "Hope.").'),
   (D(12, 23), '19:30', 'Instagram + Facebook feed', 'b8', 'Christmas week.'),
+  (D(12, 24), '19:00', 'TikTok + Instagram Reels', 'v-ostrich', 'Cover: the extreme close-up with "Let me check again."'),
   (D(12, 26), '12:00', 'Instagram + Facebook feed', 'a7', 'Boxing Day.'),
   (D(12, 27), '12:00', 'Instagram + Facebook feed', 'p9', 'Optional bold post: only if it tested well with members.'),
+  (D(12, 27), '19:00', 'TikTok + Instagram Reels', 'v-icecream', 'Cover: "Free time melts. Get paid before it does."'),
   # week 6: New Year
   (D(12, 28), '19:30', 'Instagram + Facebook feed', 'a9', ''),
-  (D(12, 29), '19:00', 'TikTok + Instagram Reels', 'repost', 'Repost the second-best video.'),
+  (D(12, 29), '19:00', 'TikTok + Instagram Reels', 'v-goldfish', 'Cover: "Waiting around to be fed is a goldfish thing."'),
   (D(12, 30), '19:30', 'Instagram + Facebook feed', 'b9', ''),
   (D(1, 1, 2027), '12:00', 'Instagram + Facebook feed', 'a8', "New Year's Day."),
   (D(1, 2, 2027), '12:00', 'Instagram + Facebook feed', 'b5', ''),

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { AccountType, Application, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
+import type { AccountType, Application, Insights, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { accountOf, audienceAllows, audienceMessage, audienceOf } from './audience'
@@ -32,6 +32,7 @@ interface DemoDB {
   payments?: Payment[]
   applications?: Application[]
   qrScans?: { code: string; visitor: string | null; device: string; scanned_at: string }[]
+  pageViews?: { path: string; gig_id: string | null; visitor: string | null; session: string | null; source: string; device: string; user_id: string | null; viewed_at: string }[]
   files: Record<string, string>
   listingFiles?: ListingFile[]
 }
@@ -298,7 +299,7 @@ const SRC_KEY = 'gigotter-src', VISITOR_KEY = 'gigotter-visitor'
 export function scanSource(): string | null {
   try { const s = JSON.parse(localStorage.getItem(SRC_KEY) || 'null'); return s && Date.now() - s.at < 30 * 864e5 ? s.code : null } catch { return null }
 }
-const deviceType = () => { const ua = navigator.userAgent; return /iPad|Tablet|Android(?!.*Mobile)/i.test(ua) ? 'tablet' : /Mobi|iPhone|Android/i.test(ua) ? 'mobile' : 'desktop' }
+export const deviceType = () => { const ua = navigator.userAgent; return /iPad|Tablet|Android(?!.*Mobile)/i.test(ua) ? 'tablet' : /Mobi|iPhone|Android/i.test(ua) ? 'mobile' : 'desktop' }
 /** Records a scan of gigotter.com/s/<code> and returns the page to continue to. Never throws. */
 export async function logScan(code: string): Promise<string> {
   code = code.toLowerCase().trim()
@@ -320,6 +321,81 @@ export async function logScan(code: string): Promise<string> {
     return /^\/[A-Za-z0-9/_-]*$/.test(target) ? target : '/'
   } catch { return '/' }
 }
+// ═══════════════════════════ site visits & insights ═══════════════════════════
+/** Records one page view (see log_view in migration 0017). Never throws, never blocks the page. */
+export async function logView(v: { path: string; visitor: string | null; session: string | null; source: string; device: string }) {
+  try {
+    if (DEMO) {
+      const d = db(), u = demoUser()
+      if (u && d.profiles.find((p) => p.id === u.id)?.role === 'admin') return
+      if (/^\/(admin|s\/)/i.test(v.path)) return
+      const m = v.path.match(/^\/gigs\/([0-9a-f-]{36})$/i)
+      const path = v.path.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id')
+      const views = (d.pageViews ??= [])
+      if (views.some((x) => x.visitor === v.visitor && x.path === path && Date.now() - +new Date(x.viewed_at) < 10000)) return
+      views.push({ path, gig_id: m && d.listings.some((l) => l.id === m[1]) ? m[1] : null, visitor: v.visitor, session: v.session, source: v.source, device: v.device, user_id: u?.id ?? null, viewed_at: now() })
+      if (views.length > 5000) views.splice(0, views.length - 5000)
+      try { localStorage.setItem(KEY_DB, JSON.stringify(d)) } catch { /* ignore */ } // no listeners: a view shouldn't re-render the app
+      return
+    }
+    await sb!.rpc('log_view', { p_path: v.path, p_visitor: v.visitor, p_session: v.session, p_source: v.source, p_device: v.device })
+  } catch { /* never let tracking break the site */ }
+}
+
+export async function siteInsights(days: number): Promise<Insights> {
+  if (!DEMO) {
+    const { data, error } = await sb!.rpc('site_insights', { p_days: days })
+    fail(error)
+    return data as Insights
+  }
+  // demo: the same numbers as site_insights(), worked out in the browser
+  const d = db(), DAY = 864e5
+  const t0 = new Date(); t0.setUTCHours(0, 0, 0, 0); t0.setTime(+t0 - (days - 1) * DAY)
+  const tp = new Date(+t0 - days * DAY)
+  const all = [...(d.pageViews ?? [])].sort((a, b) => a.viewed_at.localeCompare(b.viewed_at))
+  const v = all.filter((x) => new Date(x.viewed_at) >= t0), pv = all.filter((x) => new Date(x.viewed_at) >= tp && new Date(x.viewed_at) < t0)
+  const uniq = <T,>(xs: T[]) => new Set(xs.filter((x) => x != null)).size
+  const tot = (xs: typeof v) => ({ views: xs.length, visitors: uniq(xs.map((x) => x.visitor)), sessions: uniq(xs.map((x) => x.session)) })
+  const firstSrc = new Map<string, string>(), acct = new Map<string, string>()
+  for (const x of all) { if (x.visitor && !firstSrc.has(x.visitor)) firstSrc.set(x.visitor, x.source); if (x.user_id && x.visitor && !acct.has(x.user_id)) acct.set(x.user_id, x.visitor) }
+  const people = d.profiles.filter((p) => p.role !== 'admin')
+  const su = people.filter((p) => new Date(p.created_at) >= t0).map((p) => ({ ...p, src: firstSrc.get(acct.get(p.id) ?? '') ?? 'unknown' }))
+  const dayKey = (t: string | Date) => new Date(t).toISOString().slice(0, 10)
+  const daily = Array.from({ length: days }, (_, i) => {
+    const k = dayKey(new Date(+t0 + i * DAY)), dv = v.filter((x) => dayKey(x.viewed_at) === k)
+    return { day: k, views: dv.length, visitors: uniq(dv.map((x) => x.visitor)), signups: people.filter((p) => dayKey(p.created_at) === k).length }
+  })
+  const sess = new Map<string, (typeof v)[number]>(); for (const x of v) if (x.session && !sess.has(x.session)) sess.set(x.session, x)
+  const srcNames = new Set([...[...sess.values()].map((x) => x.source), ...su.map((s) => s.src)])
+  const sources = [...srcNames].map((source) => {
+    const ss = [...sess.values()].filter((x) => x.source === source)
+    return { source, sessions: ss.length, visitors: uniq(ss.map((x) => x.visitor)), signups: su.filter((s) => s.src === source).length }
+  }).sort((a, b) => b.visitors - a.visitors || b.signups - a.signups)
+  const byPath = new Map<string, typeof v>(); for (const x of v) byPath.set(x.path, [...(byPath.get(x.path) ?? []), x])
+  const pages = [...byPath].map(([path, xs]) => ({ path, views: xs.length, visitors: uniq(xs.map((x) => x.visitor)) })).sort((a, b) => b.views - a.views).slice(0, 12)
+  const devs = new Map<string, Set<string>>(); for (const x of v) { if (!devs.has(x.device)) devs.set(x.device, new Set()); if (x.visitor) devs.get(x.device)!.add(x.visitor) }
+  const byDay = new Map<string, Set<string>>(); for (const x of v) if (x.visitor) { if (!byDay.has(x.visitor)) byDay.set(x.visitor, new Set()); byDay.get(x.visitor)!.add(dayKey(x.viewed_at)) }
+  const apps = d.applications ?? [], subs = d.submissions, pays = d.payments ?? []
+  const gigs = d.listings.map((l) => {
+    const gv = v.filter((x) => x.gig_id === l.id)
+    return { id: l.id, title: l.title, status: l.status, join_mode: l.join_mode ?? 'open', expires_at: l.expires_at, views: gv.length, visitors: uniq(gv.map((x) => x.visitor)),
+      applied: apps.filter((a) => a.listing_id === l.id && new Date(a.created_at) >= t0).length, joined: d.claims.filter((c) => c.listing_id === l.id && new Date(c.created_at) >= t0).length }
+  }).filter((g) => g.views > 0 || (g.status === 'live' && new Date(g.expires_at) > new Date())).sort((a, b) => b.visitors - a.visitors || b.views - a.views).slice(0, 25)
+  const tookPart = (id: string) => apps.some((a) => a.applicant_id === id) || d.claims.some((c) => c.student_id === id)
+  return {
+    days, since: t0.toISOString(), first_view: all[0]?.viewed_at ?? null, totals: tot(v), prev: tot(pv),
+    signups: su.length, prev_signups: people.filter((p) => new Date(p.created_at) >= tp && new Date(p.created_at) < t0).length,
+    returning: [...byDay.values()].filter((s) => s.size > 1).length, daily, sources, pages,
+    devices: [...devs].map(([device, s]) => ({ device, visitors: s.size })).sort((a, b) => b.visitors - a.visitors), gigs,
+    funnel: {
+      visitors: uniq(v.map((x) => x.visitor)), signups: su.length, verified: su.filter((s) => s.kyc_status === 'verified').length,
+      took_part: su.filter((s) => tookPart(s.id)).length,
+      completed: su.filter((s) => subs.some((x) => x.student_id === s.id && ['approved', 'paid'].includes(x.status)) || d.claims.some((c) => c.student_id === s.id && c.status === 'completed')).length,
+      paid: su.filter((s) => subs.some((x) => x.student_id === s.id && x.status === 'paid') || pays.some((y) => y.student_id === s.id)).length,
+    },
+  }
+}
+
 export const qr = {
   async stats(): Promise<QrStat[]> {
     if (DEMO) {

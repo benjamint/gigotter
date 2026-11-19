@@ -17,6 +17,7 @@ import Verify from './pages/Verify'
 import { Privacy, Terms } from './pages/Legal'
 import { Empty } from './components/ui'
 import { Link } from 'react-router'
+import { useTrackViews } from './lib/track'
 
 const Page = ({ children }: { children: React.ReactNode }) => (
   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>{children}</motion.div>
@@ -24,6 +25,7 @@ const Page = ({ children }: { children: React.ReactNode }) => (
 
 export default function App() {
   const loc = useLocation()
+  useTrackViews()
   return (
     <AnimatePresence mode="wait">
       <Routes location={loc} key={loc.pathname}>

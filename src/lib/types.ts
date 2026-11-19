@@ -235,3 +235,16 @@ export const AUDIENCES: Record<Audience, { label: string; short: string }> = {
 
 export interface PayoutItem { name: string; school: string | null; amount: number; currency: string; gig: string; units: number; paid_at: string }
 export interface Testimonial { id: string; name: string; school: string | null; quote: string; consent: boolean; published: boolean; created_at: string }
+
+/** Numbers for the admin Insights tab (site_insights() in migration 0017). */
+export interface Insights {
+  days: number; since: string; first_view: string | null
+  totals: { views: number; visitors: number; sessions: number }; prev: { views: number; visitors: number; sessions: number }
+  signups: number; prev_signups: number; returning: number
+  daily: { day: string; views: number; visitors: number; signups: number }[]
+  sources: { source: string; visitors: number; sessions: number; signups: number }[]
+  pages: { path: string; views: number; visitors: number }[]
+  devices: { device: string; visitors: number }[]
+  gigs: { id: string; title: string; status: string; join_mode: string; expires_at: string; views: number; visitors: number; applied: number; joined: number }[]
+  funnel: { visitors: number; signups: number; verified: number; took_part: number; completed: number; paid: number }
+}

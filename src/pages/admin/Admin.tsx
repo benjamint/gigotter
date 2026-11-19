@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Share2, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, BarChart3, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Share2, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
@@ -11,6 +11,7 @@ import { GENDERS, WORK_STATUSES, type KycStatus, type Listing, type Payment, typ
 import { accountOf, ageOf } from '../../lib/audience'
 import ListingForm from './ListingForm'
 import QrCodes from './QrCodes'
+import Insights from './Insights'
 import ShareGig from '../../components/ShareGig'
 import Briefs from './Briefs'
 import { subTitle } from '../../lib/forms'
@@ -18,6 +19,7 @@ import { csvCell } from '../../lib/security'
 
 const TABS = [
   { k: 'overview', l: 'Overview', i: LayoutGrid },
+  { k: 'insights', l: 'Insights', i: BarChart3 },
   { k: 'students', l: 'Students', i: Users },
   { k: 'gigs', l: 'Gigs', i: Briefcase },
   { k: 'work', l: 'Work & payouts', i: Wallet },
@@ -69,6 +71,7 @@ export default function Admin() {
             {tab === 'briefs' && <Briefs reqs={d.requests} reload={data.reload} />}
             {tab === 'testimonials' && <Testimonials />}
             {tab === 'qr' && <QrCodes />}
+            {tab === 'insights' && <Insights />}
           </motion.div>
         )}
       </div>

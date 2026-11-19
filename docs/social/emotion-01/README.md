@@ -12,3 +12,11 @@ Photos: the free-licence images in `public/images` (see `public/images/CREDITS.m
 
 Rebuild: `python3 build.py /tmp/earned.html && node render.cjs /tmp/earned.html .`
 (needs the Onest and Inter Tight fontsource packages unpacked where `build.py` says).
+
+## TikTok video: "the ping"
+
+`video/gigotter-earned-ping.mp4`: 1080×1920, 12 s, 30 fps, H.264 + AAC, with a short original two-note chime when the payment lands. `video/cover.png` is a cover frame ("Earned.").
+
+Lock screen, then the mobile-money alert drops in with a buzz and the chime, then "That's not pocket money." then "Best sound your phone makes." then "Earned. gigotter.com". Text stays clear of TikTok's buttons and caption. The amount is illustrative.
+
+Rebuild: `python3 video/build.py /tmp/ping.html && node video/render.cjs /tmp/ping.html /tmp/frames && video/encode.sh /tmp/frames video/gigotter-earned-ping.mp4`

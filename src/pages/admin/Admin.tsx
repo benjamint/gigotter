@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Share2, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
@@ -11,6 +11,7 @@ import { GENDERS, WORK_STATUSES, type KycStatus, type Listing, type Payment, typ
 import { accountOf, ageOf } from '../../lib/audience'
 import ListingForm from './ListingForm'
 import QrCodes from './QrCodes'
+import ShareGig from '../../components/ShareGig'
 import Briefs from './Briefs'
 import { subTitle } from '../../lib/forms'
 import { csvCell } from '../../lib/security'
@@ -275,6 +276,7 @@ function KycReview({ p, onClose, onDone, onEmailed }: { p: Profile | null; onClo
 function Gigs({ listings, subs, reload }: { listings: Listing[]; subs: Submission[]; reload: () => void }) {
   const toast = useToast()
   const [edit, setEdit] = useState<Partial<Listing> | null>(null)
+  const [share, setShare] = useState<Listing | null>(null)
   return (
     <div>
       <div className="flex justify-end"><button onClick={() => setEdit({})} className="btn-brand btn-sm"><Plus className="h-4 w-4" />New gig</button></div>
@@ -287,6 +289,7 @@ function Gigs({ listings, subs, reload }: { listings: Listing[]; subs: Submissio
               <div className="flex items-start gap-3">
                 <Photo src={coverFor(l)} alt="" className="h-14 w-14 shrink-0 rounded-xl" />
                 <div className="min-w-0 flex-1"><h3 className="font-semibold leading-tight">{l.title}</h3><div className="mt-1 flex flex-wrap gap-1.5"><span className="chip bg-sand capitalize">{l.status}</span><span className={`chip ${t.urgent ? 'bg-red-100 text-red-700' : 'bg-sand'}`}>{t.label}</span><span className="chip bg-sand">{payLine(l)}</span></div></div>
+                {l.status === 'live' && <button onClick={() => setShare(l)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-sand" aria-label="Share" title="Share this gig"><Share2 className="h-4 w-4" /></button>}
                 <button onClick={() => setEdit(l)} className="grid h-9 w-9 place-items-center rounded-full hover:bg-sand" aria-label="Edit"><Edit3 className="h-4 w-4" /></button>
                 <button onClick={async () => { if (confirm(`Delete “${l.title}”? This also removes its submissions.`)) { await deleteListing(l.id); toast('Deleted'); reload() } }} className="grid h-9 w-9 place-items-center rounded-full text-red-600 hover:bg-red-50" aria-label="Delete"><Trash2 className="h-4 w-4" /></button>
               </div>
@@ -312,8 +315,14 @@ function Gigs({ listings, subs, reload }: { listings: Listing[]; subs: Submissio
       </div>
       {!listings.length && <Empty title="No gigs yet" action={<button onClick={() => setEdit({})} className="btn-brand">Post the first one</button>} />}
       <Modal open={!!edit} onClose={() => setEdit(null)} wide>
-        {edit && <ListingForm initial={edit} hasResponses={!!edit.id && subs.some((s: any) => s.listing_id === edit.id)} onSaved={() => { setEdit(null); reload(); toast('Gig saved') }} />}
+        {edit && <ListingForm initial={edit} hasResponses={!!edit.id && subs.some((s: any) => s.listing_id === edit.id)} onSaved={(saved) => {
+          // a gig that has just gone live: offer to share it straight away
+          const wentLive = saved.status === 'live' && (!edit.id || edit.status !== 'live')
+          setEdit(null); reload(); toast(wentLive ? 'Gig is live. Share it to get people in' : 'Gig saved')
+          if (wentLive) setShare(saved)
+        }} />}
       </Modal>
+      {share && <ShareGig listing={share} open={!!share} onClose={() => setShare(null)} />}
     </div>
   )
 }

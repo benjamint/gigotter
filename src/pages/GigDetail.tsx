@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
-import { AlertCircle, ArrowLeft, ArrowRight, Calendar, Camera, Check, MapPin, Users, Wallet } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { AlertCircle, ArrowLeft, ArrowRight, Calendar, Camera, Check, MapPin, Share2, Users, Wallet } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import Photo from '../components/Photo'
 import { Empty, PageLoader, Progress, Spinner, useToast } from '../components/ui'
-import { claimListing, getListing, listingFiles, myApplications, myClaims, withdrawApplication } from '../lib/api'
+import { claimListing, getListing, listingFiles, logScan, myApplications, myClaims, withdrawApplication } from '../lib/api'
+import ShareGig from '../components/ShareGig'
 import ApplyForm from '../components/ApplyForm'
 import { accountOf, audienceAllows, audienceOf, eligibilityText, isApply } from '../lib/audience'
 import { AUDIENCES } from '../lib/types'
@@ -27,6 +28,16 @@ export default function GigDetail() {
   const files = useAsync(() => listingFiles(id!), [id, user?.id])
   const apps = useAsync(() => (user ? myApplications() : Promise.resolve([])), [user?.id])
   const [applying, setApplying] = useState(false)
+  const [sharing, setSharing] = useState(false)
+  // arrived through a shared link (gigotter.com/g/<id>?s=li): count the visit like a QR scan, credit a later sign-up to it,
+  // then tidy the address bar. Counted only if a QR code named share-<channel> exists in Admin → QR codes.
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    const s = params.get('s')
+    if (!s) return
+    if (['wa', 'x', 'li', 'fb', 'link'].includes(s)) void logScan(`share-${s}`)
+    params.delete('s'); setParams(params, { replace: true })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const joined = !!claims.data?.some((c) => c.listing_id === id && c.status !== 'withdrawn' && c.status !== 'removed')
   const [busy, setBusy] = useState(false)
   if (loading) return <PageLoader />
@@ -160,8 +171,10 @@ export default function GigDetail() {
               <div className="mt-5 flex gap-2.5 rounded-xl bg-red-50 p-3.5 text-sm text-red-800"><AlertCircle className="h-4 w-4 shrink-0 translate-y-0.5" /><span>Your verification needs attention. <Link to="/verify" className="font-medium underline">Update it</Link></span></div>
             )}
           </motion.div>
+          <button type="button" onClick={() => setSharing(true)} className="btn-ghost mt-3 w-full py-3"><Share2 className="h-4 w-4" />Share this gig</button>
           <p className="mt-4 px-1 text-xs leading-relaxed text-ink-muted">{apply ? 'Applying doesn’t guarantee a place. If you’re selected and can’t make it, let us know so someone else can take your place.' : 'Joining reserves a spot. If you can’t complete it, withdraw from your dashboard so someone else can take it.'}</p>
         </aside>
+        <ShareGig listing={l} open={sharing} onClose={() => setSharing(false)} />
         <ApplyForm listing={l} open={applying} onClose={() => setApplying(false)} onApplied={() => apps.reload()} />
       </div>
     </div>

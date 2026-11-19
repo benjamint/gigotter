@@ -23,3 +23,11 @@ Rebuild: download the photos by ID into a folder (`https://images.pexels.com/pho
 Rebuild: `python3 build.py PHOTODIR /tmp/e2s.html --story && node render.cjs /tmp/e2s.html . 1`
 
 The fridge photo (4058699) has its small "LIEBHERR" badge painted out before rendering: a patch of the plain panel from just below, at about x 432–560, y 886–914 of the 2000×3000 download.
+
+## TikTok video: the snail
+
+`video/gigotter-earned-snail.mp4`: 1080×1920, 13.5 s, 30 fps, H.264 + AAC, original sound (room tone, a tick on each "Day", a low bonk on the punchline, the two-note chime on "Earned."). `video/cover.png` is the punchline frame, for the TikTok cover.
+
+Me: *asks uncle for money* → snail creeps in, "Uncle: 'Let me see what I can do.'" → "Day 1 … Day 23, still waiting…" → "Response time: 3–5 business weeks." → "Or just… earn it." → "Earned." + otter + gigotter.com.
+
+Rebuild: `python3 video/build.py PHOTODIR/31280238.jpg /tmp/snail.html && node video/render.cjs /tmp/snail.html /tmp/frames && video/encode.sh /tmp/frames video/gigotter-earned-snail.mp4`

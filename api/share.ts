@@ -13,9 +13,9 @@ export default async function handler(req: Request) {
 
   const title = g ? g.title : 'Gigotter: paid gigs in Ghana'
   const desc = g ? describe(g) : 'Verified students and young people doing paid gigs for real businesses in Ghana. Paid to mobile money.'
-  // the gig's own cover photo (or its type's default photo); the text details show beside it in the preview
-  const cover = g ? (g.cover_url || COVER[g.type] || COVER.other) : '/og-default.jpg'
-  const image = cover.startsWith('http') ? cover : origin + cover
+  // uploaded covers go through /g/<id>/image (our domain, no X-Robots-Tag, which X rejects)
+  const cover = g ? (g.cover_url ? `/g/${g.id}/image` : COVER[g.type] || COVER.other) : '/og-default.jpg'
+  const image = origin + cover
   const to = g ? `/gigs/${g.id}${tag}` : '/gigs'
   const kind = g ? (TYPE_LABEL[g.type] ?? 'Paid gig') : 'Gigotter'
 

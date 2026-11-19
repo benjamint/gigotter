@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/g/:id/image",
+      "destination": "/api/cover?id=:id"
+    },
+    {
       "source": "/g/:id",
       "destination": "/api/share?id=:id"
     },

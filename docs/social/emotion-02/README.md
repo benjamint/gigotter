@@ -31,3 +31,11 @@ The fridge photo (4058699) has its small "LIEBHERR" badge painted out before ren
 Me: *asks uncle for money* → snail creeps in, "Uncle: 'Let me see what I can do.'" → "Day 1 … Day 23, still waiting…" → "Response time: 3–5 business weeks." → "Or just… earn it." → "Earned." + otter + gigotter.com.
 
 Rebuild: `python3 video/build.py PHOTODIR/31280238.jpg /tmp/snail.html && node video/render.cjs /tmp/snail.html /tmp/frames && video/encode.sh /tmp/frames video/gigotter-earned-snail.mp4`
+
+## TikTok video: the pigeons
+
+`video-pigeons/gigotter-earned-pigeons.mp4`: 1080×1920, 13.5 s, 30 fps, original sound (street ambience, a wing flutter, a thud on each punch-in, a low bonk, the "Earned." chime). `video-pigeons/cover.png` is the "Stop fighting for crumbs." frame.
+
+"Everyone's fighting for the same crumbs." → punch-ins: "Pocket money." / "Leftover transport money." / "'Something small.'" → "Stop fighting for crumbs." → "Get your own bread." → "Earned."
+
+Rebuild: `python3 video-pigeons/build.py PHOTODIR/18132498.jpg /tmp/p.html && node video-pigeons/render.cjs /tmp/p.html /tmp/frames && video-pigeons/encode.sh /tmp/frames video-pigeons/gigotter-earned-pigeons.mp4`

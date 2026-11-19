@@ -1,8 +1,9 @@
 """Gigotter "Earned." series 2: abstract and odd Pexels photos with provocative lines. 1080x1350, rendered at 2x (2160x2700).
-usage: python3 build.py PHOTODIR OUT.html  then  node render.cjs OUT.html OUTDIR
+usage: python3 build.py PHOTODIR OUT.html [--story]  then  node render.cjs OUT.html OUTDIR
 PHOTODIR holds <pexels id>.jpg downloaded from images.pexels.com (see CREDITS.md)."""
 import base64, pathlib, sys
 PHOTOS = pathlib.Path(sys.argv[1])
+STORY = '--story' in sys.argv  # 1080x1920 TikTok/Story version, words kept clear of the app's buttons and caption
 FONTS = pathlib.Path('/tmp/claude-0/-home-user/04016ca2-3467-57d3-863b-54dd5a5c69fc/scratchpad/fonts2')
 def font(pkg, f): return 'data:font/woff;base64,' + base64.b64encode((FONTS / pkg / 'package/files' / f).read_bytes()).decode()
 ON, IT = 'fontsource-onest-5.1.0', 'fontsource-inter-tight-5.1.0'
@@ -34,15 +35,24 @@ body { background: #222; }
 .sticker { position: absolute; left: 80px; bottom: 190px; z-index: 2; background: #10291F; color: #fff; padding: 34px 40px 38px; border-radius: 28px; max-width: 760px; }
 .sticker .l1 { font-size: 96px; font-weight: 700; line-height: .96; }
 .sticker .l1 em { font-style: normal; color: #B7CDBE; }
+/* story: 1080x1920; TikTok covers ~200px at the top, ~420px at the bottom and ~150px on the right */
+.story { height: 1920px; }
+.story .copy { right: 170px; } .story .copy.top { top: 240px; } .story .copy.bot { bottom: 470px; }
+.story .foot { bottom: 340px; right: 170px; }
+.story .sticker { bottom: 470px; }
+.story .l1 { font-size: 84px; } .story .l1.xl { font-size: 108px; }
+.story.shade-bot::before { background: linear-gradient(0deg, rgba(10,22,17,.85), rgba(10,22,17,.55) 30%, rgba(10,22,17,0) 55%); }
+.story.shade-both::before { background: linear-gradient(180deg, rgba(0,0,0,.78), rgba(0,0,0,.45) 22%, rgba(0,0,0,0) 40%), linear-gradient(0deg, rgba(0,0,0,.75), rgba(0,0,0,0) 32%); }
+.story.shade-foot::before { background: linear-gradient(0deg, rgba(10,22,17,.9), rgba(10,22,17,0) 34%); }
 """
 
 def art(id, pid, l1, l2='', place='top', light=False, shade='', pos='center', big=False, sticker=False):
-    cls = 'a' + (' light' if light else '') + (f' shade-{shade}' if shade else '')
+    cls = 'a' + (' story' if STORY else '') + (' light' if light else '') + (f' shade-{shade}' if shade else '')
     if sticker:
         copy = f'<div class="sticker"><div class="l1">{l1}</div></div>'
     else:
         copy = f'<div class="copy {place}"><div class="l1{" xl" if big else ""}">{l1}</div>{f"<div class=l2>{l2}</div>" if l2 else ""}</div>'
-    return f'''<section class="{cls}" id="{id}"><img class="bg" src="{ph(pid)}" style="object-position:{pos}">{copy}
+    return f'''<section class="{cls}" id="{id}{'-story' if STORY else ''}"><img class="bg" src="{ph(pid)}" style="object-position:{pos}">{copy}
 <div class="foot"><span class="earned">Earned.</span><span class="mark"><img src="{LOGO}">gigotter.com</span></div></section>'''
 
 slides = [

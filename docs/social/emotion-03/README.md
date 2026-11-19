@@ -18,3 +18,8 @@ Brand check: the first sneaker photo was a Nike, so it was replaced. In b9 the f
 
 Rebuild: download the photos in CREDITS.md as `<id>.jpg` (`https://images.pexels.com/photos/<id>/pexels-photo-<id>.jpeg?auto=compress&cs=tinysrgb&h=3000`), redo the b9 patch, then
 `python3 build.py PHOTODIR /tmp/b.html && node render.cjs /tmp/b.html .`
+
+## TikTok / Story versions
+
+`gigotter-b1-story.png` … `b9-story.png`: 1080×1920, same lines, with the words and icon kept clear of TikTok's top bar, side buttons and caption area.
+Rebuild: `python3 build.py PHOTODIR /tmp/bs.html --story && node render.cjs /tmp/bs.html . 1`

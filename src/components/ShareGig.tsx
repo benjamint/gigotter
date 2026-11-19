@@ -25,15 +25,79 @@ export function gigFacts(l: Listing) {
   return { pay, where, when, who }
 }
 
-export function defaultMessage(l: Listing) {
-  const f = gigFacts(l)
-  return `Paid gig ${f.where}: ${l.title}.\n${f.pay[0].toUpperCase() + f.pay.slice(1)} · ${f.when[0].toUpperCase() + f.when.slice(1)} · ${f.who}.\nDetails and apply on Gigotter 👉`
+const HOOK: Record<string, string> = {
+  onboarding: 'Get paid to sign up businesses', focus_group: 'Get paid to share your opinion', research: 'Get paid for field research',
+  survey: 'Get paid to answer a few questions', app_testing: 'Get paid to test an app', errand: 'Get paid to run an errand',
+  content: 'Get paid to create content', other: 'Paid gig alert',
+}
+const TYPE_TAG: Record<string, string> = {
+  onboarding: '#SalesJobs', focus_group: '#FocusGroup', research: '#Research', survey: '#PaidSurveys',
+  app_testing: '#AppTesting', errand: '#Errands', content: '#ContentCreator', other: '#PaidGigs',
+}
+const CITY_TAGS: [RegExp, string][] = [[/kumasi/i, '#Kumasi'], [/takoradi/i, '#Takoradi'], [/cape coast/i, '#CapeCoast'], [/tamale/i, '#Tamale']]
+
+/** Up to 5 hashtags: brand, place, type of work, who it's for, Ghana jobs. */
+export function hashtags(l: Listing) {
+  const city = l.is_remote ? '#RemoteWork' : CITY_TAGS.find(([re]) => re.test(l.location || ''))?.[1] ?? '#Accra'
+  const who = audienceOf(l) === 'students' ? '#StudentJobs' : '#SideHustle'
+  return ['#Gigotter', city, TYPE_TAG[l.type] ?? '#PaidGigs', who, '#GhanaJobs'].filter((t, i, a) => a.indexOf(t) === i).slice(0, 5).join(' ')
 }
 
-function intent(ch: Exclude<Channel, 'link'>, msg: string, url: string) {
+const cap = (t: string) => t[0].toUpperCase() + t.slice(1)
+
+/** Ready-to-post message: hook, title, one fact per line, call to action and hashtags. The link goes in before the hashtags. */
+export function defaultMessage(l: Listing) {
+  const f = gigFacts(l)
+  return [
+    `🔥 ${HOOK[l.type] ?? HOOK.other}!`,
+    '',
+    l.title.trim(),
+    '',
+    `💰 ${cap(f.pay)}`,
+    `📍 ${l.is_remote ? 'Remote, from home' : l.location || 'Ghana'}`,
+    `📅 ${cap(f.when)}`,
+    `👥 ${f.who}`,
+    '',
+    'Verified gig, paid straight to MoMo. Apply here 👇',
+    '',
+    hashtags(l),
+  ].join('\n')
+}
+
+/** Put the link in the message: before a trailing block of hashtags if there is one, otherwise at the end. */
+export function compose(msg: string, url: string) {
+  const lines = msg.trimEnd().split('\n')
+  let i = lines.length
+  while (i > 0 && /^\s*(#\w+\s*)+$/.test(lines[i - 1])) i--
+  if (i === lines.length || i === 0) return `${msg.trimEnd()}\n${url}`
+  const body = lines.slice(0, i).join('\n').trimEnd()
+  return `${body}\n${url}\n\n${lines.slice(i).join('\n')}`
+}
+
+/** Length as X counts it: links are 23, emoji and other wide characters 2. */
+export function xLength(text: string) {
+  const noUrls = text.replace(/https?:\/\/\S+/g, '')
+  const urls = (text.match(/https?:\/\/\S+/g) ?? []).length
+  let n = 0
+  for (const ch of noUrls) n += ch.codePointAt(0)! > 0x10ff ? 2 : 1
+  return n + urls * 23
+}
+
+/** X allows 280 characters: if the full message is too long, post a shorter version for X only. */
+function forX(l: Listing, msg: string, url: string) {
+  const full = compose(msg, url)
+  if (xLength(full) <= 280) return full
+  const f = gigFacts(l), tags = hashtags(l).split(' ').slice(0, 3).join(' ')
+  let title = l.title.trim()
+  const make = () => `🔥 ${title}\n\n💰 ${cap(f.pay)}\n📍 ${l.is_remote ? 'Remote' : l.location || 'Ghana'}\n📅 ${cap(f.when)}\n\nApply 👇\n${url}\n\n${tags}`
+  while (xLength(make()) > 280 && title.length > 20) title = title.slice(0, -4).trimEnd() + '…'
+  return make()
+}
+
+function intent(ch: Exclude<Channel, 'link'>, text: string, url: string) {
   const e = encodeURIComponent
-  if (ch === 'wa') return `https://wa.me/?text=${e(`${msg} ${url}`)}`
-  if (ch === 'x') return `https://twitter.com/intent/tweet?text=${e(msg)}&url=${e(url)}`
+  if (ch === 'wa') return `https://wa.me/?text=${e(text)}`
+  if (ch === 'x') return `https://twitter.com/intent/tweet?text=${e(text)}`
   if (ch === 'li') return `https://www.linkedin.com/sharing/share-offsite/?url=${e(url)}`
   return `https://www.facebook.com/sharer/sharer.php?u=${e(url)}`
 }
@@ -59,7 +123,7 @@ export default function ShareGig({ listing: l, open, onClose }: { listing: Listi
     catch { toast('Couldn’t copy. Press and hold the text to copy it instead', 'err') }
   }
   const native = async () => {
-    try { await navigator.share({ title: l.title, text: msg, url: shareUrl(l.id, 'link') }) } catch { /* cancelled */ }
+    try { await navigator.share({ title: l.title, text: compose(msg, shareUrl(l.id, 'link')) }) } catch { /* cancelled */ }
   }
 
   return (
@@ -86,22 +150,22 @@ export default function ShareGig({ listing: l, open, onClose }: { listing: Listi
         </button>
       </div>
 
-      <label className="label mt-4" htmlFor="share-msg">Message <span className="font-normal text-ink-muted">(edit it if you like)</span></label>
-      <textarea id="share-msg" value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={500} className="input min-h-[104px] text-sm" />
+      <label className="label mt-4" htmlFor="share-msg">Message <span className="font-normal text-ink-muted">(edit it if you like; the link goes in above the hashtags)</span></label>
+      <textarea id="share-msg" value={msg} onChange={(e) => setMsg(e.target.value)} maxLength={500} rows={14} className="input min-h-[260px] text-sm leading-relaxed" />
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {CHANNELS.map((c) => (
-          <a key={c.k} href={intent(c.k, msg, shareUrl(l.id, c.k))} target="_blank" rel="noopener noreferrer"
-            onClick={() => { if (c.k === 'li' || c.k === 'fb') void navigator.clipboard?.writeText(`${msg} ${shareUrl(l.id, c.k)}`).catch(() => {}) }}
+          <a key={c.k} href={intent(c.k, c.k === 'x' ? forX(l, msg, shareUrl(l.id, c.k)) : compose(msg, shareUrl(l.id, c.k)), shareUrl(l.id, c.k))} target="_blank" rel="noopener noreferrer"
+            onClick={() => { if (c.k === 'li' || c.k === 'fb') void navigator.clipboard?.writeText(compose(msg, shareUrl(l.id, c.k))).catch(() => {}) }}
             className={`flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-medium transition hover:opacity-90 ${c.bg}`}>
             <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>{c.icon}</svg>{c.label}
           </a>
         ))}
       </div>
-      <p className="mt-2 text-xs text-ink-muted">LinkedIn and Facebook only take the link: your message is copied, so paste it into the post.</p>
+      <p className="mt-2 text-xs text-ink-muted">LinkedIn and Facebook only take the link: your message is copied, so paste it into the post. X gets a shorter version if the message is over 280 characters.</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={() => copy(`${msg} ${shareUrl(l.id, 'link')}`, 'msg')} className="btn-ghost btn-sm">
+        <button type="button" onClick={() => copy(compose(msg, shareUrl(l.id, 'link')), 'msg')} className="btn-ghost btn-sm">
           {copied === 'msg' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}Copy message + link
         </button>
         {canNative && <button type="button" onClick={native} className="btn-ghost btn-sm"><Share2 className="h-4 w-4" />More apps</button>}

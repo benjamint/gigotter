@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { AlertCircle, ArrowLeft, ArrowRight, Calendar, Camera, Check, MapPin, Users, Wallet } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router'
 import Photo from '../components/Photo'
 import { Empty, PageLoader, Progress, Spinner, useToast } from '../components/ui'
 import { claimListing, getListing, listingFiles, myApplications, myClaims, withdrawApplication } from '../lib/api'

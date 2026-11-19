@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, Calendar, Camera, Check, ChevronDown, ClipboardList, Copy, FileText, Lock, MapPin, Paperclip, Send, Wallet, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { mapsUrl } from '../components/AddressField'
 import { FieldInput, isWide } from '../components/FormFields'
 import Photo from '../components/Photo'

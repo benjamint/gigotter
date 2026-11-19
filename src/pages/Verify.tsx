@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Check, Clock, IdCard, Lock, ShieldCheck, Smartphone, User, GraduationCap, Camera } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router'
 import { FileDrop, SelfieCam } from '../components/Upload'
 import { PageLoader, Spinner, useToast } from '../components/ui'
 import { fileUrl, updateMyProfile, uploadFile } from '../lib/api'

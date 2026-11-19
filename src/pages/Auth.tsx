@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Eye, EyeOff, KeyRound, MailCheck } from 'lucide-react'
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Logo } from '../components/Layout'
 import Photo from '../components/Photo'
 import { IMG } from '../lib/images'

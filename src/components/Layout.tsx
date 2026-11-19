@@ -2,7 +2,7 @@ import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-
 import { ScrollProgress } from './motion'
 import { BadgeCheck, ChevronDown, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { DEMO, auth, resetDemo } from '../lib/api'
 import { useSession } from '../lib/session'
 

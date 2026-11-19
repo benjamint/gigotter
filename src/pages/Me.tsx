@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Copy, Receipt, ShieldAlert, Sparkles } from 'lucide-react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate } from 'react-router'
 import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from '../components/ui'
 import { myApplications, myClaims, myPayments, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'

@@ -1,7 +1,7 @@
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
 import { ArrowRight, BadgeCheck, Check, ClipboardList, Handshake, MessagesSquare, Package, Search, ShieldCheck, Smartphone, Wallet } from 'lucide-react'
 import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import GigCard from '../components/GigCard'
 import { Reveal, SectionHead } from '../components/ui'
 import { PayoutFeed, TestimonialStrip } from '../components/Feeds'

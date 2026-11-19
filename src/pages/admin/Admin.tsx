@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
 import { admin, deleteListing, deleteTestimonial, fileUrl, listListings, listTestimonials, saveTestimonial } from '../../lib/api'
 import Photo from '../../components/Photo'

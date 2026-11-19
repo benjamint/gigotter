@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router'
 import { logScan } from '../lib/api'
 
 /** gigotter.com/s/<code>: count the QR scan, then continue to the page chosen for that code. */

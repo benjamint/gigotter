@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowLeft, Check, Download, ImageIcon, Inbox, MapPin, Phone, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router'
 import { mapsUrl } from '../../components/AddressField'
 import Photo from '../../components/Photo'
 import { Empty, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'

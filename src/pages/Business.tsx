@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Camera, Check, FileSpreadsheet, MapPin, ShieldCheck, Users } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router'
 import BriefForm, { type BriefPreset } from '../components/BriefForm'
 import FAQ from '../components/Faq'
 import { Magnetic, SplitReveal } from '../components/motion'

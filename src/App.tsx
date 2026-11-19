@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router'
 import Layout from './components/Layout'
 import Admin from './pages/admin/Admin'
 import GigResponses from './pages/admin/GigResponses'
@@ -16,7 +16,7 @@ import MyGig from './pages/MyGig'
 import Verify from './pages/Verify'
 import { Privacy, Terms } from './pages/Legal'
 import { Empty } from './components/ui'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 const Page = ({ children }: { children: React.ReactNode }) => (
   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>{children}</motion.div>

@@ -1,6 +1,6 @@
 import { ArrowRight, Briefcase, Calendar, ExternalLink, Mail, MapPin, MessageCircle, Paperclip, Phone, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { GigFileList, type PendingFile } from '../../components/GigFiles'
 import { Empty, Modal, Spinner, useToast } from '../../components/ui'
 import { admin } from '../../lib/api'

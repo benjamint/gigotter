@@ -23,3 +23,11 @@ Photos are the Pexels IDs listed in `../emotion-02/CREDITS.md`. Finished videos 
 | goldfish | "Waiting for pocket money like:" → the fish bobbing → Day 1 "It's coming." / Day 12 "Soon." / Day 30 "Next week." → "Waiting around to be fed is a goldfish thing." → "You're not a goldfish." | the post line |
 | ostrich | "Me after checking my balance:" → three dramatic punch-ins with a "dun" each → "Let me check again." → "Hiding from your balance won't fix it." → "Earning will." | extreme close-up |
 | icecream | "Your 3-month vacation:" → Week 1 "Sleep." / Week 4 "Still sleep." / Week 12 "Where did it go?" → "Free time melts. Get paid before it does." → "Make this holiday count." | the post line |
+
+## Footage videos
+
+`footage.py` puts the same captions and ending over a real video clip instead of a photo: the clip is trimmed, sped or slowed to fit, cropped to 9:16 (a fixed position or a pan that follows the subject), lightly graded and composited under a transparent caption layer. Scripts: `snail_footage.py`, `pigeons_footage.py`, `icecream_footage.py`, `hourglass_footage.py`; clips and credits in `CREDITS.md`.
+
+```bash
+python3 snail_footage.py CLIPS/2467471.mp4 /tmp/vf/snail
+```

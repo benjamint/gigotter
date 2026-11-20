@@ -26,11 +26,13 @@ def page(photo, intro, captions, turn, pos='50% 50%', origin='50% 50%', zoom=((0
     for i, c in enumerate(captions):
         style = c.get('style', 'line'); place = c.get('place', 'top')
         caps += f'<div class="t cap {style} {place}" id="c{i}">{c["text"]}</div>'
+    # photo=None: a transparent caption layer, composited over video footage by footage.py
+    photo_tag = f'<img id="photo" src="{b64(photo, "image/jpeg")}">' if photo else '<div id="photo"></div>'
     cfg = {'captions': [[c['at'], c['until']] for c in captions], 'zoom': [list(z) for z in zoom], 'bob': bob, 'shakes': list(shakes), 'introEnd': intro[1]}
     return f'''<!doctype html><html><head><meta charset="utf-8"><style>{faces}
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-body {{ width: 1080px; height: 1920px; overflow: hidden; background: #000; font-family: Tight, sans-serif; color: #fff; }}
-#stage {{ position: absolute; inset: 0; overflow: hidden; background: {ground or ('#F3F5F1' if light else '#000')}; }}
+body {{ width: 1080px; height: 1920px; overflow: hidden; background: {'#000' if photo else 'transparent'}; font-family: Tight, sans-serif; color: #fff; }}
+#stage {{ position: absolute; inset: 0; overflow: hidden; background: {(ground or ('#F3F5F1' if light else '#000')) if photo else 'transparent'}; }}
 #photo {{ position: absolute; inset: -40px 0; width: 100%; height: calc(100% + 80px); object-fit: cover; object-position: {pos}; transform-origin: {origin}; {f'top: {shift - 40}px; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 260px); mask-image: linear-gradient(180deg, transparent 0, #000 260px);' if shift else ''} }}
 #shade {{ position: absolute; inset: 0; background: {shade_css}; }}
 #black {{ position: absolute; inset: 0; background: #000; }}
@@ -55,7 +57,7 @@ body {{ width: 1080px; height: 1920px; overflow: hidden; background: #000; font-
 #end .mark img {{ width: 84px; height: 84px; }}
 #end .sub {{ margin-top: 26px; font: 400 34px Tight; color: rgba(255,255,255,.6); }}
 </style></head><body><div id="stage" class="{'light' if light else ''}">
-<img id="photo" src="{b64(photo, 'image/jpeg')}"><div id="shade"></div>
+{photo_tag}<div id="shade"></div>
 {caps}
 <div id="black"></div><div class="t" id="intro">{intro[0]}</div>
 <div id="green"><div class="leaf" style="width:760px;height:760px;right:-260px;top:-180px"></div>

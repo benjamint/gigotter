@@ -43,11 +43,12 @@ POSTS = {
 }
 VIDEOS = {
   'v-ping': (SOC / 'emotion-01/video/gigotter-earned-ping.mp4', 'ping-video', 'Turn the volume up. 🔔', '#StudentLife #Accra #GhanaJobs'),
-  'v-snail': (SOC / 'emotion-02/video/gigotter-earned-snail.mp4', 'snail-video', 'Still waiting? 🐌', '#Relatable #Ghana #StudentLife'),
-  'v-pigeons': (SOC / 'emotion-02/video-pigeons/gigotter-earned-pigeons.mp4', 'pigeons-video', 'Get your own bread. 🍞', '#Accra #GhanaJobs #StudentLife'),
+  'v-snail': (SOC / 'video-kit/out/gigotter-earned-snail-footage.mp4', 'snail-video', 'Still waiting? 🐌', '#Relatable #Ghana #StudentLife'),
+  'v-pigeons': (SOC / 'video-kit/out/gigotter-earned-pigeons-footage.mp4', 'pigeons-video', 'Get your own bread. 🍞', '#Accra #GhanaJobs #StudentLife'),
   'v-goldfish': (SOC / 'video-kit/out/gigotter-earned-goldfish.mp4', 'goldfish-video', '“It’s coming.” 🐠', '#Relatable #StudentLife #Ghana'),
   'v-ostrich': (SOC / 'video-kit/out/gigotter-earned-ostrich.mp4', 'ostrich-video', 'We’ve all been there. 👀', '#Relatable #Ghana #StudentLife'),
-  'v-icecream': (SOC / 'video-kit/out/gigotter-earned-icecream.mp4', 'icecream-video', 'Week 12 hits different. 🍦', '#Vacation #StudentLife #Ghana'),
+  'v-icecream': (SOC / 'video-kit/out/gigotter-earned-icecream-footage.mp4', 'icecream-video', 'Week 12 hits different. 🍦', '#Vacation #StudentLife #Ghana'),
+  'v-hourglass': (SOC / 'video-kit/out/gigotter-earned-hourglass-footage.mp4', 'hourglass-video', 'Where did your evening go? ⏳', '#StudentLife #Ghana #GhanaJobs'),
   'v-fridge': (SOC / 'emotion-02/video-fridge/gigotter-earned-fridge.mp4', 'fridge-video', 'Tag the friend who “just checks” the fridge at 11pm. 😅', '#Relatable #StudentLife #Ghana'),
 }
 CAROUSELS = {  # TikTok photo carousels from the Story versions
@@ -83,6 +84,7 @@ CAL = [
   (D(12, 9), '19:30', 'post', 'b7', ''),
   (D(12, 11), '19:30', 'post', 'a2', ''),
   # week 4: schools on break, run-up to Christmas
+  (D(12, 13), '19:00', 'video', 'v-hourglass', 'Cover: "Your time was never free. Start charging for it."'),
   (D(12, 14), '19:30', 'post', 'a6', 'Schools are on break.'),
   (D(12, 15), '19:00', 'carousel', 'c4', ''),
   (D(12, 16), '19:30', 'post', 'b3', ''),

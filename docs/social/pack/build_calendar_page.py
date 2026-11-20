@@ -5,9 +5,10 @@ import datetime as dt, html, json, pathlib, shutil, sys
 from PIL import Image
 PACK, OUT = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
 SOC = pathlib.Path(__file__).resolve().parent.parent
-COVERS = {'ping': SOC / 'emotion-01/video/cover.png', 'snail': SOC / 'emotion-02/video/cover.png', 'pigeons': SOC / 'emotion-02/video-pigeons/cover.png',
+COVERS = {'ping': SOC / 'emotion-01/video/cover.png', 'snail': SOC / 'video-kit/out/cover-snail-footage.png', 'pigeons': SOC / 'video-kit/out/cover-pigeons-footage.png',
           'fridge': SOC / 'emotion-02/video-fridge/cover.png', 'goldfish': SOC / 'video-kit/out/cover-goldfish.png',
-          'ostrich': SOC / 'video-kit/out/cover-ostrich.png', 'icecream': SOC / 'video-kit/out/cover-icecream.png'}
+          'ostrich': SOC / 'video-kit/out/cover-ostrich.png', 'icecream': SOC / 'video-kit/out/cover-icecream-footage.png',
+          'hourglass': SOC / 'video-kit/out/cover-hourglass-footage.png'}
 rows = json.loads((PACK / 'calendar.json').read_text())
 MEDIA = OUT / 'media'
 if MEDIA.exists(): shutil.rmtree(MEDIA)

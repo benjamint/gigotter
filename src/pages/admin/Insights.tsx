@@ -89,15 +89,15 @@ function Body({ d }: { d: Data }) {
         ))}
       </div>
       <Takeaways d={d} />
-      <div className="card p-5">
+      <div className="card min-w-0 overflow-hidden p-5">
         <VisitorsChart daily={d.daily} />
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <Funnel f={d.funnel} />
         <Sources d={d} />
       </div>
       <Gigs d={d} />
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <Pages d={d} />
         <Devices d={d} />
       </div>
@@ -190,8 +190,8 @@ function VisitorsChart({ daily }: { daily: Data['daily'] }) {
           </table>
         </div>
       ) : (
-        <div ref={ref} className="relative mt-4" onMouseLeave={() => setHover(null)}>
-          <svg width={w} height={H} role="img" aria-label={`Visitors per day: ${nf(total)} visitor-days over ${daily.length} days`} className="block">
+        <div ref={ref} className="relative mt-4 min-w-0 overflow-hidden" onMouseLeave={() => setHover(null)}>
+          <svg width="100%" height={H} viewBox={`0 0 ${w} ${H}`} role="img" aria-label={`Visitors per day: ${nf(total)} visitor-days over ${daily.length} days`} className="block">
             {ticks.map((t) => (
               <g key={t}>
                 <line x1={L} x2={w - R} y1={y(t)} y2={y(t)} stroke="#E3E9E4" strokeWidth={1} />
@@ -230,7 +230,7 @@ function VisitorsChart({ daily }: { daily: Data['daily'] }) {
 /** Horizontal bar with a rounded end, sized against the largest value in its list. */
 const Bar = ({ v, max, label }: { v: number; max: number; label: string }) => (
   <div className="h-2.5 w-full rounded-full bg-sand" role="presentation" title={label}>
-    <div className="h-full rounded-full bg-brand-600 transition-[width] duration-700" style={{ width: `${max ? Math.max(v ? 1.5 : 0, (v / max) * 100) : 0}%` }} />
+    <div className="h-full rounded-full bg-brand-600 transition-[width] duration-700" style={{ width: `${max ? Math.min(100, Math.max(v ? 1.5 : 0, (v / max) * 100)) : 0}%` }} />
   </div>
 )
 
@@ -243,6 +243,7 @@ function Funnel({ f }: { f: Data['funnel'] }) {
     { k: 'Finished approved work', v: f.completed },
     { k: 'Got paid', v: f.paid },
   ]
+  const top = Math.max(1, ...steps.map((x) => x.v))   // size every bar against the biggest step, so none can pass 100%
   return (
     <div className="card p-5">
       <h3 className="text-lg font-semibold">From visit to payout</h3>
@@ -252,12 +253,15 @@ function Funnel({ f }: { f: Data['funnel'] }) {
           <li key={s.k}>
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className="font-medium">{s.k}</span>
-              <span className="tabular-nums"><b className="font-semibold">{nf(s.v)}</b>{i > 0 && steps[i - 1].v > 0 && <span className="ml-2 text-xs text-ink-muted">{pctText(s.v, steps[i - 1].v)} of previous</span>}</span>
+              <span className="tabular-nums"><b className="font-semibold">{nf(s.v)}</b>{i > 0 && steps[i - 1].v > 0 && s.v <= steps[i - 1].v && <span className="ml-2 text-xs text-ink-muted">{pctText(s.v, steps[i - 1].v)} of previous</span>}</span>
             </div>
-            <div className="mt-1.5"><Bar v={s.v} max={steps[0].v || Math.max(...steps.map((x) => x.v))} label={`${s.k}: ${s.v}`} /></div>
+            <div className="mt-1.5"><Bar v={s.v} max={top} label={`${s.k}: ${s.v}`} /></div>
           </li>
         ))}
       </ol>
+      {f.signups > f.visitors && (
+        <p className="mt-4 text-xs text-ink-muted">Sign-ups include people who joined before visit tracking started (19 Nov), so early steps can be bigger than visitors.</p>
+      )}
     </div>
   )
 }

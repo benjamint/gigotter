@@ -129,6 +129,11 @@ slides = [
     earned_it('p8'),
     type_only('p9', 'Broke is not<br>a <em>personality.</em>', cls='xl'),
     # Story / TikTok versions
+    type_only('s2', 'Mum asked who<br>sent the money.<br><em>You said: me.</em>', cls='l', tall=True),
+    photo('s3', 'class_', 'Lecture at 8.<br>Gig at 2.<br><em>Paid by 5.</em>', tall=True, pos='40% 40%'),
+    type_only('s4', 'Pocket money<br>was a <em>phase.</em>', cls='xl', paper=True, tall=True),
+    photo('s5', 'focus', 'Your time always<br>had a price.<br><em>Now someone’s<br>paying it.</em>', tall=True, pos='70% 40%'),
+    type_only('s9', 'Broke is not<br>a <em>personality.</em>', cls='xl', tall=True),
     photo('s1', 'sky', 'The first time<br>you didn’t<br><em>have to ask.</em>', tall=True, pos='80% 30%', up=True),
     photo('s6', 'joy', 'Not a side hustle.<br><em>Your first salary.</em>', tall=True, pos='48% 30%'),
     ping('s7', tall=True),

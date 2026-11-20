@@ -1,5 +1,5 @@
 """Builds the Gigotter social posting pack: every post as a high-res file named in posting order, captions with hashtags,
-and a calendar (20 Nov 2026 to 3 Jan 2027) for the two platforms Gigotter is on: TikTok and X (Twitter).
+and a calendar (20 Nov 2026 to 3 Jan 2027) for the platforms Gigotter is on: Instagram, X (Twitter) and TikTok.
 usage: python3 build_pack.py SERIES1_2X_DIR OUTDIR   (SERIES1_2X_DIR holds p1..p9.png rendered at 2x)
 Series 2 and 3 files and the videos are read from docs/social/emotion-02 and emotion-03 / emotion-01."""
 import csv, datetime as dt, html, json, pathlib, shutil, sys
@@ -124,34 +124,44 @@ def tiktok_caption(text, extra):
     bio = '' if 'gigotter.com' in text else ' Link in bio.'
     return f'{text}{bio}\n\n{TAG} {extra}'.strip()
 
-X_TIME, TT_TIME = '12:30', '19:00'
+def ig_caption(text, extra):
+    """Instagram: the line, "link in bio" (caption links aren't clickable) and 4 hashtags (Instagram now favours 3-5)."""
+    bio = '' if 'gigotter.com' in text else ' Link in bio.'
+    tags = ' '.join(f'{TAG} {extra}'.split()[:4])
+    return f'{text}{bio}\n\n{tags}'.strip()
+
+X_TIME, IG_TIME, TT_TIME, IG_STORY_TIME = '12:30', '19:30', '19:00', '12:00'
+FEED, VERT = 'feed-4x5', 'vertical-9x16'   # one copy of each file, shared across platforms
 if OUT.exists(): shutil.rmtree(OUT)
 rows = []
 for n, (day, _time, _where, item, note) in enumerate(CAL, 1):
     stem = f'{n:02d}_{day.isoformat()}'
-    x_time = '19:30' if n == 1 else X_TIME   # launch tonight: lunchtime has passed
+    # launch tonight: lunchtime has passed, so all three go out in the evening
+    x_time, story_time = ('20:00', '') if n == 1 else (X_TIME, IG_STORY_TIME)
+    story = []
     if item in POSTS:
-        feed, story, name, text, extra = POSTS[item]
-        xf = [OUT / 'x' / f'{stem}_{name}.jpg']; jpeg(feed, xf[0])
-        tf = [OUT / 'tiktok' / f'{stem}_{name}.jpg']; jpeg(story, tf[0])
-        kind = 'Post'
+        feed, vert, name, text, extra = POSTS[item]
+        ff = [OUT / FEED / f'{stem}_{name}.jpg']; jpeg(feed, ff[0])
+        vf = [OUT / VERT / f'{stem}_{name}.jpg']; jpeg(vert, vf[0])
+        xf, igf, tf, story, kind = ff, ff, vf, vf, 'Post'
     elif item in VIDEOS:
         src, name, text, extra = VIDEOS[item]
         v = OUT / 'videos' / f'{stem}_{name}.mp4'; v.parent.mkdir(parents=True, exist_ok=True); shutil.copy(src, v)
-        xf, tf, kind = [v], [v], 'Video'   # one file, posted to both
+        xf, igf, tf, kind = [v], [v], [v], 'Video'   # one file: X video, Instagram Reel, TikTok
     elif item in CAROUSELS:
         ids, name, text, extra = CAROUSELS[item]
-        xf, tf = [], []
-        for i, pid in enumerate(ids[:4], 1):   # X takes up to 4 images in one post
-            f = OUT / 'x' / f'{stem}_{name}' / f'{i}_{POSTS[pid][2]}.jpg'; jpeg(POSTS[pid][0], f); xf.append(f)
+        ff, vf = [], []
         for i, pid in enumerate(ids, 1):
-            f = OUT / 'tiktok' / f'{stem}_{name}' / f'{i}_{POSTS[pid][2]}.jpg'; jpeg(POSTS[pid][1], f); tf.append(f)
-        kind = 'Carousel'
+            f = OUT / FEED / f'{stem}_{name}' / f'{i}_{POSTS[pid][2]}.jpg'; jpeg(POSTS[pid][0], f); ff.append(f)
+            f = OUT / VERT / f'{stem}_{name}' / f'{i}_{POSTS[pid][2]}.jpg'; jpeg(POSTS[pid][1], f); vf.append(f)
+        xf, igf, tf, kind = ff[:4], ff[:10], vf, 'Carousel'   # X takes 4 images, Instagram 10
     else:
         raise SystemExit(f'unknown item {item}')
     rel = lambda fs: ' | '.join(str(f.relative_to(OUT)) for f in fs)
     rows.append({'#': n, 'date': day.isoformat(), 'day': day.strftime('%a'), 'type': kind,
                  'X time': x_time, 'X files': rel(xf), 'X caption': x_caption(text, extra),
+                 'Instagram time': IG_TIME, 'Instagram files': rel(igf), 'Instagram caption': ig_caption(text, extra),
+                 'Instagram Story': (f'{story_time} · ' + rel(story)) if story and story_time else '',
                  'TikTok time': TT_TIME, 'TikTok files': rel(tf), 'TikTok caption': tiktok_caption(text, extra), 'note': note})
 
 # the #EarnedIt template is not a real story: kept apart so it isn't posted by mistake
@@ -161,21 +171,24 @@ with open(OUT / 'CALENDAR.csv', 'w', newline='', encoding='utf-8-sig') as fh:
     w = csv.DictWriter(fh, fieldnames=list(rows[0])); w.writeheader(); w.writerows(rows)
 with open(OUT / 'CAPTIONS.txt', 'w', encoding='utf-8') as fh:
     for r in rows:
+        story = f"\n(Instagram Story at {r['Instagram Story']})" if r['Instagram Story'] else ''
         fh.write(f"#{r['#']}  {r['day']} {r['date']}  ·  {r['type']}\n\n"
-                 f"X (Twitter) at {r['X time']}:\n{r['X caption']}\n\nTikTok at {r['TikTok time']}:\n{r['TikTok caption']}\n\n{'-' * 60}\n\n")
+                 f"TikTok at {r['TikTok time']}:\n{r['TikTok caption']}\n\n"
+                 f"Instagram at {r['Instagram time']}:\n{r['Instagram caption']}{story}\n\n"
+                 f"X (Twitter) at {r['X time']}:\n{r['X caption']}\n\n{'-' * 60}\n\n")
 (OUT / 'calendar.json').write_text(json.dumps(rows, indent=1, ensure_ascii=False))
-(OUT / 'README.txt').write_text('''Gigotter social pack for TikTok and X (Twitter): 20 Nov 2026 to 3 Jan 2027
+(OUT / 'README.txt').write_text('''Gigotter social pack for Instagram, X (Twitter) and TikTok: 20 Nov 2026 to 3 Jan 2027
 
-x/           X posts: 4:5 images (2160x2700), and carousel days as folders of up to 4 images for one post.
-tiktok/      TikTok posts: 9:16 photos (1080x1920) and photo carousels as folders (upload in order).
-videos/      The videos (1080x1920 with sound). Each one goes on both X and TikTok on its day.
-templates/   The #EarnedIt layout with a made-up person. Do not post; swap in a real, consented story.
-CALENDAR.csv Every day: what goes on X (12:30) and on TikTok (19:00), file names, captions and notes. Opens in Excel or Google Sheets.
-CAPTIONS.txt The X and TikTok captions for each day, ready to copy.
+feed-4x5/      4:5 images (2160x2700) for X and the Instagram feed. Carousel days are folders: Instagram takes all of them, X the first 4.
+vertical-9x16/ 9:16 images (1080x1920) for TikTok posts and Instagram Stories. Carousel days are folders (upload in order).
+videos/        The videos (1080x1920 with sound). Each one goes on X, as an Instagram Reel and on TikTok on its day.
+templates/     The #EarnedIt layout with a made-up person. Do not post; swap in a real, consented story.
+CALENDAR.csv   Every day: what goes on X (12:30), Instagram (19:30, Story 12:00) and TikTok (19:00), file names, captions and notes.
+CAPTIONS.txt   The captions for each platform, each day, ready to copy.
 
-Files are numbered in posting order: 01 is tonight (Fri 20 Nov). Times are Ghana time.
-X captions carry the gigotter.com link and 1-2 hashtags; TikTok captions say "Link in bio" and carry 4-5 hashtags.
-Keep money amounts out of captions and headlines so TikTok doesn't flag posts.
-After week 2, check Admin > Insights > Where people come from (X and TikTok show up separately) and post more of what brings sign-ups.
+Files are numbered in posting order: 01 is tonight (Fri 20 Nov: TikTok 19:00, Instagram 19:30, X 20:00). Times are Ghana time.
+X captions carry the gigotter.com link and 2 hashtags. Instagram and TikTok captions say "Link in bio", so keep gigotter.com in both bios.
+Keep money amounts out of captions and headlines so posts don't get flagged.
+After week 2, check Admin > Insights > Where people come from (Instagram, X and TikTok show up separately) and post more of what brings sign-ups.
 ''')
 print(len(rows), 'calendar entries;', sum(1 for _ in OUT.rglob('*') if _.is_file()), 'files in', OUT)

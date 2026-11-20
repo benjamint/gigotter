@@ -17,7 +17,7 @@ COVERS = {'ping': SOC / 'emotion-01/video/cover.png', 'snail': SOC / 'emotion-02
 PLAT = {'Instagram + Facebook feed': 'feed', 'TikTok + Instagram Reels': 'video', 'TikTok carousel': 'carousel'}
 weeks, cards = {}, []
 for r in rows:
-    d = dt.date.fromisoformat(r['date']); wk = (d - dt.date(2026, 11, 23)).days // 7 + 1
+    d = dt.date.fromisoformat(r['date']); wk = max(1, (d - dt.date(2026, 11, 23)).days // 7 + 1)  # launch week runs Fri 20 to Sun 29 Nov
     files = [f for f in r['files'].split(' | ') if f]
     media = ''
     for f in files:
@@ -94,7 +94,7 @@ footer {{ border-top:1px solid var(--line); padding-block:28px 48px; color:var(-
 </style>
 <header class="top"><div class="wrap">
   <h1>Posting calendar<span>.</span></h1>
-  <p>Six weeks of Gigotter posts, 23 November 2026 to 3 January 2027. Every post has its file name, caption and hashtags. All files are in the download pack (gigotter-social-pack.zip), named in posting order, so post 01 goes first.</p>
+  <p>Gigotter posts from today, Friday 20 November 2026, to 3 January 2027. Every post has its file name, caption and hashtags. All files are in the download pack (gigotter-social-pack.zip), named in posting order, so post 01 goes first.</p>
   <div class="facts"><span>{counts['feed']} feed posts</span><span>{counts['video']} video slots</span><span>{counts['carousel']} TikTok carousels</span><span>21 Story / Status versions</span><span>Times in Ghana time</span></div>
 </div></header>
 <main class="wrap">

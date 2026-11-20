@@ -1,5 +1,5 @@
 """Builds the Gigotter social posting pack: every post as a high-res file named in posting order, captions with hashtags,
-and a six-week calendar (23 Nov 2026 to 3 Jan 2027) for Instagram, Facebook, TikTok, Reels, Stories and WhatsApp Status.
+and a calendar (20 Nov 2026 to 3 Jan 2027) for Instagram, Facebook, TikTok, Reels, Stories and WhatsApp Status.
 usage: python3 build_pack.py SERIES1_2X_DIR OUTDIR   (SERIES1_2X_DIR holds p1..p9.png rendered at 2x)
 Series 2 and 3 files and the videos are read from docs/social/emotion-02 and emotion-03 / emotion-01."""
 import csv, datetime as dt, html, json, pathlib, shutil, sys
@@ -61,14 +61,15 @@ CAROUSELS = {  # TikTok photo carousels from the Story versions
 D = lambda m, d, y=2026: dt.date(y, m, d)
 # (date, time, platforms, item, note)
 CAL = [
-  # week 1: launch
-  (D(11, 23), '19:30', 'Instagram + Facebook feed', 'p2', 'Launch post. Pin it to the top of the profile.'),
-  (D(11, 24), '19:00', 'TikTok + Instagram Reels', 'v-ping', 'Choose the "Earned." frame as the cover.'),
-  (D(11, 25), '19:30', 'Instagram + Facebook feed', 'b1', ''),
-  (D(11, 26), '19:00', 'TikTok + Instagram Reels', 'v-snail', 'Cover: the "3–5 business weeks" frame.'),
-  (D(11, 27), '19:30', 'Instagram + Facebook feed', 'a4', ''),
-  (D(11, 28), '12:00', 'Instagram + Facebook feed', 'b2', 'Weekend: post around midday.'),
-  (D(11, 29), '19:00', 'TikTok carousel', 'c1', ''),
+  # week 1: launch, from today (Fri 20 Nov) to Sun 29 Nov
+  (D(11, 20), '19:30', 'Instagram + Facebook feed', 'p2', 'Launch post, tonight. Pin it to the top of the profile.'),
+  (D(11, 21), '12:00', 'TikTok + Instagram Reels', 'v-ping', 'Choose the "Earned." frame as the cover.'),
+  (D(11, 22), '12:00', 'Instagram + Facebook feed', 'b1', 'Weekend: post around midday.'),
+  (D(11, 23), '19:30', 'Instagram + Facebook feed', 'a4', ''),
+  (D(11, 24), '19:00', 'TikTok + Instagram Reels', 'v-snail', 'Cover: the "3–5 business weeks" frame.'),
+  (D(11, 25), '19:30', 'Instagram + Facebook feed', 'b2', ''),
+  (D(11, 26), '19:00', 'TikTok carousel', 'c1', ''),
+  (D(11, 28), '12:00', 'Instagram + Facebook feed', 'p5', ''),
   # week 2: Farmers' Day long weekend (Fri 4 Dec)
   (D(11, 30), '19:30', 'Instagram + Facebook feed', 'p1', ''),
   (D(12, 1), '19:00', 'TikTok + Instagram Reels', 'v-pigeons', 'Cover: "Stop fighting for crumbs."'),
@@ -81,7 +82,6 @@ CAL = [
   (D(12, 8), '19:00', 'TikTok carousel', 'c3', ''),
   (D(12, 9), '19:30', 'Instagram + Facebook feed', 'b7', ''),
   (D(12, 11), '19:30', 'Instagram + Facebook feed', 'a2', ''),
-  (D(12, 12), '12:00', 'Instagram + Facebook feed', 'p5', ''),
   # week 4: schools on break, run-up to Christmas
   (D(12, 14), '19:30', 'Instagram + Facebook feed', 'a6', 'Schools are on break.'),
   (D(12, 15), '19:00', 'TikTok carousel', 'c4', ''),
@@ -147,7 +147,7 @@ with open(OUT / 'CAPTIONS.txt', 'w', encoding='utf-8') as fh:
         if not r['caption']: continue
         fh.write(f"#{r['#']}  {r['date']} {r['day']} {r['time (Ghana)']}  ·  {r['where']}\n{r['caption']}\n\n{r['hashtags']}\n\n{'-' * 60}\n\n")
 (OUT / 'calendar.json').write_text(json.dumps(rows, indent=1, ensure_ascii=False))
-(OUT / 'README.txt').write_text('''Gigotter social pack: 23 Nov 2026 to 3 Jan 2027
+(OUT / 'README.txt').write_text('''Gigotter social pack: 20 Nov 2026 to 3 Jan 2027
 
 feed/              Instagram + Facebook feed posts, 2160x2700 (4:5). Upload as they are; Instagram shrinks them cleanly.
 stories-status/    1080x1920 versions for Instagram Stories and WhatsApp Status, same day at 12:30.

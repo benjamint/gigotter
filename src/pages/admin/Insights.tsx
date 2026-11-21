@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { siteInsights } from '../../lib/api'
 import { useAsync } from '../../lib/session'
-import type { Insights as Data } from '../../lib/types'
+import type { Insights as Data, Listing, Payment, Profile, Submission } from '../../lib/types'
 import { CountUp, Empty, PageLoader } from '../../components/ui'
 
 const RANGES = [7, 30, 90] as const
@@ -33,7 +33,10 @@ const PAGES: Record<string, string> = {
 }
 const DEVICES: Record<string, string> = { mobile: 'Phone', tablet: 'Tablet', desktop: 'Computer', other: 'Other' }
 
-export default function Insights() {
+/** The admin data already loaded by the Control room, used for the all-time repeat metrics (no extra queries). */
+export interface RepeatData { profiles: Profile[]; listings: Listing[]; subs: Submission[]; payments: Payment[] }
+
+export default function Insights({ repeat }: { repeat?: RepeatData }) {
   const [days, setDays] = useState<(typeof RANGES)[number]>(() => {
     try { const v = Number(localStorage.getItem('gigotter-insights-days')); return (RANGES as readonly number[]).includes(v) ? (v as 7 | 30 | 90) : 30 } catch { return 30 }
   })
@@ -58,12 +61,12 @@ export default function Insights() {
         </div>
       </div>
       {q.error ? <Empty title="Couldn’t load insights" body={/site_insights|function/i.test(String(q.error)) ? 'Run migration 0017 (site insights) in the Supabase SQL editor, then reload this page.' : String(q.error)} />
-        : !d ? <PageLoader /> : <Body d={d} />}
+        : !d ? <PageLoader /> : <Body d={d} repeat={repeat} />}
     </div>
   )
 }
 
-function Body({ d }: { d: Data }) {
+function Body({ d, repeat }: { d: Data; repeat?: RepeatData }) {
   const conv = pct(d.signups, d.totals.visitors), prevConv = pct(d.prev_signups, d.prev.visitors)
   const tiles = [
     { k: 'Visitors', v: d.totals.visitors, prev: d.prev.visitors, sub: `${nf(d.returning)} came back on another day` },
@@ -89,6 +92,7 @@ function Body({ d }: { d: Data }) {
         ))}
       </div>
       <Takeaways d={d} />
+      {repeat && <Repeat r={repeat} />}
       <div className="card min-w-0 overflow-hidden p-5">
         <VisitorsChart daily={d.daily} />
       </div>
@@ -365,6 +369,71 @@ function Devices({ d }: { d: Data }) {
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+const DAY = 864e5
+const median = (xs: number[]) => { if (!xs.length) return null; const a = [...xs].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2 }
+
+/** All-time "does it keep coming back?" numbers: clients posting again, students earning again, days to first payout. */
+export function repeatMetrics({ profiles, listings, subs, payments }: RepeatData) {
+  // clients: gigs grouped by client name (drafts don't count)
+  const gigs = listings.filter((l) => l.status !== 'draft')
+  const named = gigs.filter((l) => (l.client_name ?? '').trim())
+  const byClient = new Map<string, Listing[]>()
+  for (const l of named) { const k = l.client_name!.trim().toLowerCase(); byClient.set(k, [...(byClient.get(k) ?? []), l]) }
+  const clientRows = [...byClient.values()].map((ls) => ls.map((l) => +new Date(l.created_at)).sort((a, b) => a - b))
+  const clients = clientRows.length
+  const clientsAgain = clientRows.filter((t) => t.length > 1).length
+  const clientsAgain60 = clientRows.filter((t) => t.length > 1 && t[1] - t[0] <= 60 * DAY).length
+  // earnings per student: recorded payments plus work marked paid without a receipt
+  const earned = new Map<string, { first: number; gigs: Set<string> }>()
+  const add = (sid: string, when: string | null, gig: string) => {
+    if (!when) return
+    const e = earned.get(sid) ?? { first: Infinity, gigs: new Set<string>() }
+    e.first = Math.min(e.first, +new Date(when)); e.gigs.add(gig); earned.set(sid, e)
+  }
+  for (const p of payments) add(p.student_id, p.paid_at || p.created_at, p.listing_id ?? `payment:${p.id}`)
+  for (const s of subs) if (s.status === 'paid' && !s.payment_id) add(s.student_id, s.paid_at ?? s.created_at, s.listing_id)
+  const earners = earned.size
+  const earnersAgain = [...earned.values()].filter((e) => e.gigs.size > 1).length
+  // days from sign-up to first money
+  const joined = new Map(profiles.map((p) => [p.id, +new Date(p.created_at)]))
+  const waits = [...earned].flatMap(([sid, e]) => (joined.has(sid) ? [Math.max(0, (e.first - joined.get(sid)!) / DAY)] : []))
+  return { clients, clientsAgain, clientsAgain60, unnamedGigs: gigs.length - named.length, earners, earnersAgain,
+    medianDays: median(waits), fastestDays: waits.length ? Math.min(...waits) : null, waitsCounted: waits.length }
+}
+
+function Repeat({ r }: { r: RepeatData }) {
+  const m = useMemo(() => repeatMetrics(r), [r])
+  const days = (x: number | null) => (x == null ? '–' : x < 1 ? 'Same day' : `${Math.round(x)} day${Math.round(x) === 1 ? '' : 's'}`)
+  const tiles = [
+    { k: 'Clients posting again', v: m.clients ? pctText(m.clientsAgain, m.clients) : '–',
+      sub: m.clients ? `${nf(m.clientsAgain)} of ${nf(m.clients)} clients posted more than one gig · ${nf(m.clientsAgain60)} within 60 days` : 'No gigs have a client name yet',
+      hint: m.unnamedGigs ? `${nf(m.unnamedGigs)} gig${m.unnamedGigs === 1 ? ' has' : 's have'} no client name, so ${m.unnamedGigs === 1 ? 'it isn’t' : 'they aren’t'} counted. Add it in Admin → Gigs.` : '' },
+    { k: 'Students earning again', v: m.earners ? pctText(m.earnersAgain, m.earners) : '–',
+      sub: m.earners ? `${nf(m.earnersAgain)} of ${nf(m.earners)} paid students earned on more than one gig` : 'Nobody has been paid yet', hint: '' },
+    { k: 'Days to first payout', v: days(m.medianDays),
+      sub: m.waitsCounted ? `Typical time from sign-up to first money · fastest ${days(m.fastestDays).toLowerCase()} · ${nf(m.waitsCounted)} ${m.waitsCounted === 1 ? 'person' : 'people'}` : 'Nobody has been paid yet', hint: '' },
+  ]
+  return (
+    <div className="card min-w-0 p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-lg font-semibold">Does it keep coming back?</h3>
+        <span className="text-xs text-ink-muted">All time · not affected by the date range above</span>
+      </div>
+      <p className="mt-1 text-sm text-ink-muted">A problem people hit once is an annoyance; one they hit again and again is a business. These show whether clients and students return.</p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {tiles.map((t) => (
+          <div key={t.k} className="min-w-0 rounded-2xl bg-sand p-4">
+            <div className="text-sm font-medium text-ink-muted">{t.k}</div>
+            <div className="figure mt-1 text-3xl leading-none">{t.v}</div>
+            <div className="mt-2 text-xs text-ink-muted">{t.sub}</div>
+            {t.hint && <div className="mt-2 text-xs text-[#93370D]">{t.hint}</div>}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

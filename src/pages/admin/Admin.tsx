@@ -71,7 +71,7 @@ export default function Admin() {
             {tab === 'briefs' && <Briefs reqs={d.requests} reload={data.reload} />}
             {tab === 'testimonials' && <Testimonials />}
             {tab === 'qr' && <QrCodes />}
-            {tab === 'insights' && <Insights />}
+            {tab === 'insights' && <Insights repeat={{ profiles: d.profiles, listings: d.listings, subs: d.subs, payments: d.payments ?? [] }} />}
           </motion.div>
         )}
       </div>

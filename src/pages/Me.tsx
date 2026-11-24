@@ -6,7 +6,33 @@ import { myApplications, myClaims, myPayments, myPoints, myRedemptions, updateMy
 import Photo from '../components/Photo'
 import { ago, coverFor, isPoints, money, points, timeLeft, plural } from '../lib/format'
 import { subTitle } from '../lib/forms'
+import { WELCOME_POINTS, type PointsEntry } from '../lib/types'
 import { useAsync, useSession } from '../lib/session'
+
+/** First thing on the dashboard: the member's points, counting up, with the next step. */
+function RewardsTile({ verified, data }: { verified: boolean; data: { balance: number; entries: PointsEntry[] } | null }) {
+  if (!data) return <div className="mt-6 h-[136px] animate-pulse rounded-[28px] bg-[#F9C93A]/20" />
+  const { balance, entries } = data
+  const welcomeOnly = entries.length === 1 && entries[0].kind === 'welcome'
+  const state = balance > 0 ? 'has' : verified ? 'empty' : 'unverified'
+  const cta = state === 'has' ? { to: '/rewards', label: 'Spend in Rewards' } : state === 'empty' ? { to: '/gigs', label: 'Find points gigs' } : { to: '/verify', label: 'Verify now' }
+  const note = state === 'has' ? (welcomeOnly ? '🎁 Your welcome bonus, ready to spend' : 'Swap them for airtime, vouchers and merch')
+    : state === 'empty' ? 'Earn more on points gigs' : `Get verified and we’ll add ${WELCOME_POINTS} welcome points`
+  return (
+    <motion.div initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="mt-6 flex flex-col gap-5 rounded-[28px] bg-[#F9C93A] p-6 text-ink sm:flex-row sm:items-center sm:justify-between sm:p-7">
+      <div className="flex items-center gap-4 sm:gap-5">
+        <span className="gift-badge grid h-14 w-14 shrink-0 place-items-center rounded-full bg-ink text-[#F9C93A] sm:h-16 sm:w-16"><Gift className="h-7 w-7" /></span>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-ink/70">Your Gigotter points</div>
+          <div className="figure text-[44px] leading-none sm:text-[56px]"><CountUp to={balance} suffix=" pts" /></div>
+          <div className="mt-1.5 text-sm font-medium text-ink/80">{note}</div>
+        </div>
+      </div>
+      <Link to={cta.to} className="btn-primary w-full justify-center sm:w-auto">{cta.label} <ArrowRight className="h-4 w-4" /></Link>
+    </motion.div>
+  )
+}
 
 export default function Me() {
   const { user, profile, loading, refresh } = useSession()
@@ -35,11 +61,13 @@ export default function Me() {
           <div className="mt-2 flex items-center gap-2"><KycPill s={profile.kyc_status} />{profile.school && <span className="text-sm text-ink-muted">{profile.school}</span>}</div>
         </div>
         {profile.referral_code && (
-          <button onClick={() => { navigator.clipboard?.writeText(profile.referral_code!); toast('Code copied') }} className="card flex items-center gap-3 px-4 py-3 text-left hover:bg-brand-50">
+          <button onClick={() => { navigator.clipboard?.writeText(profile.referral_code!); toast('Code copied') }} className="card hidden items-center gap-3 px-4 py-3 text-left hover:bg-brand-50 sm:flex">
             <div><div className="text-xs text-ink-muted">Your referral code</div><div className="font-mono text-lg font-semibold tracking-[0.2em]">{profile.referral_code}</div></div><Copy className="h-4 w-4" />
           </button>
         )}
       </div>
+
+      <RewardsTile verified={profile.kyc_status === 'verified'} data={pts.data?.[0] ?? null} />
 
       {profile.kyc_status !== 'verified' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-ink p-5 ${profile.kyc_status === 'pending' ? 'bg-amber-50' : 'bg-brand-50'}`}>
@@ -64,14 +92,10 @@ export default function Me() {
         ))}
       </div>
 
-      {pts.data && (pts.data[0].entries.length > 0 || claims.some((c) => isPoints(c.listing))) && (
-        <Link to="/rewards" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-[#F9C93A]/30 p-5 transition hover:bg-[#F9C93A]/45">
-          <div className="flex items-center gap-4">
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-[#F9C93A] text-ink"><Gift className="h-5 w-5" /></span>
-            <div><div className="text-sm font-medium text-ink-muted">Your Gigotter points</div><div className="figure text-3xl leading-tight">{points(pts.data[0].balance)}</div>{pts.data[0].entries.length === 1 && pts.data[0].entries[0].kind === 'welcome' && <div className="text-xs text-ink-soft">🎁 Your welcome bonus, ready to spend</div>}</div>
-          </div>
-          <span className="btn-primary btn-sm">Spend in Rewards <ArrowRight className="h-4 w-4" /></span>
-        </Link>
+      {profile.referral_code && (
+        <button onClick={() => { navigator.clipboard?.writeText(profile.referral_code!); toast('Code copied') }} className="card mt-4 flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-brand-50 sm:hidden">
+          <div><div className="text-xs text-ink-muted">Your referral code</div><div className="font-mono text-lg font-semibold tracking-[0.2em]">{profile.referral_code}</div></div><Copy className="h-4 w-4" />
+        </button>
       )}
 
       <div className="mt-12 flex items-end justify-between">

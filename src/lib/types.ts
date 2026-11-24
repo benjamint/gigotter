@@ -210,6 +210,26 @@ export interface Payment {
   reference: string | null; note: string | null; items: number; paid_at: string; email_sent_at: string | null; created_at: string
 }
 
+/** Points: a gig whose currency is POINTS pays Gigotter points instead of cash (migration 0018). */
+export const POINTS = 'PTS'
+export type RewardCategory = 'airtime' | 'product' | 'voucher' | 'other'
+export const REWARD_CATEGORIES: Record<RewardCategory, string> = { airtime: 'Airtime & data', product: 'Products', voucher: 'Vouchers', other: 'Other' }
+export interface RewardItem {
+  id: string; name: string; description: string | null; image_url: string | null; vendor: string | null
+  category: RewardCategory; points_cost: number; stock: number | null; active: boolean; created_at: string
+}
+export type RedemptionStatus = 'requested' | 'sent' | 'cancelled'
+export interface Redemption {
+  id: string; student_id: string; item_id: string | null; item_name: string; points: number; phone: string
+  delivery_note: string | null; status: RedemptionStatus; admin_note: string | null; handled_at: string | null; created_at: string
+  student?: Pick<Profile, 'id' | 'full_name' | 'email' | 'phone' | 'school'>
+}
+export type PointsKind = 'earned' | 'reversed' | 'redeemed' | 'refund' | 'adjust'
+export interface PointsEntry {
+  id: string; student_id: string; delta: number; kind: PointsKind; submission_id: string | null
+  redemption_id: string | null; note: string | null; created_at: string
+}
+
 /** One day of a scheduled gig. date is YYYY-MM-DD (Ghana time); start/end are HH:MM. */
 export interface SessionDay { date: string; label?: string; start?: string; end?: string }
 export type AccountType = 'student' | 'general'

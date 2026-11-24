@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowUpRight, Clock, MapPin, Users } from 'lucide-react'
 import { Link } from 'react-router'
-import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft } from '../lib/format'
+import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft, isPoints } from '../lib/format'
 import { GIG_TYPES, type Listing } from '../lib/types'
 import Photo from './Photo'
 import { audienceOf, isApply } from '../lib/audience'
@@ -40,7 +40,7 @@ export default function GigCard({ l, i = 0 }: { l: Listing; i?: number }) {
           </div>
           <div className="mt-auto flex items-end justify-between border-t border-line pt-4">
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-ink-muted">Earn up to</div>
+              <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-ink-muted">Earn up to{isPoints(l) && <span className="rounded-full bg-[#F9C93A] px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-ink">Points</span>}</div>
               <div className="font-display text-2xl font-semibold tracking-tight">{money(maxEarn(l), l.currency)}</div>
             </div>
             <div className="text-right text-sm font-medium text-brand-600">{payLine(l)}</div>

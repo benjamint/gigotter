@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Copy, Receipt, ShieldAlert, Sparkles } from 'lucide-react'
+import { ArrowRight, Copy, Gift, Receipt, ShieldAlert, Sparkles } from 'lucide-react'
 import { Link, Navigate } from 'react-router'
 import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from '../components/ui'
-import { myApplications, myClaims, myPayments, updateMyProfile } from '../lib/api'
+import { myApplications, myClaims, myPayments, myPoints, myRedemptions, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'
-import { ago, coverFor, money, timeLeft, plural } from '../lib/format'
+import { ago, coverFor, isPoints, money, points, timeLeft, plural } from '../lib/format'
 import { subTitle } from '../lib/forms'
 import { useAsync, useSession } from '../lib/session'
 
@@ -14,14 +14,15 @@ export default function Me() {
   const { data, loading: l2 } = useAsync(() => (user ? myClaims() : Promise.resolve([])), [user?.id])
   const pays = useAsync(() => (user ? myPayments() : Promise.resolve([])), [user?.id])
   const apps = useAsync(() => (user ? myApplications() : Promise.resolve([])), [user?.id])
+  const pts = useAsync(() => (user ? Promise.all([myPoints(), myRedemptions()]) : Promise.resolve(null)), [user?.id])
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login?next=/me" replace />
   if (!profile || l2) return <PageLoader />
 
   const claims = data ?? []
   const subs = claims.flatMap((c) => c.subs.map((s) => ({ ...s, cur: c.listing.currency, title: c.listing.title })))
-  // group totals by currency, display main currency
-  const cur = claims[0]?.listing.currency ?? 'GHS'
+  // cash totals in the main cash currency (points gigs are shown separately)
+  const cur = claims.find((c) => !isPoints(c.listing))?.listing.currency ?? 'GHS'
   const sum = (st: string[]) => subs.filter((s) => st.includes(s.status) && s.cur === cur).reduce((a, s) => a + (s.amount ?? 0), 0)
   const active = claims.filter((c) => c.status === 'active')
   const first = profile.full_name?.split(' ')[0] || 'friend'
@@ -62,6 +63,16 @@ export default function Me() {
           </motion.div>
         ))}
       </div>
+
+      {pts.data && (pts.data[0].entries.length > 0 || claims.some((c) => isPoints(c.listing))) && (
+        <Link to="/rewards" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-[#F9C93A]/30 p-5 transition hover:bg-[#F9C93A]/45">
+          <div className="flex items-center gap-4">
+            <span className="grid h-11 w-11 place-items-center rounded-full bg-[#F9C93A] text-ink"><Gift className="h-5 w-5" /></span>
+            <div><div className="text-sm font-medium text-ink-muted">Your Gigotter points</div><div className="figure text-3xl leading-tight">{points(pts.data[0].balance)}</div></div>
+          </div>
+          <span className="btn-primary btn-sm">Spend in Rewards <ArrowRight className="h-4 w-4" /></span>
+        </Link>
+      )}
 
       <div className="mt-12 flex items-end justify-between">
         <h2 className="text-[clamp(1.75rem,3vw,2.25rem)] font-semibold tracking-[-0.03em]">Your <span className="em">gigs</span></h2>
@@ -115,6 +126,23 @@ export default function Me() {
                 </Link>
               )
             })}
+          </div>
+        </>
+      )}
+      {(pts.data?.[1].length ?? 0) > 0 && (
+        <>
+          <h2 className="mt-12 text-[clamp(1.75rem,3vw,2.25rem)] font-semibold tracking-[-0.03em]">Your <span className="em">rewards</span></h2>
+          <div className="card mt-5 divide-y divide-line overflow-hidden">
+            {pts.data![1].map((r) => (
+              <div key={r.id} className="flex items-center gap-4 p-4">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#F9C93A]/30 text-ink"><Gift className="h-5 w-5" /></span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold">{r.item_name} <span className="font-normal text-ink-muted">· {points(r.points)}</span></div>
+                  <div className="truncate text-xs text-ink-muted">Requested {ago(r.created_at)}{r.admin_note ? ` · ${r.admin_note}` : ''}</div>
+                </div>
+                <span className={`chip ${r.status === 'sent' ? 'bg-brand-50 text-brand-700' : r.status === 'cancelled' ? 'bg-sand text-ink-muted' : 'bg-[#efdcc6] text-ink'}`}>{r.status === 'requested' ? 'On its way soon' : r.status === 'sent' ? 'Sent' : 'Cancelled, refunded'}</span>
+              </div>
+            ))}
           </div>
         </>
       )}

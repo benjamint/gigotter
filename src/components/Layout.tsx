@@ -36,6 +36,7 @@ export default function Layout() {
   // the main website menu is the same for everyone; account pages live in the avatar menu
   const links = [
     { to: '/gigs', label: 'Find work' },
+    { to: '/rewards', label: 'Rewards' },
     { to: '/business', label: 'For businesses' },
   ]
   const isAdmin = profile?.role === 'admin'

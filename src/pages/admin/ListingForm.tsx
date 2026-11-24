@@ -5,10 +5,10 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { AttachmentsEditor, type PendingFile } from '../../components/GigFiles'
 import { Spinner, useToast } from '../../components/ui'
 import { listingFiles, saveListing, uploadCover, uploadListingFile } from '../../lib/api'
-import { coverFor, money } from '../../lib/format'
+import { coverFor, isPoints, money } from '../../lib/format'
 import { Calendar, Trash2 } from 'lucide-react'
 import { formatDay, todayGhana } from '../../lib/sessions'
-import { AUDIENCES, CURRENCIES, GENDERS, GIG_TYPES, WORK_STATUSES, type Audience, type Eligibility, type Gender, type GigType, type JoinMode, type Listing, type ListingFile, type PhotoRule, type SessionDay, type WorkStatus } from '../../lib/types'
+import { AUDIENCES, CURRENCIES, POINTS, GENDERS, GIG_TYPES, WORK_STATUSES, type Audience, type Eligibility, type Gender, type GigType, type JoinMode, type Listing, type ListingFile, type PhotoRule, type SessionDay, type WorkStatus } from '../../lib/types'
 import { TEMPLATES, keyFor, photoRuleOf, schemaOf } from '../../lib/forms'
 import FormBuilder, { schemaProblem, toRows, toSchema } from './FormBuilder'
 
@@ -80,6 +80,7 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
   const set = <K extends keyof Listing>(k: K, v: Listing[K]) => setL((x) => ({ ...x, [k]: v }))
   const num = (v: string) => (v === '' ? null : Number(v))
 
+  const pts = isPoints(l)
   const perStudent = l.pay_model === 'per_unit' ? (l.rate ?? 0) * (l.units_per_student ?? 0) : (l.rate ?? 0)
   const maxSpend = perStudent * (l.slots ?? 1)
 
@@ -181,19 +182,28 @@ export default function ListingForm({ initial, onSaved, hasResponses = false, in
       </div>
 
       <div className="rounded-3xl border border-line bg-white p-4">
+        <div className="label">Reward</div>
         <div className="mb-3 flex gap-2">
-          {(['per_unit', 'fixed'] as const).map((m) => <button type="button" key={m} onClick={() => set('pay_model', m)} className={`flex-1 rounded-2xl border p-3 text-left text-sm ${l.pay_model === m ? 'border-ink bg-brand-50' : 'border-line'}`}><b>{scheduled ? (m === 'per_unit' ? 'Pay per day' : 'Total for all days') : m === 'per_unit' ? `Pay per ${l.unit_label || 'unit'}` : 'Fixed per person'}</b><div className="text-xs text-ink-muted">{scheduled ? (m === 'per_unit' ? 'e.g. ₵60 for each day attended' : 'Split equally across the days; each approved day is paid') : m === 'per_unit' ? `e.g. ₵50 per ${l.unit_label || 'salon'}` : 'e.g. ₵80 to attend, ₵300 for the whole job'}</div></button>)}
+          {([['cash', 'Cash', 'Paid to mobile money after approval'], ['points', 'Gigotter points', 'Added on approval; spent in Rewards']] as const).map(([k, t, d]) => {
+            const on = (k === 'points') === pts
+            return <button type="button" key={k} onClick={() => set('currency', k === 'points' ? POINTS : pts ? 'GHS' : (l.currency ?? 'GHS'))}
+              className={`flex-1 rounded-2xl border p-3 text-left text-sm ${on ? 'border-ink bg-brand-50' : 'border-line'}`}><b>{t}</b><div className="text-xs text-ink-muted">{d}</div></button>
+          })}
+        </div>
+        <div className="mb-3 flex gap-2">
+          {(['per_unit', 'fixed'] as const).map((m) => <button type="button" key={m} onClick={() => set('pay_model', m)} className={`flex-1 rounded-2xl border p-3 text-left text-sm ${l.pay_model === m ? 'border-ink bg-brand-50' : 'border-line'}`}><b>{scheduled ? (m === 'per_unit' ? 'Pay per day' : 'Total for all days') : m === 'per_unit' ? `Pay per ${l.unit_label || 'unit'}` : 'Fixed per person'}</b><div className="text-xs text-ink-muted">{scheduled ? (m === 'per_unit' ? 'e.g. ₵60 for each day attended' : 'Split equally across the days; each approved day is paid') : m === 'per_unit' ? (pts ? `e.g. 40 pts per ${l.unit_label || 'survey'}` : `e.g. ₵50 per ${l.unit_label || 'salon'}`) : pts ? 'e.g. 100 pts to take part' : 'e.g. ₵80 to attend, ₵300 for the whole job'}</div></button>)}
         </div>
         <div className="grid gap-3 sm:grid-cols-4">
-          <div><label className="label">Currency</label><select className="input" value={l.currency} onChange={(e) => set('currency', e.target.value)}>{Object.keys(CURRENCIES).map((c) => <option key={c}>{c}</option>)}</select></div>
-          <div><label className="label">{scheduled ? (l.pay_model === 'per_unit' ? 'Pay per day' : 'Total pay') : l.pay_model === 'per_unit' ? 'Rate / unit' : 'Pay / person'}</label><input className="input" type="number" min={0} step="0.01" value={l.rate ?? ''} onChange={(e) => set('rate', Number(e.target.value))} /></div>
+          {!pts && <div><label className="label">Currency</label><select className="input" value={l.currency} onChange={(e) => set('currency', e.target.value)}>{Object.keys(CURRENCIES).map((c) => <option key={c}>{c}</option>)}</select></div>}
+          <div><label className="label">{pts ? (scheduled ? (l.pay_model === 'per_unit' ? 'Points per day' : 'Total points') : l.pay_model === 'per_unit' ? `Points per ${l.unit_label || 'unit'}` : 'Points / person') : scheduled ? (l.pay_model === 'per_unit' ? 'Pay per day' : 'Total pay') : l.pay_model === 'per_unit' ? 'Rate / unit' : 'Pay / person'}</label><input className="input" type="number" min={0} step={pts ? 1 : 0.01} value={l.rate ?? ''} onChange={(e) => set('rate', pts ? Math.round(Number(e.target.value)) : Number(e.target.value))} /></div>
           <div><label className="label">Unit name</label><input className="input" value={l.unit_label ?? ''} onChange={(e) => set('unit_label', e.target.value)} placeholder="salon, session, test…" /></div>
           <div><label className="label">{scheduled ? 'Days' : 'Units / person'}</label><input className="input" type="number" min={1} disabled={scheduled} value={scheduled ? days.length : l.units_per_student ?? ''} onChange={(e) => set('units_per_student', num(e.target.value))} placeholder="∞" title={scheduled ? 'Set by the number of session days' : undefined} /></div>
           <div><label className="label">Students needed</label><input className="input" type="number" min={1} value={l.slots ?? 1} onChange={(e) => set('slots', Number(e.target.value))} /></div>
-          <div><label className="label">Budget cap</label><input className="input" type="number" min={0} value={l.total_budget ?? ''} onChange={(e) => set('total_budget', num(e.target.value))} placeholder="optional" /></div>
+          <div><label className="label">{pts ? 'Points cap' : 'Budget cap'}</label><input className="input" type="number" min={0} value={l.total_budget ?? ''} onChange={(e) => set('total_budget', num(e.target.value))} placeholder="optional" /></div>
           <div className="sm:col-span-2"><label className="label">Expires</label><input className="input" type="datetime-local" value={exp} onChange={(e) => setExp(e.target.value)} /></div>
         </div>
-        <p className="mt-3 text-sm text-ink-muted">Each student earns up to <b className="text-ink">{money(perStudent, l.currency)}</b>. Max spend if every spot completes: <b className="text-ink">{money(l.total_budget ? Math.min(l.total_budget, maxSpend) : maxSpend, l.currency)}</b>{l.total_budget && l.total_budget < maxSpend ? ' (capped)' : ''}.</p>
+        {pts && <p className="mt-3 rounded-2xl bg-brand-50 px-3 py-2 text-sm text-ink-soft">Points are added to the student’s balance as soon as you approve their work. No MoMo payment is needed.</p>}
+        <p className="mt-3 text-sm text-ink-muted">Each student earns up to <b className="text-ink">{money(perStudent, l.currency)}</b>. {pts ? 'Most points given if every spot completes:' : 'Max spend if every spot completes:'} <b className="text-ink">{money(l.total_budget ? Math.min(l.total_budget, maxSpend) : maxSpend, l.currency)}</b>{l.total_budget && l.total_budget < maxSpend ? ' (capped)' : ''}.</p>
       </div>
 
       <div className="rounded-3xl border border-line bg-white p-4 sm:p-5">

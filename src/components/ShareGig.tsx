@@ -1,6 +1,6 @@
 import { Check, Copy, Link2, Share2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { coverFor, maxEarn, money, payLine } from '../lib/format'
+import { coverFor, isPoints, maxEarn, money, payLine } from '../lib/format'
 import { sessionsOf } from '../lib/sessions'
 import { GIG_TYPES, type Listing } from '../lib/types'
 import { audienceOf } from '../lib/audience'
@@ -49,7 +49,7 @@ const cap = (t: string) => t[0].toUpperCase() + t.slice(1)
 export function defaultMessage(l: Listing) {
   const f = gigFacts(l)
   return [
-    `🔥 ${HOOK[l.type] ?? HOOK.other}!`,
+    isPoints(l) ? '🎁 Earn Gigotter points, redeem for airtime and more!' : `🔥 ${HOOK[l.type] ?? HOOK.other}!`,
     '',
     l.title.trim(),
     '',

@@ -12,6 +12,7 @@ import Gigs from './pages/Gigs'
 import Landing from './pages/Landing'
 import Scan from './pages/Scan'
 import Me from './pages/Me'
+import Rewards from './pages/Rewards'
 import MyGig from './pages/MyGig'
 import Verify from './pages/Verify'
 import { Privacy, Terms } from './pages/Legal'
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="reset-password" element={<Page><ResetPassword /></Page>} />
           <Route path="verify" element={<Page><Verify /></Page>} />
           <Route path="me" element={<Page><Me /></Page>} />
+          <Route path="rewards" element={<Page><Rewards /></Page>} />
           <Route path="me/gig/:claimId" element={<Page><MyGig /></Page>} />
           <Route path="brief" element={<Page><Brief /></Page>} />
           <Route path="business" element={<Page><Business /></Page>} />

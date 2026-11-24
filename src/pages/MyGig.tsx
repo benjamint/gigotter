@@ -10,7 +10,7 @@ import { Empty, PageLoader, Progress, Spinner, SubPill, useToast } from '../comp
 import { listingFiles, myClaims, submitCheckin, submitWork, withdrawClaim } from '../lib/api'
 import { dayLabel, dayState, formatDay, hasSessions, sessionsOf, timeRange, todayGhana, type DayState } from '../lib/sessions'
 import { GigFileList } from '../components/GigFiles'
-import { ago, coverFor, money, payLine, timeLeft, plural } from '../lib/format'
+import { ago, coverFor, isPoints, money, payLine, timeLeft, plural } from '../lib/format'
 import { friendlyError } from '../lib/security'
 import { useScrollIntoViewOn } from '../lib/scroll'
 import { useAsync, useSession } from '../lib/session'
@@ -115,9 +115,9 @@ export default function MyGig() {
             <Progress value={done} max={goal ?? Math.max(done, 1)} className="mt-2" />
           </div>
           <div className="bg-white px-5 py-4 sm:px-6">
-            <div className="text-xs text-ink-muted">Approved earnings</div>
+            <div className="text-xs text-ink-muted">{isPoints(l) ? 'Points earned' : 'Approved earnings'}</div>
             <div className="figure mt-1 text-3xl leading-tight">{money(earned, l.currency)}</div>
-            <div className="text-xs text-ink-muted">{pending ? `${money(pending, l.currency)} in review` : 'Paid weekly to your MoMo'}</div>
+            <div className="text-xs text-ink-muted">{pending ? `${money(pending, l.currency)} in review` : isPoints(l) ? <>Added on approval · <Link to="/rewards" className="underline underline-offset-2">spend in Rewards</Link></> : 'Paid weekly to your MoMo'}</div>
           </div>
           <div className="bg-white px-5 py-4 sm:px-6">
             <div className="text-xs text-ink-muted">Your referral code</div>

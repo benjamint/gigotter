@@ -11,7 +11,7 @@ import { accountOf, audienceAllows, audienceOf, eligibilityText, isApply } from 
 import { AUDIENCES } from '../lib/types'
 import { dayLabel, formatDay, sessionsOf, timeRange } from '../lib/sessions'
 import { GigFileList } from '../components/GigFiles'
-import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft, plural } from '../lib/format'
+import { coverFor, isOpen, maxEarn, money, payLine, spotsLeft, timeLeft, plural, isPoints } from '../lib/format'
 import { useAsync, useSession } from '../lib/session'
 import { GIG_TYPES } from '../lib/types'
 import { photoRuleOf, schemaOf } from '../lib/forms'
@@ -95,7 +95,7 @@ export default function GigDetail() {
 
           <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-line bg-line md:grid-cols-4">
             {[
-              [Wallet, 'Pay', payLine(l)],
+              [Wallet, isPoints(l) ? 'Reward' : 'Pay', payLine(l)],
               [Users, 'Spots left', `${spotsLeft(l)} of ${l.slots}`],
               [MapPin, 'Location', l.is_remote ? 'Remote' : l.location ?? '—'],
               [Calendar, 'Closes', `${new Date(l.expires_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} · ${t.label}`],
@@ -150,6 +150,7 @@ export default function GigDetail() {
             <div className="text-sm text-ink-muted">You can earn up to</div>
             <div className="figure mt-1.5 text-[52px] leading-none">{money(maxEarn(l), l.currency)}</div>
             <div className="mt-1.5 text-sm text-ink-muted">{payLine(l)}{l.units_per_student ? ` · up to ${l.units_per_student} ${plural(l.unit_label, l.units_per_student)}` : ''}</div>
+            {isPoints(l) && <p className="mt-3 rounded-2xl bg-[#F9C93A]/25 px-3.5 py-2.5 text-sm text-ink-soft">Earn <b className="text-ink">Gigotter points</b>, added when your work is approved. Spend them in <Link to="/rewards" className="font-medium text-ink underline underline-offset-2">Rewards</Link> on airtime and more.</p>}
             <div className="mt-5 flex flex-wrap gap-1.5">
               <span className="chip bg-sand text-ink-soft">{AUDIENCES[aud].short}</span>
               {apply && <span className="chip bg-brand-50 text-brand-700">Apply · selected by Gigotter</span>}

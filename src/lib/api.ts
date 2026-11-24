@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { AccountType, Application, Insights, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, QrCode, QrStat, PayoutItem, Profile, Submission, SubmissionStatus, Testimonial } from './types'
+import type { AccountType, Application, Insights, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, PointsEntry, QrCode, QrStat, PayoutItem, Profile, Redemption, RewardItem, Submission, SubmissionStatus, Testimonial } from './types'
+import { POINTS } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { accountOf, audienceAllows, audienceMessage, audienceOf } from './audience'
@@ -35,6 +36,9 @@ interface DemoDB {
   pageViews?: { path: string; gig_id: string | null; visitor: string | null; session: string | null; source: string; device: string; user_id: string | null; viewed_at: string }[]
   files: Record<string, string>
   listingFiles?: ListingFile[]
+  rewardItems?: RewardItem[]
+  redemptions?: Redemption[]
+  pointsLedger?: PointsEntry[]
 }
 const KEY_DB = 'gigotter-demo-v2'
 const uid = () => crypto.randomUUID()
@@ -647,6 +651,86 @@ export async function createRequest(r: Omit<ClientRequest, 'id' | 'status' | 'cr
 }
 const toDataUrlRaw = (f: File) => new Promise<string>((res) => { const r = new FileReader(); r.onload = () => res(r.result as string); r.readAsDataURL(f) })
 
+// ═══════════════════════════ points & rewards (migration 0018) ═══════════════════════════
+const demoRewards = (): RewardItem[] => [
+  { id: uid(), name: 'GHS 10 airtime', description: 'Sent to your phone on any network.', image_url: null, vendor: 'Any network', category: 'airtime', points_cost: 100, stock: null, active: true, created_at: now() },
+  { id: uid(), name: '2GB data bundle', description: 'Valid for 30 days.', image_url: null, vendor: 'MTN', category: 'airtime', points_cost: 150, stock: 20, active: true, created_at: now() },
+  { id: uid(), name: 'Gigotter tote bag', description: 'Sturdy canvas tote with the otter on it.', image_url: null, vendor: 'Gigotter', category: 'product', points_cost: 400, stock: 3, active: true, created_at: now() },
+  { id: uid(), name: 'Lunch voucher', description: 'One meal at a partner campus café.', image_url: null, vendor: '[Partner café]', category: 'voucher', points_cost: 250, stock: 10, active: true, created_at: now() },
+]
+function demoStore() {
+  const d = db()
+  d.rewardItems ??= demoRewards(); d.redemptions ??= []; d.pointsLedger ??= []
+  return d as DemoDB & { rewardItems: RewardItem[]; redemptions: Redemption[]; pointsLedger: PointsEntry[] }
+}
+const ledgerEntry = (e: Omit<PointsEntry, 'id' | 'created_at' | 'submission_id' | 'redemption_id' | 'note'> & Partial<PointsEntry>): PointsEntry =>
+  ({ id: uid(), created_at: now(), submission_id: null, redemption_id: null, note: null, ...e })
+/** Demo copy of the database triggers: approving work on a points gig settles it and adds the points once. */
+function demoSettlePoints(s: Submission, was: SubmissionStatus) {
+  const d = demoStore(), l = d.listings.find((x) => x.id === s.listing_id)
+  if (l?.currency !== POINTS) return
+  if (s.status === 'approved' && was !== 'approved') Object.assign(s, { status: 'paid', paid_at: s.paid_at ?? now(), payout_ref: s.payout_ref || 'points' })
+  const net = d.pointsLedger.filter((e) => e.submission_id === s.id && ['earned', 'reversed'].includes(e.kind)).reduce((a, e) => a + e.delta, 0)
+  const pts = Math.round(s.amount ?? 0)
+  if (s.status === 'paid' && was !== 'paid' && net === 0 && pts > 0) d.pointsLedger.push(ledgerEntry({ student_id: s.student_id, delta: pts, kind: 'earned', submission_id: s.id, note: s.summary || 'Approved work' }))
+  else if (was === 'paid' && ['pending', 'rejected'].includes(s.status) && net > 0) d.pointsLedger.push(ledgerEntry({ student_id: s.student_id, delta: -net, kind: 'reversed', submission_id: s.id, note: 'Approval taken back' }))
+}
+const balanceOf = (entries: PointsEntry[]) => entries.reduce((a, e) => a + e.delta, 0)
+
+/** The signed-in student's points: balance and history (newest first). */
+export async function myPoints(): Promise<{ balance: number; entries: PointsEntry[] }> {
+  const u = await auth.user(); if (!u) return { balance: 0, entries: [] }
+  let entries: PointsEntry[]
+  if (DEMO) entries = demoStore().pointsLedger.filter((e) => e.student_id === u.id)
+  else {
+    const { data, error } = await sb!.from('points_ledger').select('*').eq('student_id', u.id)
+    entries = error ? [] : (data ?? [])
+  }
+  entries = [...entries].sort((a, b) => b.created_at.localeCompare(a.created_at))
+  return { balance: balanceOf(entries), entries }
+}
+/** The signed-in student's reward requests, newest first. */
+export async function myRedemptions(): Promise<Redemption[]> {
+  const u = await auth.user(); if (!u) return []
+  if (DEMO) return demoStore().redemptions.filter((r) => r.student_id === u.id).sort((a, b) => b.created_at.localeCompare(a.created_at))
+  const { data, error } = await sb!.from('redemptions').select('*').eq('student_id', u.id).order('created_at', { ascending: false })
+  return error ? [] : (data ?? [])
+}
+/** Rewards on offer (active only, cheapest first). */
+export async function listRewardItems(): Promise<RewardItem[]> {
+  let items: RewardItem[]
+  if (DEMO) items = demoStore().rewardItems.filter((i) => i.active)
+  else {
+    const { data, error } = await sb!.from('reward_items').select('*').eq('active', true)
+    items = error ? [] : (data ?? [])
+  }
+  return items.sort((a, b) => a.points_cost - b.points_cost || a.name.localeCompare(b.name))
+}
+/** Spend points on a reward. Points are taken at once; an admin sends the item and can cancel (refund). */
+export async function redeemItem(itemId: string, phone: string, note: string): Promise<Redemption> {
+  if (DEMO) {
+    const u = must(demoUser(), 'Sign in to redeem rewards'), d = demoStore()
+    const p = must(d.profiles.find((x) => x.id === u.id), 'Profile not found')
+    if (p.kyc_status !== 'verified') throw new Error('Complete verification before redeeming rewards')
+    const ph = phone.trim()
+    if (ph.replace(/\D/g, '').length < 9 || ph.length > 20) throw new Error('Enter a valid phone number')
+    if (note.length > 300) throw new Error('Keep the delivery note under 300 characters')
+    const it = d.rewardItems.find((x) => x.id === itemId)
+    if (!it || !it.active) throw new Error('This reward isn’t available any more')
+    if (it.stock != null && it.stock < 1) throw new Error('This reward is out of stock')
+    const bal = balanceOf(d.pointsLedger.filter((e) => e.student_id === u.id))
+    if (bal < it.points_cost) throw new Error(`You need ${it.points_cost - bal} more points for this reward`)
+    const r: Redemption = { id: uid(), student_id: u.id, item_id: it.id, item_name: it.name, points: it.points_cost, phone: ph,
+      delivery_note: note.trim() || null, status: 'requested', admin_note: null, handled_at: null, created_at: now() }
+    d.redemptions.push(r)
+    d.pointsLedger.push(ledgerEntry({ student_id: u.id, delta: -it.points_cost, kind: 'redeemed', redemption_id: r.id, note: it.name }))
+    if (it.stock != null) it.stock -= 1
+    save(); return r
+  }
+  const { data, error } = await sb!.rpc('redeem_item', { p_item: itemId, p_phone: phone.trim(), p_note: note.trim() || null })
+  fail(error); return data as Redemption
+}
+
 // ═══════════════════════════ admin ═══════════════════════════
 export const admin = {
   async profiles(): Promise<Profile[]> {
@@ -691,7 +775,10 @@ export const admin = {
   async review(ids: string[], status: SubmissionStatus, extra: { admin_note?: string; payout_ref?: string } = {}) {
     const patch: Partial<Submission> = { status, reviewed_at: now(), ...extra }
     if (status === 'paid') patch.paid_at = now()
-    if (DEMO) { db().submissions.forEach((s) => ids.includes(s.id) && Object.assign(s, patch)); return save() }
+    if (DEMO) {
+      db().submissions.forEach((s) => { if (ids.includes(s.id)) { const was = s.status; Object.assign(s, patch); demoSettlePoints(s, was) } })
+      return save()
+    }
     const { error } = await sb!.from('submissions').update(patch).in('id', ids)
     fail(error)
   },
@@ -769,6 +856,67 @@ export const admin = {
     }
     const { data, error } = await sb!.rpc('resend_payment_receipt', { p_payment: paymentId })
     fail(error); return data as string
+  },
+  // ───── points & rewards ─────
+  /** Every reward item, including switched-off ones. */
+  async rewardItems(): Promise<RewardItem[]> {
+    if (DEMO) return [...demoStore().rewardItems].sort((a, b) => b.created_at.localeCompare(a.created_at))
+    const { data, error } = await sb!.from('reward_items').select('*').order('created_at', { ascending: false })
+    fail(error); return data ?? []
+  },
+  async saveRewardItem(item: Partial<RewardItem> & Pick<RewardItem, 'name' | 'points_cost'>): Promise<RewardItem> {
+    const row = { name: item.name.trim(), description: item.description?.trim() || null, image_url: item.image_url || null, vendor: item.vendor?.trim() || null,
+      category: item.category ?? 'product', points_cost: Math.round(item.points_cost), stock: item.stock == null || Number.isNaN(item.stock) ? null : Math.max(0, Math.round(item.stock)), active: item.active ?? true }
+    if (row.name.length < 2) throw new Error('Give the reward a name')
+    if (!(row.points_cost > 0)) throw new Error('Set how many points it costs')
+    if (DEMO) {
+      const d = demoStore()
+      const ex = item.id ? d.rewardItems.find((x) => x.id === item.id) : undefined
+      if (ex) { Object.assign(ex, row); save(); return ex }
+      const n: RewardItem = { id: uid(), created_at: now(), ...row }; d.rewardItems.push(n); save(); return n
+    }
+    const q = item.id ? sb!.from('reward_items').update(row).eq('id', item.id) : sb!.from('reward_items').insert(row)
+    const { data, error } = await q.select().single()
+    fail(error); return data as RewardItem
+  },
+  /** Reward requests with each student's details, oldest open request first. */
+  async redemptions(): Promise<Redemption[]> {
+    let rs: Redemption[]
+    if (DEMO) rs = [...demoStore().redemptions]
+    else { const { data, error } = await sb!.from('redemptions').select('*'); fail(error); rs = data ?? [] }
+    const ps = await admin.profiles()
+    const rank = (r: Redemption) => (r.status === 'requested' ? 0 : 1)
+    return rs.map((r) => ({ ...r, student: ps.find((p) => p.id === r.student_id) }))
+      .sort((a, b) => rank(a) - rank(b) || (rank(a) === 0 ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at)))
+  },
+  /** Mark a request sent (emails the student) or cancel it (refunds the points, restores stock). */
+  async handleRedemption(id: string, status: 'sent' | 'cancelled', note: string): Promise<Redemption> {
+    if (DEMO) {
+      const d = demoStore(), r = must(d.redemptions.find((x) => x.id === id), 'Reward request not found')
+      if (r.status !== 'requested') throw new Error(`This request was already marked ${r.status}`)
+      Object.assign(r, { status, admin_note: note.trim() || null, handled_at: now() })
+      if (status === 'cancelled') {
+        d.pointsLedger.push(ledgerEntry({ student_id: r.student_id, delta: r.points, kind: 'refund', redemption_id: r.id, note: `Refund: ${r.item_name}` }))
+        const it = d.rewardItems.find((x) => x.id === r.item_id); if (it && it.stock != null) it.stock += 1
+      }
+      save(); return r
+    }
+    const { data, error } = await sb!.rpc('admin_handle_redemption', { p_redemption: id, p_status: status, p_note: note.trim() || null })
+    fail(error); return data as Redemption
+  },
+  /** Add (positive) or remove (negative) points for a student, with a reason. */
+  async adjustPoints(studentId: string, delta: number, note: string): Promise<void> {
+    if (!Number.isInteger(delta) || delta === 0) throw new Error('Enter the points to add or remove')
+    if (note.trim().length < 3) throw new Error('Add a short reason')
+    if (DEMO) { demoStore().pointsLedger.push(ledgerEntry({ student_id: studentId, delta, kind: 'adjust', note: note.trim() })); return save() }
+    const { error } = await sb!.rpc('admin_adjust_points', { p_student: studentId, p_delta: delta, p_note: note.trim() })
+    fail(error)
+  },
+  /** Every points movement (for balances and totals). Empty if migration 0018 hasn't been run. */
+  async pointsLedger(): Promise<PointsEntry[]> {
+    if (DEMO) return [...demoStore().pointsLedger]
+    const { data, error } = await sb!.from('points_ledger').select('*')
+    return error ? [] : (data ?? [])
   },
   async requests(): Promise<ClientRequest[]> {
     if (DEMO) return [...db().requests].reverse()

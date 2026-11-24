@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { siteInsights } from '../../lib/api'
 import { useAsync } from '../../lib/session'
 import type { Insights as Data, Listing, Payment, Profile, Submission } from '../../lib/types'
+import { POINTS } from '../../lib/types'
 import { CountUp, Empty, PageLoader } from '../../components/ui'
 
 const RANGES = [7, 30, 90] as const
@@ -388,19 +389,22 @@ export function repeatMetrics({ profiles, listings, subs, payments }: RepeatData
   const clientsAgain = clientRows.filter((t) => t.length > 1).length
   const clientsAgain60 = clientRows.filter((t) => t.length > 1 && t[1] - t[0] <= 60 * DAY).length
   // earnings per student: recorded payments plus work marked paid without a receipt
+  // (points gigs count as earning again, but only cash counts towards "days to first payout")
+  const pointsGig = new Set(listings.filter((l) => l.currency === POINTS).map((l) => l.id))
   const earned = new Map<string, { first: number; gigs: Set<string> }>()
-  const add = (sid: string, when: string | null, gig: string) => {
+  const add = (sid: string, when: string | null, gig: string, cash = true) => {
     if (!when) return
     const e = earned.get(sid) ?? { first: Infinity, gigs: new Set<string>() }
-    e.first = Math.min(e.first, +new Date(when)); e.gigs.add(gig); earned.set(sid, e)
+    if (cash) e.first = Math.min(e.first, +new Date(when))
+    e.gigs.add(gig); earned.set(sid, e)
   }
   for (const p of payments) add(p.student_id, p.paid_at || p.created_at, p.listing_id ?? `payment:${p.id}`)
-  for (const s of subs) if (s.status === 'paid' && !s.payment_id) add(s.student_id, s.paid_at ?? s.created_at, s.listing_id)
+  for (const s of subs) if (s.status === 'paid' && !s.payment_id) add(s.student_id, s.paid_at ?? s.created_at, s.listing_id, !pointsGig.has(s.listing_id))
   const earners = earned.size
   const earnersAgain = [...earned.values()].filter((e) => e.gigs.size > 1).length
   // days from sign-up to first money
   const joined = new Map(profiles.map((p) => [p.id, +new Date(p.created_at)]))
-  const waits = [...earned].flatMap(([sid, e]) => (joined.has(sid) ? [Math.max(0, (e.first - joined.get(sid)!) / DAY)] : []))
+  const waits = [...earned].flatMap(([sid, e]) => (joined.has(sid) && Number.isFinite(e.first) ? [Math.max(0, (e.first - joined.get(sid)!) / DAY)] : []))
   return { clients, clientsAgain, clientsAgain60, unnamedGigs: gigs.length - named.length, earners, earnersAgain,
     medianDays: median(waits), fastestDays: waits.length ? Math.min(...waits) : null, waitsCounted: waits.length }
 }

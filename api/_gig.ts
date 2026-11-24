@@ -35,6 +35,7 @@ export const COVER: Record<string, string> = {
 }
 
 export function money(n: number, cur = 'GHS') {
+  if (cur === 'PTS') return `${Math.round(n).toLocaleString('en-GB')} points`
   const sym = cur === 'GHS' ? '₵' : cur === 'NGN' ? '₦' : cur === 'USD' ? '$' : `${cur} `
   return sym + (Number.isInteger(n) ? n.toLocaleString('en-GB') : n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
 }
@@ -63,7 +64,7 @@ export function whoWords(g: Gig) { return g.audience === 'everyone' ? 'Open to e
 export function describe(g: Gig) {
   const p = payWords(g)
   return [`${p.big} ${p.small}`.replace(/^Up to (.+) (₵.+ per .+)$/, '$2, up to $1'), whereWords(g), whoWords(g), whenWords(g)].join(' · ')
-    + '. Verified, paid to mobile money.'
+    + (g.currency === 'PTS' ? '. Earn Gigotter points, redeem for airtime and more.' : '. Verified, paid to mobile money.')
 }
 
 export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))

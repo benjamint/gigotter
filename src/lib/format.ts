@@ -1,10 +1,16 @@
 import { GIG_COVERS } from './images'
-import { CURRENCIES, type Listing } from './types'
+import { CURRENCIES, POINTS, type Listing } from './types'
 
 export const coverFor = (l: Pick<Listing, 'cover_url' | 'type'>) => l.cover_url || GIG_COVERS[l.type]
 
 export const money = (n: number | null | undefined, cur = 'GHS') =>
-  `${CURRENCIES[cur] ?? cur + ' '}${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+  cur === POINTS
+    ? `${Math.round(n ?? 0).toLocaleString()} pts`
+    : `${CURRENCIES[cur] ?? cur + ' '}${(n ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+
+/** Points gigs pay Gigotter points instead of cash. */
+export const isPoints = (l: { currency?: string | null } | null | undefined) => l?.currency === POINTS
+export const points = (n: number | null | undefined) => `${Math.round(n ?? 0).toLocaleString()} pts`
 
 export function timeLeft(iso: string) {
   const ms = new Date(iso).getTime() - Date.now()

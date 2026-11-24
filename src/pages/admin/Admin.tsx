@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, BarChart3, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Share2, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, BarChart3, Gift, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Share2, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
@@ -7,11 +7,12 @@ import { admin, deleteListing, deleteTestimonial, fileUrl, listListings, listTes
 import Photo from '../../components/Photo'
 import { ago, coverFor, money, payLine, spotsLeft, timeLeft, plural } from '../../lib/format'
 import { useAsync, useSession } from '../../lib/session'
-import { GENDERS, WORK_STATUSES, type KycStatus, type Listing, type Payment, type Profile, type Submission } from '../../lib/types'
+import { GENDERS, POINTS, WORK_STATUSES, type KycStatus, type Listing, type Payment, type Profile, type Submission } from '../../lib/types'
 import { accountOf, ageOf } from '../../lib/audience'
 import ListingForm from './ListingForm'
 import QrCodes from './QrCodes'
 import Insights from './Insights'
+import Rewards from './Rewards'
 import ShareGig from '../../components/ShareGig'
 import Briefs from './Briefs'
 import { subTitle } from '../../lib/forms'
@@ -23,6 +24,7 @@ const TABS = [
   { k: 'students', l: 'Students', i: Users },
   { k: 'gigs', l: 'Gigs', i: Briefcase },
   { k: 'work', l: 'Work & payouts', i: Wallet },
+  { k: 'rewards', l: 'Rewards', i: Gift },
   { k: 'briefs', l: 'Briefs', i: Inbox },
   { k: 'testimonials', l: 'Testimonials', i: Quote },
   { k: 'qr', l: 'QR codes', i: QrCode },
@@ -35,8 +37,9 @@ export default function Admin() {
   const tab = (TABS.some((t) => t.k === sp.get('tab')) ? sp.get('tab') : 'overview') as Tab
   const setTab = (t: Tab) => setSp(t === 'overview' ? {} : { tab: t }, { replace: true })
   const data = useAsync(async () => {
-    const [profiles, listings, subs, requests, claims, payments] = await Promise.all([admin.profiles(), listListings({ all: true }), admin.submissions(), admin.requests(), admin.claims(), admin.allPayments()])
-    return { profiles: profiles.filter((p) => p.role !== 'admin'), listings, subs, requests, claims, payments }
+    const [profiles, listings, subs, requests, claims, payments, openRewards] = await Promise.all([admin.profiles(), listListings({ all: true }), admin.submissions(), admin.requests(), admin.claims(), admin.allPayments(),
+      admin.redemptions().then((r) => r.filter((x) => x.status === 'requested').length).catch(() => 0)])
+    return { profiles: profiles.filter((p) => p.role !== 'admin'), listings, subs, requests, claims, payments, openRewards }
   }, [])
   if (loading) return <PageLoader />
   if (profile?.role !== 'admin') return <Navigate to="/" replace />
@@ -45,6 +48,7 @@ export default function Admin() {
     students: d.profiles.filter((p) => p.kyc_status === 'pending').length,
     work: d.subs.filter((s) => s.status === 'pending').length,
     briefs: d.requests.filter((r) => r.status === 'new').length,
+    rewards: d.openRewards,
   } : {}
 
   return (
@@ -68,6 +72,7 @@ export default function Admin() {
             {tab === 'students' && <Students profiles={d.profiles} reload={data.reload} />}
             {tab === 'gigs' && <Gigs listings={d.listings} subs={d.subs} reload={data.reload} />}
             {tab === 'work' && <Work subs={d.subs} reload={data.reload} />}
+            {tab === 'rewards' && <Rewards profiles={d.profiles} />}
             {tab === 'briefs' && <Briefs reqs={d.requests} reload={data.reload} />}
             {tab === 'testimonials' && <Testimonials />}
             {tab === 'qr' && <QrCodes />}
@@ -92,7 +97,7 @@ function Overview({ d, go }: { d: any; go: (t: Tab) => void }) {
   const week = series.slice(-7).reduce((a, s) => a + s.n, 0)
   const owed = subs.filter((s) => s.status === 'approved')
   const paid = subs.filter((s) => s.status === 'paid')
-  const total = (rows: { currency: string; amount: number }[]) => Object.entries(rows.reduce<Record<string, number>>((a, r) => { a[r.currency] = (a[r.currency] ?? 0) + r.amount; return a }, {}))
+  const total = (rows: { currency: string; amount: number }[]) => Object.entries(rows.filter((r) => r.currency !== POINTS).reduce<Record<string, number>>((a, r) => { a[r.currency] = (a[r.currency] ?? 0) + r.amount; return a }, {}))
     .map(([c, v]) => money(v, c)).join(' · ') || money(0)
   const byCur = (xs: Submission[]) => total(xs.map((s) => ({ currency: s.listing?.currency ?? 'GHS', amount: Number(s.amount ?? 0) })))
   // Paid out = what you actually sent: recorded payments (which can include bonuses or part-payments),

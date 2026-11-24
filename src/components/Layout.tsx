@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'framer-motion'
 import { ScrollProgress } from './motion'
-import { BadgeCheck, ChevronDown, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-react'
+import { BadgeCheck, ChevronDown, Gift, LayoutDashboard, LogOut, Menu, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { DEMO, auth, resetDemo } from '../lib/api'
@@ -12,6 +12,17 @@ export function Logo({ className = '', light = false }: { className?: string; li
       <img src="/logo-mark.png" alt="" width={40} height={40} className="h-10 w-10 shrink-0 transition-transform duration-300 hover:-rotate-6" />
       <span className={`font-display text-[19px] font-semibold tracking-tight ${light ? 'text-white' : 'text-ink'}`}>Gigotter</span>
     </Link>
+  )
+}
+
+/** The little yellow gift beside "Rewards": wiggles and glows every few seconds so it catches the eye. */
+function GiftBadge({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
+  const box = size === 'lg' ? 'h-8 w-8' : 'h-6 w-6'
+  return (
+    <span aria-hidden className={`gift-badge relative grid ${box} shrink-0 place-items-center rounded-full bg-[#F9C93A] text-[#10291F]`}>
+      <Gift className={size === 'lg' ? 'h-4 w-4' : 'h-3.5 w-3.5'} strokeWidth={2.4} />
+      <span className="gift-spark absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-brand-600 ring-2 ring-white" />
+    </span>
   )
 }
 
@@ -36,7 +47,7 @@ export default function Layout() {
   // the main website menu is the same for everyone; account pages live in the avatar menu
   const links = [
     { to: '/gigs', label: 'Find work' },
-    { to: '/rewards', label: 'Rewards' },
+    { to: '/rewards', label: 'Rewards', gift: true },
     { to: '/business', label: 'For businesses' },
   ]
   const isAdmin = profile?.role === 'admin'
@@ -64,7 +75,7 @@ export default function Layout() {
           <nav className="hidden items-center gap-1 md:flex">
             {links.map((l) => (
               <NavLink key={l.to} to={l.to} className={({ isActive }) => `relative isolate rounded-full px-4 py-2 text-sm transition ${isActive ? 'font-medium text-ink' : 'text-ink-muted hover:text-ink'}`}>
-                {({ isActive }) => (<>{isActive && <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-brand-50" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />}{l.label}</>)}
+                {({ isActive }) => (<>{isActive && <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-brand-50" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />}<span className="inline-flex items-center gap-1.5">{'gift' in l && <GiftBadge />}{l.label}</span></>)}
               </NavLink>
             ))}
           </nav>
@@ -90,7 +101,7 @@ export default function Layout() {
               <div className="mt-2 flex flex-col rounded-3xl border border-line bg-white px-5 py-3 shadow-[0_20px_40px_-28px_rgba(16,41,31,.4)]">
                 {links.map((l, i) => (
                   <motion.div key={l.to} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 + i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}>
-                    <NavLink to={l.to} className="block border-b border-line py-4 text-lg font-medium">{l.label}</NavLink>
+                    <NavLink to={l.to} className="flex items-center gap-2.5 border-b border-line py-4 text-lg font-medium">{'gift' in l && <GiftBadge size="lg" />}{l.label}</NavLink>
                   </motion.div>
                 ))}
                 {user && <div className="pt-4 text-xs font-medium uppercase tracking-wider text-ink-muted">Your account</div>}

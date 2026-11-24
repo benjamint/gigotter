@@ -51,4 +51,17 @@
 @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
 .animate-float { animation: float 6s ease-in-out infinite; }
 @keyframes leaf-drift { 50% { translate: 0 -6px; rotate: 1deg; } }
+/* Rewards gift in the menu: a wiggle and a soft yellow glow every few seconds */
+@keyframes gift-wiggle {
+  0%, 62%, 100% { transform: rotate(0) scale(1); }
+  66% { transform: rotate(-16deg) scale(1.15); }
+  70% { transform: rotate(13deg) scale(1.15); }
+  74% { transform: rotate(-9deg) scale(1.08); }
+  78% { transform: rotate(6deg) scale(1.04); }
+  82% { transform: rotate(0) scale(1); }
+}
+@keyframes gift-glow { 0%, 60% { box-shadow: 0 0 0 0 rgba(249, 201, 58, .7); } 85%, 100% { box-shadow: 0 0 0 9px rgba(249, 201, 58, 0); } }
+@keyframes gift-spark { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(.55); opacity: .5; } }
+.gift-badge { animation: gift-wiggle 3.6s ease-in-out infinite, gift-glow 3.6s ease-out infinite; }
+.gift-spark { animation: gift-spark 1.8s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }

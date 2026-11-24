@@ -79,7 +79,7 @@ export default function Rewards() {
                       <div className="font-display text-2xl font-semibold tracking-tight">{points(it.points_cost)}</div>
                       <div className="text-xs text-ink-muted">{out ? 'Out of stock' : it.stock != null && it.stock <= 5 ? `Only ${it.stock} left` : ' '}</div>
                     </div>
-                    {!user ? <Link to="/login?next=/rewards" className="btn-ghost btn-sm">Log in to redeem</Link>
+                    {!user ? <Link to="/login?next=/rewards" className="btn-brand btn-sm">Redeem</Link>
                       : out ? <span className="chip bg-sand text-ink-muted">Out of stock</span>
                       : short > 0 ? <span className="chip bg-sand text-ink-soft">{points(short)} to go</span>
                       : <button className="btn-brand btn-sm" onClick={() => setPick(it)}>Redeem</button>}

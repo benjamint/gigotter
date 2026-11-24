@@ -9,6 +9,7 @@ import { useAsync, useSession } from '../lib/session'
 import { friendlyError } from '../lib/security'
 import { REWARD_CATEGORIES, WELCOME_POINTS, type RewardCategory, type RewardItem } from '../lib/types'
 import { ItemThumb } from './admin/Rewards'
+import OtterCard from '../components/OtterCard'
 
 /** Rewards: spend Gigotter points (earned on points gigs) on airtime, data and products. */
 export default function Rewards() {
@@ -34,11 +35,11 @@ export default function Rewards() {
           <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Earn Gigotter points on quick gigs, then swap them for airtime, data and goodies from our partners.</p>
         </div>
         {user ? (
-          <div className="rounded-3xl bg-[#F9C93A]/30 p-6 md:min-w-[17rem]">
-            <div className="text-sm font-medium text-ink-muted">Your balance</div>
-            <div className="figure mt-1 text-[44px] leading-none">{bal.loading ? '…' : points(balance)}</div>
-            {welcomeOnly && <div className="mt-2 text-sm text-ink-soft">🎁 Your {WELCOME_POINTS}-point welcome bonus. Pick a reward below!</div>}
-            <Link to="/gigs" className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline-offset-2 hover:underline">Earn more on points gigs <ArrowRight className="h-4 w-4" /></Link>
+          <div className="w-full md:w-[22rem]">
+            {bal.loading ? <div className="aspect-[85.6/54] w-full animate-pulse rounded-[24px] bg-brand-50" />
+              : <OtterCard size="sm" picker={false} name={profile?.full_name || 'Gigotter member'} code={`OTTER · ${(profile?.referral_code || user.id.slice(0, 6)).toUpperCase()}`} balance={balance} active={verified} />}
+            {welcomeOnly && <div className="mt-3 text-sm text-ink-soft">🎁 Your {WELCOME_POINTS}-point welcome bonus is on your card. Pick a reward below!</div>}
+            <Link to="/gigs" className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline-offset-2 hover:underline">Earn more on points gigs <ArrowRight className="h-4 w-4" /></Link>
           </div>
         ) : (
           <div className="rounded-3xl bg-[#F9C93A]/30 p-6 md:max-w-xs">

@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { AccountType, Application, Insights, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, PointsEntry, QrCode, QrStat, PayoutItem, Profile, Redemption, RewardItem, Submission, SubmissionStatus, Testimonial } from './types'
-import { POINTS } from './types'
+import { POINTS, WELCOME_POINTS } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { accountOf, audienceAllows, audienceMessage, audienceOf } from './audience'
@@ -739,7 +739,19 @@ export const admin = {
     fail(error); return data ?? []
   },
   async setKyc(id: string, status: KycStatus, note: string | null) {
-    if (DEMO) { const p = db().profiles.find((x) => x.id === id); if (p) { if (p.kyc_status !== status && (status === 'verified' || status === 'rejected')) p.kyc_email_sent_at = now(); p.kyc_status = status; p.kyc_note = note } return save() }
+    if (DEMO) {
+      const p = db().profiles.find((x) => x.id === id)
+      if (p) {
+        if (p.kyc_status !== status && (status === 'verified' || status === 'rejected')) p.kyc_email_sent_at = now()
+        // same as the database: becoming verified adds the welcome points, once ever
+        if (status === 'verified' && p.kyc_status !== 'verified' && p.role !== 'admin') {
+          const d = demoStore()
+          if (!d.pointsLedger.some((e) => e.student_id === id && e.kind === 'welcome')) d.pointsLedger.push(ledgerEntry({ student_id: id, delta: WELCOME_POINTS, kind: 'welcome', note: 'Welcome bonus', emailed_at: now() }))
+        }
+        p.kyc_status = status; p.kyc_note = note
+      }
+      return save()
+    }
     const { error } = await sb!.from('profiles').update({ kyc_status: status, kyc_note: note }).eq('id', id)
     fail(error)
   },
@@ -911,6 +923,24 @@ export const admin = {
     if (DEMO) { demoStore().pointsLedger.push(ledgerEntry({ student_id: studentId, delta, kind: 'adjust', note: note.trim() })); return save() }
     const { error } = await sb!.rpc('admin_adjust_points', { p_student: studentId, p_delta: delta, p_note: note.trim() })
     fail(error)
+  },
+  /** Already-verified members whose welcome points haven't been emailed about yet (migration 0019). */
+  async welcomeEmailsPending(): Promise<number> {
+    if (DEMO) return demoStore().pointsLedger.filter((e) => e.kind === 'welcome' && !e.emailed_at).length
+    const { data, error } = await sb!.from('points_ledger').select('id, student_id').eq('kind', 'welcome').is('emailed_at', null)
+    if (error) return 0
+    const ps = await admin.profiles()
+    return (data ?? []).filter((r) => { const p = ps.find((x) => x.id === r.student_id); return p && p.kyc_status === 'verified' && p.email }).length
+  },
+  /** Emails the next batch of members about their welcome points. */
+  async sendWelcomeEmails(limit = 20): Promise<{ sent: number; remaining: number }> {
+    if (DEMO) {
+      const waiting = demoStore().pointsLedger.filter((e) => e.kind === 'welcome' && !e.emailed_at)
+      waiting.slice(0, limit).forEach((e) => (e.emailed_at = now())); save()
+      return { sent: Math.min(limit, waiting.length), remaining: Math.max(0, waiting.length - limit) }
+    }
+    const { data, error } = await sb!.rpc('admin_send_welcome_emails', { p_limit: limit })
+    fail(error); return data as { sent: number; remaining: number }
   },
   /** Every points movement (for balances and totals). Empty if migration 0018 hasn't been run. */
   async pointsLedger(): Promise<PointsEntry[]> {

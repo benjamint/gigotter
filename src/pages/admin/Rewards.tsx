@@ -1,11 +1,11 @@
-import { Check, Gift, Package, Plus, Edit3, Smartphone, X, Coins } from 'lucide-react'
+import { Check, Gift, Mail, Package, Plus, Edit3, Smartphone, X, Coins } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Empty, Modal, PageLoader, Spinner, useToast } from '../../components/ui'
 import { FileDrop } from '../../components/Upload'
 import { admin, uploadCover } from '../../lib/api'
 import { ago, points } from '../../lib/format'
 import { useAsync } from '../../lib/session'
-import { REWARD_CATEGORIES, type Profile, type Redemption, type RewardCategory, type RewardItem } from '../../lib/types'
+import { REWARD_CATEGORIES, WELCOME_POINTS, type Profile, type Redemption, type RewardCategory, type RewardItem } from '../../lib/types'
 
 /** Admin: reward items, reward requests to send, and points balances. */
 export default function Rewards({ profiles }: { profiles: Profile[] }) {
@@ -31,6 +31,8 @@ export default function Rewards({ profiles }: { profiles: Profile[] }) {
         <Tile k="Points held by students" v={points(held)} sub={`${points(earned)} earned from gigs`} bg="bg-brand-50" />
         <Tile k="Rewards on offer" v={String(items.filter((i) => i.active).length)} sub={`${items.length} in total`} bg="bg-[#d6e4d9]" />
       </div>
+
+      <WelcomeCard />
 
       <section>
         <h2 className="text-xl font-semibold">Reward requests</h2>
@@ -77,6 +79,32 @@ export default function Rewards({ profiles }: { profiles: Profile[] }) {
 
       <ItemEditor item={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); data.reload() }} />
       <AdjustPoints open={adjust} profiles={profiles} balances={balances} onClose={() => setAdjust(false)} onSaved={() => { setAdjust(false); data.reload() }} />
+    </div>
+  )
+}
+
+/** Welcome bonus: points on verification, and emailing members who were verified before it existed. */
+function WelcomeCard() {
+  const toast = useToast()
+  const pending = useAsync(() => admin.welcomeEmailsPending(), [])
+  const [busy, setBusy] = useState(false)
+  const send = async () => {
+    setBusy(true)
+    try { const r = await admin.sendWelcomeEmails(20); toast(`Sent ${r.sent} email${r.sent === 1 ? '' : 's'}. ${r.remaining} still to go`); pending.reload() }
+    catch (e: any) { toast(e.message, 'err') } finally { setBusy(false) }
+  }
+  const n = pending.data ?? 0
+  return (
+    <div className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#F9C93A]/30 text-ink"><Gift className="h-5 w-5" /></span>
+        <div>
+          <div className="font-semibold">Welcome bonus: {points(WELCOME_POINTS)} on verification</div>
+          <div className="text-sm text-ink-muted">Added automatically when you verify someone, and mentioned in their “You’re verified” email. Add a {WELCOME_POINTS}-point reward (e.g. GHS 5 MTN airtime) so they can spend it.</div>
+          {n > 0 && <div className="mt-1 text-sm font-medium text-ink">{n} member{n === 1 ? '' : 's'} verified earlier haven’t been told about their points yet.</div>}
+        </div>
+      </div>
+      {n > 0 && <button className="btn-brand btn-sm shrink-0" disabled={busy} onClick={send}>{busy ? <Spinner /> : <Mail className="h-4 w-4" />}Send next {Math.min(20, n)} emails</button>}
     </div>
   )
 }

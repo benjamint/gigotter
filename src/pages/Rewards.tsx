@@ -7,7 +7,7 @@ import { listRewardItems, myPoints, redeemItem } from '../lib/api'
 import { points } from '../lib/format'
 import { useAsync, useSession } from '../lib/session'
 import { friendlyError } from '../lib/security'
-import { REWARD_CATEGORIES, type RewardCategory, type RewardItem } from '../lib/types'
+import { REWARD_CATEGORIES, WELCOME_POINTS, type RewardCategory, type RewardItem } from '../lib/types'
 import { ItemThumb } from './admin/Rewards'
 
 /** Rewards: spend Gigotter points (earned on points gigs) on airtime, data and products. */
@@ -22,6 +22,8 @@ export default function Rewards() {
   const list = useMemo(() => all.filter((i) => cat === 'all' || i.category === cat), [all, cat])
   const balance = bal.data?.balance ?? 0
   const verified = profile?.kyc_status === 'verified'
+  const entries = bal.data?.entries ?? []
+  const welcomeOnly = entries.length === 1 && entries[0].kind === 'welcome'
 
   return (
     <div className="container-x pb-16 pt-10 md:pt-16">
@@ -35,6 +37,7 @@ export default function Rewards() {
           <div className="rounded-3xl bg-[#F9C93A]/30 p-6 md:min-w-[17rem]">
             <div className="text-sm font-medium text-ink-muted">Your balance</div>
             <div className="figure mt-1 text-[44px] leading-none">{bal.loading ? '…' : points(balance)}</div>
+            {welcomeOnly && <div className="mt-2 text-sm text-ink-soft">🎁 Your {WELCOME_POINTS}-point welcome bonus. Pick a reward below!</div>}
             <Link to="/gigs" className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline-offset-2 hover:underline">Earn more on points gigs <ArrowRight className="h-4 w-4" /></Link>
           </div>
         ) : (

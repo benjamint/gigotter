@@ -224,10 +224,12 @@ export interface Redemption {
   delivery_note: string | null; status: RedemptionStatus; admin_note: string | null; handled_at: string | null; created_at: string
   student?: Pick<Profile, 'id' | 'full_name' | 'email' | 'phone' | 'school'>
 }
-export type PointsKind = 'earned' | 'reversed' | 'redeemed' | 'refund' | 'adjust'
+export type PointsKind = 'earned' | 'reversed' | 'redeemed' | 'refund' | 'adjust' | 'welcome'
+/** Points every member gets once, when they're verified (migration 0019). */
+export const WELCOME_POINTS = 10
 export interface PointsEntry {
   id: string; student_id: string; delta: number; kind: PointsKind; submission_id: string | null
-  redemption_id: string | null; note: string | null; created_at: string
+  redemption_id: string | null; note: string | null; created_at: string; emailed_at?: string | null
 }
 
 /** One day of a scheduled gig. date is YYYY-MM-DD (Ghana time); start/end are HH:MM. */

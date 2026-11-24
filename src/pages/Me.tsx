@@ -68,7 +68,7 @@ export default function Me() {
         <Link to="/rewards" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-[#F9C93A]/30 p-5 transition hover:bg-[#F9C93A]/45">
           <div className="flex items-center gap-4">
             <span className="grid h-11 w-11 place-items-center rounded-full bg-[#F9C93A] text-ink"><Gift className="h-5 w-5" /></span>
-            <div><div className="text-sm font-medium text-ink-muted">Your Gigotter points</div><div className="figure text-3xl leading-tight">{points(pts.data[0].balance)}</div></div>
+            <div><div className="text-sm font-medium text-ink-muted">Your Gigotter points</div><div className="figure text-3xl leading-tight">{points(pts.data[0].balance)}</div>{pts.data[0].entries.length === 1 && pts.data[0].entries[0].kind === 'welcome' && <div className="text-xs text-ink-soft">🎁 Your welcome bonus, ready to spend</div>}</div>
           </div>
           <span className="btn-primary btn-sm">Spend in Rewards <ArrowRight className="h-4 w-4" /></span>
         </Link>

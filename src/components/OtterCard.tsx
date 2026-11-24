@@ -68,7 +68,7 @@ export default function OtterCard({ name, code, balance, active = true, size = '
       <div style={{ perspective: '1200px' }} onPointerMove={tilt} onPointerLeave={reset}>
         <div ref={card} role="img" aria-label={`Otter Card for ${name}, ${balance.toLocaleString()} points${active ? '' : ', not active yet'}`}
           className={`otter-card relative w-full select-none overflow-hidden transition-transform duration-300 ease-out ${active ? '' : 'otter-card--off'}`}
-          style={{ aspectRatio: '85.6 / 54', containerType: 'inline-size', borderRadius: '3.7cqw', background: f.bg, color: INK,
+          style={{ aspectRatio: '85.6 / 54', containerType: 'inline-size', borderRadius: '15px', background: f.bg, color: INK,
             fontFamily: "'Inter Tight', Arial, sans-serif",
             boxShadow: '0 0 0 1px rgba(255,255,255,.07) inset, 0 1px 0 rgba(255,255,255,.14) inset, 0 28px 50px -26px rgba(8,20,15,.6), 0 10px 20px -14px rgba(8,20,15,.45)' }}>
           {/* quiet tone-on-tone shapes and one fine yellow line */}

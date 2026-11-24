@@ -2,27 +2,49 @@ import { Nfc } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { CountUp } from './ui'
 
-export type Finish = 'forest' | 'lemon' | 'charcoal'
+export type Finish = 'green' | 'black'
 const FINISH_KEY = 'gigotter-otter-card-finish'
 
-const FINISHES: Record<Finish, { label: string; swatch: string; bg: string; ink: string; soft: string; disc: string; arch: string; dot: string; grain: number }> = {
-  forest: { label: 'Forest', swatch: '#245A44', bg: 'linear-gradient(140deg,#2A6650 0%,#1A4535 45%,#10291F 100%)', ink: '#F6F4EC', soft: 'rgba(246,244,236,.72)', disc: '#F9C93A', arch: 'rgba(183,205,190,.22)', dot: '#B7CDBE', grain: 0.09 },
-  lemon: { label: 'Lemon', swatch: '#F9C93A', bg: 'linear-gradient(140deg,#FDE9A6 0%,#F9C93A 50%,#E9B11C 100%)', ink: '#10291F', soft: 'rgba(16,41,31,.68)', disc: '#245A44', arch: 'rgba(255,255,255,.38)', dot: '#10291F', grain: 0.07 },
-  charcoal: { label: 'Charcoal', swatch: '#1F2321', bg: 'linear-gradient(140deg,#3A3F3C 0%,#232725 50%,#121514 100%)', ink: '#F6F4EC', soft: 'rgba(246,244,236,.66)', disc: '#F9C93A', arch: 'rgba(36,90,68,.55)', dot: '#B7CDBE', grain: 0.1 },
+// Two quiet finishes; yellow only as a hint (the chip and a fine line)
+const FINISHES: Record<Finish, { label: string; swatch: string; bg: string; tone: string }> = {
+  green: { label: 'Green', swatch: '#1F4A3A', bg: 'linear-gradient(135deg,#24503F 0%,#173A2D 46%,#0D241B 100%)', tone: 'rgba(255,255,255,.045)' },
+  black: { label: 'Black', swatch: '#141615', bg: 'linear-gradient(135deg,#34383A 0%,#1A1C1C 46%,#080909 100%)', tone: 'rgba(255,255,255,.04)' },
 }
+const INK = '#ECE9DF'                    // warm silver, like foil print
+const SOFT = 'rgba(236,233,223,.6)'
+const EMBOSS = '0 1px 0 rgba(0,0,0,.45), 0 -1px 0 rgba(255,255,255,.12)'
 
 function readFinish(): Finish {
-  try { const f = localStorage.getItem(FINISH_KEY); if (f && f in FINISHES) return f as Finish } catch { /* storage blocked */ }
-  return 'forest'
+  try {
+    const f = localStorage.getItem(FINISH_KEY)
+    if (f === 'green' || f === 'black') return f
+    if (f === 'charcoal') return 'black'  // earlier finish names
+  } catch { /* storage blocked */ }
+  return 'green'
 }
 
-/** The Otter Card: where a member's Gigotter points live. Digital for now; drawn at credit-card proportions. */
+/** Gold contact chip, the card's hint of yellow. */
+const Chip = () => (
+  <svg aria-hidden viewBox="0 0 50 38" style={{ width: '11.5cqw', height: 'auto', display: 'block' }}>
+    <defs>
+      <linearGradient id="otter-chip" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#F6DE8F" /><stop offset=".45" stopColor="#D9B04A" /><stop offset=".7" stopColor="#F2D57A" /><stop offset="1" stopColor="#B98F2E" />
+      </linearGradient>
+    </defs>
+    <rect x=".5" y=".5" width="49" height="37" rx="6.5" fill="url(#otter-chip)" stroke="#8C6A1E" strokeOpacity=".45" />
+    <g fill="none" stroke="#7A5B16" strokeOpacity=".55" strokeWidth="1.1">
+      <path d="M0 13h15c3 0 4 2 4 5v2c0 3-1 5-4 5H0M50 13H35c-3 0-4 2-4 5v2c0 3 1 5 4 5h15M19 0v10M31 0v10M19 38V28M31 38V28" />
+      <rect x="19" y="10" width="12" height="18" rx="3" />
+    </g>
+  </svg>
+)
+
+/** The Otter Card: where a member's Gigotter points live. Digital for now; drawn like a real card (85.6 × 54 mm). */
 export default function OtterCard({ name, code, balance, active = true, size = 'lg', picker = true }: {
   name: string; code: string; balance: number; active?: boolean; size?: 'sm' | 'lg'; picker?: boolean
 }) {
   const [finish, setFinish] = useState<Finish>(readFinish)
   const choose = (f: Finish) => { setFinish(f); try { localStorage.setItem(FINISH_KEY, f) } catch { /* ignore */ } }
-  // keep cards on the same page in step when the finish changes
   useEffect(() => {
     const on = (e: StorageEvent) => { if (e.key === FINISH_KEY) setFinish(readFinish()) }
     window.addEventListener('storage', on); return () => window.removeEventListener('storage', on)
@@ -36,7 +58,7 @@ export default function OtterCard({ name, code, balance, active = true, size = '
     if (still || !card.current) return
     const r = card.current.getBoundingClientRect()
     const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5
-    card.current.style.transform = `rotateX(${(-y * 9).toFixed(2)}deg) rotateY(${(x * 12).toFixed(2)}deg)`
+    card.current.style.transform = `rotateX(${(-y * 8).toFixed(2)}deg) rotateY(${(x * 11).toFixed(2)}deg)`
     card.current.style.setProperty('--gx', `${(x + 0.5) * 100}%`); card.current.style.setProperty('--gy', `${(y + 0.5) * 100}%`)
   }
   const reset = () => { if (card.current) card.current.style.transform = '' }
@@ -46,51 +68,58 @@ export default function OtterCard({ name, code, balance, active = true, size = '
       <div style={{ perspective: '1200px' }} onPointerMove={tilt} onPointerLeave={reset}>
         <div ref={card} role="img" aria-label={`Otter Card for ${name}, ${balance.toLocaleString()} points${active ? '' : ', not active yet'}`}
           className={`otter-card relative w-full select-none overflow-hidden transition-transform duration-300 ease-out ${active ? '' : 'otter-card--off'}`}
-          style={{ aspectRatio: '85.6 / 54', containerType: 'inline-size', borderRadius: '5.5cqw', background: f.bg, color: f.ink,
-            boxShadow: '0 1px 0 rgba(255,255,255,.18) inset, 0 30px 60px -28px rgba(16,41,31,.55), 0 12px 24px -16px rgba(16,41,31,.4)' }}>
-          {/* shapes */}
+          style={{ aspectRatio: '85.6 / 54', containerType: 'inline-size', borderRadius: '3.7cqw', background: f.bg, color: INK,
+            fontFamily: "'Inter Tight', Arial, sans-serif",
+            boxShadow: '0 0 0 1px rgba(255,255,255,.07) inset, 0 1px 0 rgba(255,255,255,.14) inset, 0 28px 50px -26px rgba(8,20,15,.6), 0 10px 20px -14px rgba(8,20,15,.45)' }}>
+          {/* quiet tone-on-tone shapes and one fine yellow line */}
           <svg aria-hidden viewBox="0 0 856 540" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-            <circle cx="700" cy="120" r="210" fill={f.disc} opacity={finish === 'lemon' ? 0.9 : 0.95} />
-            <path d="M520 560 V400 a110 110 0 0 1 220 0 V560 Z" fill={f.arch} />
-            <circle cx="470" cy="150" r="26" fill={f.dot} opacity=".85" />
+            <circle cx="760" cy="40" r="330" fill={f.tone} />
+            <circle cx="760" cy="40" r="230" fill={f.tone} />
+            <path d="M856 300 C 700 330, 610 430, 590 540" fill="none" stroke="#F9C93A" strokeOpacity=".55" strokeWidth="1.6" />
           </svg>
-          {/* grain */}
-          <svg aria-hidden className="absolute inset-0 h-full w-full mix-blend-overlay" style={{ opacity: f.grain }}>
+          {/* brushed finish + grain */}
+          <div aria-hidden className="absolute inset-0" style={{ background: 'repeating-linear-gradient(100deg, rgba(255,255,255,.018) 0 1px, transparent 1px 3px)' }} />
+          <svg aria-hidden className="absolute inset-0 h-full w-full mix-blend-overlay" style={{ opacity: 0.08 }}>
             <filter id="otter-grain"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch" /></filter>
             <rect width="100%" height="100%" filter="url(#otter-grain)" />
           </svg>
           {/* light that follows the pointer + a sweeping shine */}
-          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at var(--gx,30%) var(--gy,20%), rgba(255,255,255,.16), transparent 45%)' }} />
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: 'radial-gradient(circle at var(--gx,25%) var(--gy,15%), rgba(255,255,255,.11), transparent 50%)' }} />
           <div aria-hidden className="otter-shine pointer-events-none absolute inset-y-0 -left-1/3 w-1/3" />
 
           {/* content */}
-          <div className="absolute inset-0 flex flex-col justify-between" style={{ padding: '6cqw 6.5cqw 5.5cqw' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center font-display font-semibold" style={{ gap: '1.8cqw', fontSize: '4cqw' }}>
-                <img src="/logo-mark.png" alt="" style={{ width: '7.4cqw', height: '7.4cqw' }} />Gigotter
+          <div className="absolute inset-0" style={{ padding: '5.6cqw 6.2cqw' }}>
+            {/* top: icon only, card name on the right */}
+            <div className="flex items-start justify-between">
+              <img src="/logo-mark.png" alt="" style={{ width: '8cqw', height: '8cqw', filter: 'drop-shadow(0 1px 1px rgba(0,0,0,.35))' }} />
+              <div className="text-right">
+                <div style={{ fontSize: '4.6cqw', fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, textShadow: EMBOSS }}>Otter Card</div>
+                <div style={{ fontSize: '2.3cqw', color: SOFT, letterSpacing: '.16em', marginTop: '1.3cqw' }} className="uppercase">Your points. One card.</div>
               </div>
-              <Nfc aria-hidden style={{ width: '5.6cqw', height: '5.6cqw', opacity: 0.85, color: finish === 'lemon' ? f.ink : f.ink }} />
             </div>
-            <div style={{ marginTop: '-2cqw' }}>
-              <div className="font-display font-semibold leading-[0.92]" style={{ fontSize: '9cqw', letterSpacing: '-0.04em' }}>Otter Card.</div>
-              <div style={{ fontSize: '3cqw', color: f.soft, marginTop: '1.2cqw' }}>Your points. One card.</div>
+            {/* chip + contactless */}
+            <div className="flex items-center" style={{ gap: '2.4cqw', marginTop: '6.5cqw' }}>
+              <Chip />
+              <Nfc aria-hidden style={{ width: '5.2cqw', height: '5.2cqw', color: SOFT }} />
             </div>
-            <div className="flex items-end justify-between" style={{ gap: '3cqw' }}>
+            {/* bottom: name and code, points */}
+            <div className="absolute flex items-end justify-between" style={{ left: '6.2cqw', right: '6.2cqw', bottom: '5.4cqw', gap: '3cqw' }}>
               <div className="min-w-0">
-                <div className="truncate font-semibold uppercase" style={{ fontSize: '3.3cqw', letterSpacing: '.12em' }}>{name}</div>
-                <div className="font-mono" style={{ fontSize: '2.7cqw', color: f.soft, letterSpacing: '.14em', marginTop: '.8cqw' }}>{code}</div>
+                <div style={{ fontSize: '2.2cqw', color: SOFT, letterSpacing: '.18em', marginBottom: '1cqw' }} className="uppercase">Member</div>
+                <div className="truncate uppercase" style={{ fontSize: '3.6cqw', fontWeight: 500, letterSpacing: '.14em', textShadow: EMBOSS }}>{name}</div>
+                <div style={{ fontSize: '2.6cqw', color: SOFT, letterSpacing: '.22em', marginTop: '1cqw', fontVariantNumeric: 'tabular-nums' }}>{code}</div>
               </div>
               <div className="shrink-0 text-right">
-                <div style={{ fontSize: '2.5cqw', color: f.soft, letterSpacing: '.14em' }} className="uppercase">Points</div>
-                <div className="font-display font-semibold leading-none" style={{ fontSize: '8.4cqw', letterSpacing: '-0.03em' }}>
-                  <CountUp to={balance} /><span style={{ fontSize: '3.4cqw', marginLeft: '.8cqw', letterSpacing: 0 }}>pts</span>
+                <div style={{ fontSize: '2.2cqw', color: SOFT, letterSpacing: '.18em', marginBottom: '0.6cqw' }} className="uppercase">Points</div>
+                <div className="leading-none" style={{ fontSize: '8cqw', fontWeight: 500, letterSpacing: '-0.02em', textShadow: EMBOSS }}>
+                  <CountUp to={balance} /><span style={{ fontSize: '3cqw', marginLeft: '.9cqw', letterSpacing: '.04em', color: SOFT }}>pts</span>
                 </div>
               </div>
             </div>
           </div>
           {!active && (
-            <div className="absolute inset-0 bg-[#10291F]/30">
-              <span className="absolute rounded-full bg-white/95 font-semibold text-ink shadow-sm" style={{ top: '5.4cqw', right: '6cqw', fontSize: '3cqw', padding: '1.3cqw 3.2cqw' }}>Not active yet</span>
+            <div className="absolute inset-0 bg-[#0B1E17]/30">
+              <span className="absolute rounded-full bg-white/95 font-semibold text-ink shadow-sm" style={{ top: '16cqw', right: '6.2cqw', fontSize: '2.8cqw', padding: '1.2cqw 3cqw' }}>Not active yet</span>
             </div>
           )}
         </div>

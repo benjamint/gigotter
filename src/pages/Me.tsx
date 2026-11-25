@@ -7,20 +7,23 @@ import Photo from '../components/Photo'
 import OtterCard from '../components/OtterCard'
 import { ago, coverFor, isPoints, money, points, timeLeft, plural } from '../lib/format'
 import { subTitle } from '../lib/forms'
-import { WELCOME_POINTS, type PointsEntry } from '../lib/types'
+import { WELCOME_POINTS, type KycStatus, type PointsEntry } from '../lib/types'
 import { useAsync, useSession } from '../lib/session'
 
 /** First thing on the dashboard: the member's Otter Card with their points, and the next step. */
-function RewardsTile({ verified, data, name, code }: { verified: boolean; data: { balance: number; entries: PointsEntry[] } | null; name: string; code: string }) {
+function RewardsTile({ kyc, data, name, code }: { kyc: KycStatus; data: { balance: number; entries: PointsEntry[] } | null; name: string; code: string }) {
+  const verified = kyc === 'verified'
   if (!data) return <div className="mx-auto mt-6 aspect-[85.6/54] w-[84%] max-w-[30rem] animate-pulse rounded-[15px] bg-brand-50 sm:mx-0 sm:w-full" />
   const { balance, entries } = data
   const welcomeOnly = entries.length === 1 && entries[0].kind === 'welcome'
-  const state = balance > 0 ? 'has' : verified ? 'empty' : 'unverified'
-  const cta = state === 'has' ? { to: '/rewards', label: 'Spend in Rewards' } : state === 'empty' ? { to: '/gigs', label: 'Find points gigs' } : { to: '/verify', label: 'Verify now' }
+  const state = balance > 0 ? 'has' : verified ? 'empty' : kyc === 'pending' ? 'review' : 'unverified'
+  const cta = state === 'has' ? { to: '/rewards', label: 'Spend in Rewards' } : state === 'empty' ? { to: '/gigs', label: 'Find points gigs' } : state === 'unverified' ? { to: '/verify', label: 'Verify now' } : null
   const head = state === 'has' ? (welcomeOnly ? '🎁 Your welcome bonus is on your card' : 'Your points are ready to spend')
-    : state === 'empty' ? 'Your card is ready for more' : 'Activate your Otter Card'
+    : state === 'empty' ? 'Your card is ready for more' : state === 'review' ? 'Verification in review' : 'Activate your Otter Card'
   const note = state === 'has' ? 'Swap your points for airtime, vouchers and Gigotter merch in Rewards.'
-    : state === 'empty' ? 'Earn points on quick gigs, then spend them in Rewards.' : `Get verified and we’ll add ${WELCOME_POINTS} welcome points to your card.`
+    : state === 'empty' ? 'Earn points on quick gigs, then spend them in Rewards.'
+    : state === 'review' ? `Hang tight, usually under 24 hours. Your ${WELCOME_POINTS} welcome points arrive as soon as you’re approved.`
+    : `Get verified and we’ll add ${WELCOME_POINTS} welcome points to your card.`
   return (
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className="mt-6 grid items-center gap-6 rounded-[32px] bg-white p-4 shadow-[0_20px_50px_-36px_rgba(16,41,31,.45)] ring-1 ring-line sm:p-6 md:grid-cols-[minmax(0,30rem),1fr] md:gap-10">
@@ -29,7 +32,7 @@ function RewardsTile({ verified, data, name, code }: { verified: boolean; data: 
         <div className="eyebrow">Otter Card</div>
         <h2 className="mt-3 text-[clamp(1.5rem,3vw,2.1rem)] font-semibold leading-tight tracking-[-0.03em]">{head}</h2>
         <p className="mt-2 max-w-md text-ink-muted">{note}</p>
-        <Link to={cta.to} className="btn-primary mt-5 w-full justify-center sm:w-auto">{cta.label} <ArrowRight className="h-4 w-4" /></Link>
+        {cta && <Link to={cta.to} className="btn-primary mt-5 w-full justify-center sm:w-auto">{cta.label} <ArrowRight className="h-4 w-4" /></Link>}
       </div>
     </motion.div>
   )
@@ -68,15 +71,14 @@ export default function Me() {
         )}
       </div>
 
-      <RewardsTile verified={profile.kyc_status === 'verified'} data={pts.data?.[0] ?? null} name={profile.full_name || 'Gigotter member'} code={`OTTER · ${(profile.referral_code || profile.id.slice(0, 6)).toUpperCase()}`} />
+      <RewardsTile kyc={profile.kyc_status} data={pts.data?.[0] ?? null} name={profile.full_name || 'Gigotter member'} code={`OTTER · ${(profile.referral_code || profile.id.slice(0, 6)).toUpperCase()}`} />
 
-      {profile.kyc_status !== 'verified' && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-ink p-5 ${profile.kyc_status === 'pending' ? 'bg-amber-50' : 'bg-brand-50'}`}>
+      {profile.kyc_status !== 'verified' && profile.kyc_status !== 'pending' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-ink p-5 bg-brand-50`}>
           <div className="flex items-center gap-3"><ShieldAlert className="h-6 w-6" />
-            <div><div className="font-semibold">{profile.kyc_status === 'pending' ? 'Verification in review' : profile.kyc_status === 'rejected' ? 'Verification needs a fix' : 'Finish verification to unlock gigs'}</div>
-              <div className="text-sm text-ink-muted">{profile.kyc_status === 'pending' ? 'Hang tight, usually under 24hrs.' : profile.kyc_note ?? 'Takes 2 minutes.'}</div></div>
+            <div><div className="font-semibold">{profile.kyc_status === 'rejected' ? 'Verification needs a fix' : 'Finish verification to unlock gigs'}</div>
+              <div className="text-sm text-ink-muted">{profile.kyc_note ?? 'Takes 2 minutes.'}</div></div>
           </div>
-          {profile.kyc_status !== 'pending' && <Link to="/verify" className="btn-primary btn-sm">Verify now</Link>}
         </motion.div>
       )}
 

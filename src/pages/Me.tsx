@@ -12,7 +12,7 @@ import { useAsync, useSession } from '../lib/session'
 
 /** First thing on the dashboard: the member's Otter Card with their points, and the next step. */
 function RewardsTile({ verified, data, name, code }: { verified: boolean; data: { balance: number; entries: PointsEntry[] } | null; name: string; code: string }) {
-  if (!data) return <div className="mt-6 aspect-[85.6/54] w-full max-w-[30rem] animate-pulse rounded-[28px] bg-brand-50" />
+  if (!data) return <div className="mx-auto mt-6 aspect-[85.6/54] w-[84%] max-w-[30rem] animate-pulse rounded-[15px] bg-brand-50 sm:mx-0 sm:w-full" />
   const { balance, entries } = data
   const welcomeOnly = entries.length === 1 && entries[0].kind === 'welcome'
   const state = balance > 0 ? 'has' : verified ? 'empty' : 'unverified'

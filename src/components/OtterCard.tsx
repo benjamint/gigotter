@@ -64,7 +64,7 @@ export default function OtterCard({ name, code, balance, active = true, size = '
   const reset = () => { if (card.current) card.current.style.transform = '' }
 
   return (
-    <div className={size === 'sm' ? 'w-full max-w-[22rem]' : 'w-full max-w-[30rem]'}>
+    <div className={size === 'sm' ? 'mx-auto w-[84%] max-w-[22rem] sm:mx-0 sm:w-full' : 'mx-auto w-[84%] max-w-[30rem] sm:mx-0 sm:w-full'}>
       <div style={{ perspective: '1200px' }} onPointerMove={tilt} onPointerLeave={reset}>
         <div ref={card} role="img" aria-label={`Otter Card for ${name}, ${balance.toLocaleString()} points${active ? '' : ', not active yet'}`}
           className={`otter-card relative w-full select-none overflow-hidden transition-transform duration-300 ease-out ${active ? '' : 'otter-card--off'}`}

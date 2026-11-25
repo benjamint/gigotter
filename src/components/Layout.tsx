@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { DEMO, auth, resetDemo } from '../lib/api'
 import { useSession } from '../lib/session'
+import { forgetInvite, pendingInvite } from '../pages/AdminInvite'
 
 export function Logo({ className = '', light = false }: { className?: string; light?: boolean }) {
   return (
@@ -33,6 +34,12 @@ export default function Layout() {
   const loc = useLocation()
   const nav = useNavigate()
   useEffect(() => { setOpen(false); window.scrollTo(0, 0) }, [loc.pathname])
+  // someone who opened an admin invite, then signed up and confirmed their email, lands back on the invite
+  useEffect(() => {
+    if (!user || !profile || profile.role === 'admin' || loc.pathname === '/admin-invite') return
+    const t = pendingInvite()
+    if (t) { forgetInvite(); nav(`/admin-invite?token=${encodeURIComponent(t)}`, { replace: true }) }
+  }, [user, profile, loc.pathname, nav])
   const [hidden, setHidden] = useState(false)
   const { scrollY } = useScroll()
   // hide the header while reading down the page, bring it back as soon as you scroll up

@@ -232,6 +232,13 @@ export interface PointsEntry {
   redemption_id: string | null; note: string | null; created_at: string; emailed_at?: string | null
 }
 
+/** An emailed invite to become an admin (migration 0020). */
+export interface AdminInvite {
+  id: string; email: string; name: string | null; invited_by: string | null; created_at: string; sent_at: string
+  expires_at: string; accepted_at: string | null; accepted_by: string | null; revoked_at: string | null
+}
+export interface AdminInviteInfo { status: 'open' | 'accepted' | 'revoked' | 'expired' | 'invalid'; email?: string; name?: string | null; invited_by?: string }
+
 /** One day of a scheduled gig. date is YYYY-MM-DD (Ghana time); start/end are HH:MM. */
 export interface SessionDay { date: string; label?: string; start?: string; end?: string }
 export type AccountType = 'student' | 'general'

@@ -15,6 +15,7 @@ import Me from './pages/Me'
 import Rewards from './pages/Rewards'
 import MyGig from './pages/MyGig'
 import Verify from './pages/Verify'
+import AdminInvite from './pages/AdminInvite'
 import { Privacy, Terms } from './pages/Legal'
 import { Empty } from './components/ui'
 import { Link } from 'react-router'
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="brief" element={<Page><Brief /></Page>} />
           <Route path="business" element={<Page><Business /></Page>} />
           <Route path="admin" element={<Page><Admin /></Page>} />
+          <Route path="admin-invite" element={<Page><AdminInvite /></Page>} />
           <Route path="admin/gigs/:id" element={<Page><GigResponses /></Page>} />
           <Route path="privacy" element={<Page><Privacy /></Page>} />
           <Route path="terms" element={<Page><Terms /></Page>} />

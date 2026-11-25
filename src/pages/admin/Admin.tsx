@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, BarChart3, Gift, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Share2, Trash2, Users, Wallet, X, Briefcase } from 'lucide-react'
+import { ArrowRight, BarChart3, Gift, Check, Download, Edit3, Inbox, LayoutGrid, Mail, MailWarning, Plus, QrCode, Quote, Share2, Trash2, Users, Wallet, X, Briefcase, UserCog } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
@@ -15,6 +15,7 @@ import Insights from './Insights'
 import Rewards from './Rewards'
 import ShareGig from '../../components/ShareGig'
 import Briefs from './Briefs'
+import Team from './Team'
 import { subTitle } from '../../lib/forms'
 import { csvCell } from '../../lib/security'
 
@@ -28,6 +29,7 @@ const TABS = [
   { k: 'briefs', l: 'Briefs', i: Inbox },
   { k: 'testimonials', l: 'Testimonials', i: Quote },
   { k: 'qr', l: 'QR codes', i: QrCode },
+  { k: 'team', l: 'Team', i: UserCog },
 ] as const
 type Tab = (typeof TABS)[number]['k']
 
@@ -76,6 +78,7 @@ export default function Admin() {
             {tab === 'briefs' && <Briefs reqs={d.requests} reload={data.reload} />}
             {tab === 'testimonials' && <Testimonials />}
             {tab === 'qr' && <QrCodes />}
+            {tab === 'team' && <Team />}
             {tab === 'insights' && <Insights repeat={{ profiles: d.profiles, listings: d.listings, subs: d.subs, payments: d.payments ?? [] }} />}
           </motion.div>
         )}

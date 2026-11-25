@@ -19,7 +19,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   const nav = useNavigate()
   const toast = useToast()
   const { user, profile, refresh } = useSession()
-  const [f, setF] = useState({ name: '', email: '', password: '' })
+  const [f, setF] = useState({ name: '', email: (sp.get('email') ?? '').slice(0, 254), password: '' })
   // student-first, but anyone can join: /signup?type=general preselects "I'm not a student"
   const [acct, setAcct] = useState<'student' | 'general'>(() => (new URLSearchParams(location.search).get('type') === 'general' ? 'general' : 'student'))
   const [show, setShow] = useState(false)
@@ -38,7 +38,8 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   useEffect(() => { const t = setInterval(() => tick((x) => x + 1), 1000); return () => clearInterval(t) }, [])
   useEffect(() => {
     if (!user || !profile) return
-    if (profile.role === 'admin') nav('/admin')
+    if (next.startsWith('/admin-invite')) nav(next)   // finishing an admin invite comes before anything else
+    else if (profile.role === 'admin') nav('/admin')
     else if (profile.kyc_status === 'unverified') nav('/verify')
     else nav(next || '/me')
   }, [user, profile, nav, next])

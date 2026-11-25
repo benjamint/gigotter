@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { AccountType, Application, Insights, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, PointsEntry, QrCode, QrStat, PayoutItem, Profile, Redemption, RewardItem, Submission, SubmissionStatus, Testimonial } from './types'
+import type { AccountType, AdminInvite, AdminInviteInfo, Application, Insights, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, PointsEntry, QrCode, QrStat, PayoutItem, Profile, Redemption, RewardItem, Submission, SubmissionStatus, Testimonial } from './types'
 import { POINTS, WELCOME_POINTS } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
@@ -39,6 +39,7 @@ interface DemoDB {
   rewardItems?: RewardItem[]
   redemptions?: Redemption[]
   pointsLedger?: PointsEntry[]
+  adminInvites?: (AdminInvite & { token: string })[]
 }
 const KEY_DB = 'gigotter-demo-v2'
 const uid = () => crypto.randomUUID()
@@ -767,6 +768,37 @@ export const admin = {
     fail(error)
     return data as string
   },
+  // ─── team: invite admins by email (migration 0020) ───
+  async invites(): Promise<AdminInvite[]> {
+    if (DEMO) return (db().adminInvites ?? []).map(({ token: _t, ...i }) => i).sort((a, b) => b.sent_at.localeCompare(a.sent_at))
+    const { data, error } = await sb!.from('admin_invites').select(INVITE_COLS).order('sent_at', { ascending: false })
+    fail(error); return (data ?? []) as AdminInvite[]
+  },
+  /** Send, or resend, an admin invite. In the demo there's no email, so the invite link is returned instead. */
+  async inviteAdmin(email: string, name: string): Promise<string | null> {
+    const e = email.trim().toLowerCase(), n = name.trim() || null
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw new Error('Enter a valid email address')
+    if (DEMO) {
+      const d = db(); d.adminInvites ??= []
+      if (d.profiles.some((p) => p.email?.toLowerCase() === e && p.role === 'admin')) throw new Error('That person is already an admin')
+      const token = crypto.randomUUID().replace(/-/g, '')
+      const open = d.adminInvites.find((i) => i.email === e && !i.accepted_at && !i.revoked_at)
+      const exp = new Date(Date.now() + 7 * 864e5).toISOString()
+      if (open) Object.assign(open, { token, name: n ?? open.name, sent_at: now(), expires_at: exp, invited_by: d.session })
+      else d.adminInvites.push({ id: uid(), email: e, name: n, token, invited_by: d.session, created_at: now(), sent_at: now(), expires_at: exp, accepted_at: null, accepted_by: null, revoked_at: null })
+      save(); return `${location.origin}/admin-invite?token=${token}`
+    }
+    const { error } = await sb!.rpc('invite_admin', { p_email: e, p_name: n })
+    fail(error); return null
+  },
+  async revokeInvite(id: string) {
+    if (DEMO) {
+      const i = must((db().adminInvites ?? []).find((x) => x.id === id && !x.accepted_at && !x.revoked_at), 'That invite is no longer open')
+      i.revoked_at = now(); return save()
+    }
+    const { error } = await sb!.rpc('revoke_admin_invite', { p_invite: id })
+    fail(error)
+  },
   async submissions(): Promise<Submission[]> {
     let subs: Submission[]
     if (DEMO) subs = [...db().submissions]
@@ -1029,5 +1061,34 @@ export async function saveTestimonial(t: Partial<Testimonial>) {
 export async function deleteTestimonial(id: string) {
   if (DEMO) { const d = db(); d.testimonials = (d.testimonials ?? []).filter((x) => x.id !== id); return save() }
   const { error } = await sb!.from('testimonials').delete().eq('id', id)
+  fail(error)
+}
+
+// ═══════════════════════════ admin invites (migration 0020) ═══════════════════════════
+const INVITE_COLS = 'id,email,name,invited_by,created_at,sent_at,expires_at,accepted_at,accepted_by,revoked_at'
+/** Who an invite link is for, so the accept page can explain what to do. Works logged out. */
+export async function adminInviteInfo(token: string): Promise<AdminInviteInfo> {
+  if (DEMO) {
+    const d = db(), i = (d.adminInvites ?? []).find((x) => x.token === token)
+    if (!i) return { status: 'invalid' }
+    const by = d.profiles.find((p) => p.id === i.invited_by)?.full_name || 'A Gigotter admin'
+    return { status: i.accepted_at ? 'accepted' : i.revoked_at ? 'revoked' : i.expires_at < now() ? 'expired' : 'open', email: i.email, name: i.name, invited_by: by }
+  }
+  const { data, error } = await sb!.rpc('admin_invite_info', { p_token: token })
+  fail(error); return data as AdminInviteInfo
+}
+/** The signed-in person accepts the invite and becomes an admin. Their email must match the invite. */
+export async function acceptAdminInvite(token: string) {
+  if (DEMO) {
+    const d = db(), me = must(demoUser(), 'Log in first, then open the invite link again')
+    const i = must((d.adminInvites ?? []).find((x) => x.token === token), 'This invite link isn’t valid. Ask an admin to send a new one')
+    if (i.accepted_at) throw new Error('This invite has already been used')
+    if (i.revoked_at) throw new Error('This invite was cancelled. Ask an admin to send a new one')
+    if (i.expires_at < now()) throw new Error('This invite has expired. Ask an admin to send a new one')
+    if (me.email.toLowerCase() !== i.email) throw new Error(`This invite is for ${i.email}. Log in with that email to accept it`)
+    must(d.profiles.find((p) => p.id === me.id), 'Profile not found').role = 'admin'
+    i.accepted_at = now(); i.accepted_by = me.id; return save()
+  }
+  const { error } = await sb!.rpc('accept_admin_invite', { p_token: token })
   fail(error)
 }

@@ -28,7 +28,7 @@ export default function Gigs() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
         <div className="eyebrow">Find work</div>
         <h1 className="mt-5 text-[clamp(2.6rem,6vw,4.75rem)] font-semibold leading-[1] tracking-[-0.045em]">Open <span className="em">gigs.</span></h1>
-        <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Paid, clearly scoped work from businesses that need people on the ground.</p>
+        <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Paid jobs from real businesses. Pick one, do it, get paid to MoMo.</p>
       </motion.div>
       {(paid.data?.length ?? 0) >= 3 && <div className="mt-10"><PayoutFeed items={paid.data!} /></div>}
       <div className="mt-10 flex flex-col gap-4 border-y border-line py-4 md:flex-row md:items-center md:justify-between">

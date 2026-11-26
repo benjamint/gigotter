@@ -126,7 +126,7 @@ export default function Layout() {
         <div className="container-x grid gap-10 py-16 md:grid-cols-[1.5fr_1fr_1fr]">
           <div>
             <Logo />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted">Verified students doing real work for real businesses in Ghana. Paid to mobile money.</p>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted">Paid small jobs for students and anyone in Ghana. Paid to mobile money.</p>
           </div>
           <div className="text-sm">
             <div className="mb-4 text-ink-muted">Students</div>

@@ -14,48 +14,48 @@ import type { GigType } from '../lib/types'
 const EASE = [0.22, 1, 0.36, 1] as const
 
 const GOALS: { tag: string; type: GigType; t: string; d: string; cta: string; bg: string; ui: ReactNode }[] = [
-  { tag: 'Sales & customer acquisition', type: 'onboarding', t: 'Get customers signed up, in person.', bg: 'bg-white', cta: 'Start a sales brief',
-    d: 'Customer and merchant sign-ups, lead lists, product sampling, store visits. You get verified contact details with a photo and GPS pin for every visit.',
+  { tag: 'Get customers', type: 'onboarding', t: 'Get customers signed up, in person.', bg: 'bg-white', cta: 'Get customers',
+    d: 'We visit shops and people, show them your product and sign them up. You get their name, number, a photo and the location for every visit.',
     ui: <VisitMock /> },
-  { tag: 'Market & field research', type: 'research', t: 'Surveys, price checks and shelf audits.', bg: 'bg-[#d6e4d9]', cta: 'Start a research brief',
-    d: 'In person, by phone or online. Every answer lands in one spreadsheet, with photos and locations to back it up.',
+  { tag: 'Surveys and price checks', type: 'research', t: 'Surveys and price checks.', bg: 'bg-[#d6e4d9]', cta: 'Plan a survey',
+    d: 'In person, by phone or online. All answers come back in one spreadsheet, with photos and locations.',
     ui: <SheetMock /> },
-  { tag: 'Purchase & product research', type: 'app_testing', t: 'See how people really buy.', bg: 'bg-brand-50', cta: 'Start a product brief',
-    d: 'How people choose and pay, mystery shopping, app and website tests, feedback on new ideas. Structured answers from the people you want to reach.',
+  { tag: 'Product feedback', type: 'app_testing', t: 'See how people really buy.', bg: 'bg-brand-50', cta: 'Get feedback',
+    d: 'Find out how people choose and pay, test your app or website, or try a mystery shop. Clear answers from the people you want to reach.',
     ui: <BarsMock /> },
-  { tag: 'Focus groups & user research', type: 'focus_group', t: 'The right people in the room.', bg: 'bg-[#c9d6c8]', cta: 'Start a focus group brief',
-    d: 'Screen by age, gender, occupation and your own questions. You see every applicant and choose. We handle attendance, check-ins and payment.',
+  { tag: 'Focus groups', type: 'focus_group', t: 'The right people in the room.', bg: 'bg-[#c9d6c8]', cta: 'Plan a focus group',
+    d: 'Choose by age, gender, job and your own questions. You see everyone who applies and pick. We handle attendance and payment.',
     ui: <ShortlistMock /> },
 ]
 
 const QUALITY: [any, string, string][] = [
-  [ShieldCheck, 'Verified people', 'ID and selfie checked before anyone can work. Students first, plus verified non-students when your brief needs them.'],
-  [Camera, 'Proof for every result', 'Photos, GPS pins, contact details or answers to your questions. Duplicates are blocked.'],
-  [Users, 'The right participants', 'Screening questions plus age, gender and occupation filters. You choose who takes part.'],
-  [FileSpreadsheet, 'Data you can use', 'All results in one spreadsheet, ready for your team, your CRM or your report.'],
+  [ShieldCheck, 'Checked people', 'We check everyone’s ID and selfie before they can work. Students, and other adults when you need them.'],
+  [Camera, 'Proof with every job', 'Photos, locations, contact details or answers. We block repeats.'],
+  [Users, 'The right people', 'Choose by age, gender, job or your own questions. You pick who takes part.'],
+  [FileSpreadsheet, 'Results you can use', 'Everything in one spreadsheet, ready for your team.'],
 ]
 
 const STEPS = [
-  { t: 'Send a brief', d: 'Who you want to reach, what you need, where and by when.' },
-  { t: 'Get a plan and quote', d: 'Within 1 business day, including what counts as a valid result.' },
-  { t: 'Verified people do the work', d: 'We write the gig, select people and collect proof as results come in.' },
-  { t: 'Pay for approved results', d: 'Every result reviewed. You get a clean spreadsheet.' },
+  { t: 'Tell us what you need', d: 'Who you want to reach, what you need, where and by when.' },
+  { t: 'Get a plan and price', d: 'Within 1 working day, including what counts as finished work.' },
+  { t: 'Our people do the work', d: 'We post the job, pick the people and collect proof as work comes in.' },
+  { t: 'Pay for approved work', d: 'We check every job. You get one clean spreadsheet.' },
 ]
 
 const PACKAGES = [
-  { name: 'Pilot', label: 'Try us', tag: 'One small project to see how we work.', points: ['One location or audience', 'Up to about 50 results', 'Results within days'] },
-  { name: 'Project', label: 'Most popular', tag: 'One-off campaigns of any size.', popular: true, points: ['Several areas or audiences', 'Screening and participant selection', 'Focus groups and multi-day studies', 'Progress updates as results come in'] },
-  { name: 'Ongoing', label: 'Every month', tag: 'Research or sales support all year.', points: ['A dedicated Gigotter contact', 'Priority recruiting', 'Monthly reports'] },
+  { name: 'Pilot', label: 'Try us', tag: 'One small project to see how we work.', points: ['One location or audience', 'Up to about 50 jobs done', 'Results within days'] },
+  { name: 'Project', label: 'Most popular', tag: 'One project of any size.', popular: true, points: ['Several areas or groups of people', 'We find and pick the right people', 'Focus groups and studies over several days', 'Updates as work comes in'] },
+  { name: 'Ongoing', label: 'Every month', tag: 'Research or sales support all year.', points: ['One Gigotter contact person', 'First pick of our people', 'Monthly reports'] },
 ]
 
 const QA: [string, string][] = [
-  ['How quickly can you start?', 'We reply to every brief within 1 business day. Simple projects like surveys or sign-ups can usually start within 48 hours of your go-ahead; focus groups need a few days to recruit and screen.'],
-  ['Where do you work?', 'Mainly Accra, with Kumasi, Tema and other cities on request. Phone surveys, online research and app testing can be done from anywhere in Ghana.'],
-  ['Who does the work?', 'Verified students from universities across Ghana, plus verified non-students when a project needs a wider audience, for example working adults or parents. Everyone is ID and selfie checked.'],
-  ['How do you make sure the data is real?', 'Each project sets what proof is needed: photos, GPS pins, contact details, answers to your questions. Duplicate answers are blocked, and our team reviews every result before it counts.'],
-  ['What if a result isn’t good enough?', 'We agree what counts as a valid result before we start. Anything that doesn’t meet it is redone or not charged. You only pay for approved results.'],
-  ['How does pricing and payment work?', 'Every quote is per approved result, with a total budget cap, so you never pay more than agreed. New clients usually pay upfront for a pilot; repeat clients can pay part on approval.'],
-  ['Can you sign an NDA or data agreement?', 'Yes. Mention it in your brief and we’ll sign before the project starts. Participants only see what they need to do the work.'],
+  ['How quickly can you start?', 'We reply within 1 working day. Surveys and sign-ups can usually start within 48 hours. Focus groups need a few days to find the right people.'],
+  ['Where do you work?', 'Mainly Accra, plus Kumasi, Tema and other cities if you ask. Phone, online and app work can be done from anywhere in Ghana.'],
+  ['Who does the work?', 'Students from universities across Ghana, plus other adults, like workers or parents, when you need them. We check everyone’s ID and selfie.'],
+  ['How do you know the work is real?', 'Each job asks for proof, like a photo, a location or contact details. We block repeats and check every piece before it counts.'],
+  ['What if the work isn’t good enough?', 'We agree what counts as finished work before we start. Anything that falls short is redone or not charged.'],
+  ['How does pricing and payment work?', 'You pay per approved job, with a total price that won’t go up. New clients usually pay upfront for a pilot. Repeat clients can pay part later.'],
+  ['Can you sign an NDA or data agreement?', 'Yes. Tell us and we’ll sign before we start. Our people only see what they need to do the work.'],
 ]
 
 export default function Business({ toForm = false }: { toForm?: boolean }) {
@@ -79,15 +79,15 @@ export default function Business({ toForm = false }: { toForm?: boolean }) {
       <HeroOlive>
         <div className="grid items-center gap-12 md:grid-cols-[1.05fr_.95fr] md:gap-16">
           <div>
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }} className="eyebrow">For businesses, researchers and agencies</motion.div>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }} className="eyebrow">For businesses</motion.div>
             <h1 className="mt-6 text-[clamp(2.5rem,5.6vw,4.6rem)] font-semibold leading-[1.02] tracking-[-0.045em]">
-              <SplitReveal delay={0.1}>Real data and real customers, <span className="em">collected on the ground</span> in Ghana.</SplitReveal>
+              <SplitReveal delay={0.1}>Trusted people to <span className="em">get your work done</span> in Ghana.</SplitReveal>
             </h1>
             <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.7, ease: EASE }} className="mt-6 max-w-xl text-lg leading-relaxed text-ink-muted md:text-xl">
-              Verified people who sign up your customers, run your surveys, check shelves and prices, and fill your focus groups, with proof for every result. You only pay for approved work.
+              Our checked people sign up your customers, run your surveys, visit shops and fill your focus groups. You get a photo and location for each job, and only pay for work that passes our check.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.7, ease: EASE }} className="mt-9 flex flex-wrap gap-3">
-              <Magnetic><button type="button" onClick={() => toBrief()} className="btn-primary px-7 py-3.5">Post a brief <ArrowRight className="h-4 w-4" /></button></Magnetic>
+              <Magnetic><button type="button" onClick={() => toBrief()} className="btn-primary px-7 py-3.5">Tell us what you need <ArrowRight className="h-4 w-4" /></button></Magnetic>
               <button type="button" onClick={() => scrollToEl(document.getElementById('pricing'))} className="btn-ghost px-7 py-3.5">See pricing</button>
             </motion.div>
           </div>
@@ -98,7 +98,7 @@ export default function Business({ toForm = false }: { toForm?: boolean }) {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.8, ease: EASE }}
               className="absolute bottom-0 left-3 w-[min(290px,80%)] motion-safe:animate-float rounded-[22px] border border-line bg-white p-4 shadow-[0_18px_50px_-24px_rgba(16,41,31,.35)] md:-left-5">
               <div className="flex items-center justify-between text-sm"><b className="font-semibold">Price check · results</b><span className="chip bg-sand text-ink-muted">Example</span></div>
-              <div className="mt-3 flex justify-between text-sm"><span className="text-ink-muted">Approved results</span><b className="tabular-nums">38</b></div>
+              <div className="mt-3 flex justify-between text-sm"><span className="text-ink-muted">Approved</span><b className="tabular-nums">38</b></div>
               <div className="mt-1.5 flex justify-between text-sm"><span className="text-ink-muted">Pharmacies visited</span><b className="tabular-nums">41 of 50</b></div>
             </motion.div>
           </div>
@@ -106,13 +106,13 @@ export default function Business({ toForm = false }: { toForm?: boolean }) {
       </HeroOlive>
 
       <section className="container-x pt-14">
-        <StatStrip items={[[1, ' day', 'To get your plan and quote'], [48, 'h', 'To start simple projects'], [100, '%', 'Of results reviewed by us'], [0, '', 'For results you reject', '₵']]} />
+        <StatStrip items={[[1, ' day', 'To get a plan and price'], [48, 'h', 'To start simple jobs'], [100, '%', 'Of work checked by us'], [0, '', 'For work you reject', '₵']]} />
       </section>
 
       {/* ───────── GOALS ───────── */}
       <section className="container-x py-24 md:py-32">
-        <Reveal><SectionHead eyebrow="What we do" title={<SplitReveal inView>What do you need to <span className="em">find out,</span> or get done?</SplitReveal>}
-          body="Most projects mix a little of each. We shape every one around your brief." /></Reveal>
+        <Reveal><SectionHead eyebrow="What we do" title={<SplitReveal inView>What do you need <span className="em">done?</span></SplitReveal>}
+          body="Pick one or mix them. We plan each job around what you need." /></Reveal>
         <StackCards>
           {GOALS.map((g) => (
             <article key={g.tag} className={`grid items-center gap-8 rounded-[28px] border border-line p-6 md:grid-cols-2 md:gap-14 md:p-12 ${g.bg}`}>
@@ -133,8 +133,8 @@ export default function Business({ toForm = false }: { toForm?: boolean }) {
         <div className="container-x">
           <Reveal>
             <div className="eyebrow !text-white/60 before:!bg-brand-200">Quality</div>
-            <h2 className="mt-4 max-w-3xl text-[clamp(2.1rem,4.8vw,3.6rem)] leading-[1.04] tracking-[-0.035em] text-white">Every result is checked <span className="text-brand-200">before you pay.</span></h2>
-            <p className="mt-5 max-w-xl text-lg text-white/65">Fieldwork is only useful if it’s real. Everything we do is built around checking it.</p>
+            <h2 className="mt-4 max-w-3xl text-[clamp(2.1rem,4.8vw,3.6rem)] leading-[1.04] tracking-[-0.035em] text-white">We check every job <span className="text-brand-200">before you pay.</span></h2>
+            <p className="mt-5 max-w-xl text-lg text-white/65">Work done in person is only useful if it’s real. So we check all of it.</p>
           </Reveal>
           <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {QUALITY.map(([I, t, d], i) => (
@@ -152,7 +152,7 @@ export default function Business({ toForm = false }: { toForm?: boolean }) {
 
       {/* ───────── STEPS ───────── */}
       <section className="container-x py-24 md:py-32">
-        <Reveal><SectionHead eyebrow="How it works" title={<SplitReveal inView>From brief to results in four steps.</SplitReveal>} /></Reveal>
+        <Reveal><SectionHead eyebrow="How it works" title={<SplitReveal inView>How it works, in four steps.</SplitReveal>} /></Reveal>
         <div className="relative mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div aria-hidden className="absolute left-0 right-0 top-[5px] hidden h-0.5 bg-line lg:block" />
           {STEPS.map((s, i) => (
@@ -168,8 +168,8 @@ export default function Business({ toForm = false }: { toForm?: boolean }) {
 
       {/* ───────── PRICING ───────── */}
       <section id="pricing" className="container-x scroll-mt-24 pb-24 md:pb-32">
-        <Reveal><SectionHead eyebrow="Pricing" title={<SplitReveal inView>Priced per approved result. <span className="em">Quoted for your brief.</span></SplitReveal>}
-          body="You always get a price per approved result and a total budget cap, so you never pay for work that doesn’t meet the brief." /></Reveal>
+        <Reveal><SectionHead eyebrow="Pricing" title={<SplitReveal inView>Pay per finished job. <span className="em">Priced for your project.</span></SplitReveal>}
+          body="You get a price per job and a total that won’t go up. You never pay for work that fails our check." /></Reveal>
         <div className="mt-12 grid gap-4 lg:grid-cols-3">
           {PACKAGES.map((p, i) => (
             <Reveal key={p.name} delay={i * 0.08} className="h-full">
@@ -187,18 +187,18 @@ export default function Business({ toForm = false }: { toForm?: boolean }) {
             </Reveal>
           ))}
         </div>
-        <p className="mt-6 flex items-center gap-2 text-sm text-ink-muted"><MapPin className="h-4 w-4" />Venue, refreshments, transport and samples are passed through at cost. Prefer to talk first? Email hello@gigotter.com.</p>
+        <p className="mt-6 flex items-center gap-2 text-sm text-ink-muted"><MapPin className="h-4 w-4" />Venue, food, transport and samples are charged at what they cost us. Prefer to talk first? Email hello@gigotter.com.</p>
       </section>
 
-      <FAQ items={QA} title="Questions from businesses." body="Anything else? Email hello@gigotter.com and we’ll get back to you within a business day." />
+      <FAQ items={QA} title="Questions from businesses." body="Anything else? Email hello@gigotter.com and we’ll reply within 1 working day." />
 
       {/* ───────── BRIEF ───────── */}
       <section className="container-x grid gap-10 pb-8 lg:grid-cols-[.85fr_1.15fr]">
         <Reveal>
           <SectionHead eyebrow="Get started" title={<>Tell us what you <span className="em">need.</span></>}
-            body="Share as much or as little as you have. We’ll call or WhatsApp you within 1 business day with a plan and a quote. No commitment until you say go." />
+            body="Share what you have. We’ll call or WhatsApp you within 1 working day with a plan and a price. Nothing is final until you say go." />
           <ul className="mt-8 space-y-3">
-            {['A plan and what counts as a valid result', 'A price per result and a total budget cap', 'A timeline you can hold us to'].map((t) => (
+            {['A plan, and what counts as finished work', 'A price per job and a total that won’t go up', 'A timeline we stick to'].map((t) => (
               <li key={t} className="flex items-center gap-3 font-medium"><span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-600"><Check className="h-4 w-4" /></span>{t}</li>
             ))}
           </ul>

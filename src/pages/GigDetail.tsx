@@ -173,7 +173,7 @@ export default function GigDetail() {
             )}
           </motion.div>
           <button type="button" onClick={() => setSharing(true)} className="btn-ghost mt-3 w-full py-3"><Share2 className="h-4 w-4" />Share this gig</button>
-          <p className="mt-4 px-1 text-xs leading-relaxed text-ink-muted">{apply ? 'Applying doesn’t guarantee a place. If you’re selected and can’t make it, let us know so someone else can take your place.' : 'Joining reserves a spot. If you can’t complete it, withdraw from your dashboard so someone else can take it.'}</p>
+          <p className="mt-4 px-1 text-xs leading-relaxed text-ink-muted">{apply ? 'Applying doesn’t promise a place. If you’re picked and can’t make it, tell us so someone else can go.' : 'Joining saves you a spot. If you can’t finish, give up your spot from your dashboard.'}</p>
         </aside>
         <ShareGig listing={l} open={sharing} onClose={() => setSharing(false)} />
         <ApplyForm listing={l} open={applying} onClose={() => setApplying(false)} onApplied={() => apps.reload()} />

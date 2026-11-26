@@ -32,7 +32,7 @@ export default function Rewards() {
         <div>
           <div className="eyebrow">Rewards</div>
           <h1 className="mt-5 text-[clamp(2.6rem,6vw,4.75rem)] font-semibold leading-[1] tracking-[-0.045em]">Spend your <span className="em">points.</span></h1>
-          <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Earn Gigotter points on quick gigs, then swap them for airtime, data and goodies from our partners.</p>
+          <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Earn points on some gigs. Swap them for airtime, data and more.</p>
         </div>
         {user ? (
           <div className="w-full md:w-[22rem]">
@@ -123,7 +123,7 @@ function RedeemSheet({ item, balance, verified, phone: defPhone, onClose, onDone
       ) : !verified ? (
         <div>
           <h3 className="pr-10 text-xl font-semibold">Verify your account first</h3>
-          <p className="mt-2 text-sm text-ink-muted">To keep rewards safe, only verified members can redeem. It takes about 2 minutes.</p>
+          <p className="mt-2 text-sm text-ink-muted">To keep rewards safe, only verified members can redeem. It takes about 5 minutes.</p>
           <Link to="/verify" className="btn-brand mt-6 w-full">Verify now</Link>
         </div>
       ) : (

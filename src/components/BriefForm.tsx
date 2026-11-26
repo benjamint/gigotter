@@ -54,7 +54,7 @@ export default function BriefForm({ preset }: { preset?: BriefPreset }) {
     {done ? (
       <div className="grid min-h-[24rem] place-items-center text-center">
         <div><div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600"><Check className="h-5 w-5" /></div>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tightest">Brief received</h2><p className="mt-2 text-ink-muted">We’ll call or WhatsApp you within 1 business day with a plan and quote.</p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tightest">Got it, thanks</h2><p className="mt-2 text-ink-muted">We’ll call or WhatsApp you within 1 working day with a plan and a price.</p>
           {failed.length > 0 && <p className="mx-auto mt-4 max-w-sm rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Your brief was sent, but {failed.length === 1 ? 'one file' : `${failed.length} files`} didn’t upload. Please email {failed.length === 1 ? 'it' : 'them'} to hello@gigotter.com.</p>}</div>
       </div>
     ) : (

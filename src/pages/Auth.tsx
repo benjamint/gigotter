@@ -102,7 +102,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
     <Shell>
       <div className="grid h-12 w-12 place-items-center rounded-full bg-brand-50 text-brand-600"><MailCheck className="h-5 w-5" /></div>
       <h1 className="mt-6 text-3xl font-semibold tracking-tightest">Check your inbox</h1>
-      <p className="mt-2 text-ink-muted">We sent a link to <b>{f.email}</b>. Tap it to confirm and continue to verification. It can take a minute — check spam too.</p>
+      <p className="mt-2 text-ink-muted">We sent a link to <b>{f.email}</b>. Tap it to confirm your email. It can take a minute, so check spam too.</p>
       <div className="mt-6"><Captcha onToken={setCaptcha} resetKey={captchaKey} /></div>
       <button onClick={resend} disabled={busy || resendWait > 0} className="btn-ghost mt-4 w-full">
         {busy ? <Spinner /> : resendWait ? `Resend email in ${resendWait}s` : 'Resend email'}
@@ -130,7 +130,7 @@ export default function AuthPage({ mode }: { mode: 'login' | 'signup' }) {
   return (
     <Shell>
       <h1 className="text-3xl font-semibold tracking-tightest md:text-4xl">{signup ? <>Create your <span className="em text-brand-600">account</span></> : <>Welcome <span className="em text-brand-600">back</span></>}</h1>
-      <p className="mt-2 text-ink-muted">{signup ? 'Start earning from real work. Verification comes next.' : 'Log in to see your gigs and earnings.'}</p>
+      <p className="mt-2 text-ink-muted">{signup ? 'Free to join. Next, we’ll check your ID.' : 'Log in to see your gigs and earnings.'}</p>
       <form onSubmit={submit} className="mt-8 space-y-4">
         {signup && (
           <div role="radiogroup" aria-label="Account type" className="grid grid-cols-2 gap-1 rounded-2xl bg-sand p-1">
@@ -183,7 +183,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         <Photo src={IMG.auth} alt="Students on campus" label="auth.jpg" tone="dark" className="absolute inset-0" />
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-10 text-white">
           <p className="font-display text-4xl font-semibold leading-tight tracking-tight">Real work. Real businesses.<br />Paid to your mobile money.</p>
-          <p className="mt-4 text-sm text-white/70">Verified students across Ghana and Nigeria</p>
+          <p className="mt-4 text-sm text-white/70">Checked people across Ghana</p>
         </div>
       </motion.div>
     </div>

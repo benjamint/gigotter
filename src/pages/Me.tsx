@@ -77,7 +77,7 @@ export default function Me() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-ink p-5 bg-brand-50`}>
           <div className="flex items-center gap-3"><ShieldAlert className="h-6 w-6" />
             <div><div className="font-semibold">{profile.kyc_status === 'rejected' ? 'Verification needs a fix' : 'Finish verification to unlock gigs'}</div>
-              <div className="text-sm text-ink-muted">{profile.kyc_note ?? 'Takes 2 minutes.'}</div></div>
+              <div className="text-sm text-ink-muted">{profile.kyc_note ?? 'Takes about 5 minutes.'}</div></div>
           </div>
         </motion.div>
       )}

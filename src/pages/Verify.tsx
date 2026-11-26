@@ -145,7 +145,7 @@ export default function Verify() {
                     </>
                   )}
                 </div>
-                <p className="mt-4 text-xs text-ink-muted">Your age, gender and occupation help match you to gigs that are looking for people like you. Only the Gigotter team sees them.</p>
+                <p className="mt-4 text-xs text-ink-muted">This helps us match you to the right gigs. Only our team sees it.</p>
               </div>
             )}
             {cur === 'id' && (
@@ -168,7 +168,7 @@ export default function Verify() {
             )}
             {cur === 'momo' && (
               <div>
-                <StepHead n={step + 1} of={STEPS.length} t="Where should we send your money?" d="The name on your MoMo account must match your ID — that’s how we keep payouts safe." />
+                <StepHead n={step + 1} of={STEPS.length} t="Where should we send your money?" d="The name on your MoMo must match your ID. This keeps your money safe." />
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {MOMO_PROVIDERS.map((p) => (
                     <button type="button" key={p} onClick={() => setF({ ...f, momo_provider: p })}

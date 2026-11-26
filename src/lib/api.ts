@@ -692,8 +692,8 @@ export async function myPoints(): Promise<{ balance: number; entries: PointsEntr
 }
 /** Today's date in Ghana (same as UTC), YYYY-MM-DD. */
 export const ghanaDay = () => new Date().toISOString().slice(0, 10)
-/** Give the signed-in member today's login point, once a day (verified members only). */
-export async function claimDailyPoint(): Promise<{ awarded: boolean; points: number; balance: number }> {
+/** Give the signed-in member today's login point, once a day (verified members only). null = no answer (offline, error): try again later. */
+export async function claimDailyPoint(): Promise<{ awarded: boolean; points: number; balance: number } | null> {
   if (DEMO) {
     const u = demoUser(), d = demoStore(), p = u && d.profiles.find((x) => x.id === u.id)
     if (!u || !p || p.role === 'admin' || p.kyc_status !== 'verified') return { awarded: false, points: DAILY_POINTS, balance: 0 }
@@ -703,7 +703,7 @@ export async function claimDailyPoint(): Promise<{ awarded: boolean; points: num
     return { awarded, points: DAILY_POINTS, balance: balanceOf(d.pointsLedger.filter((e) => e.student_id === u.id)) }
   }
   const { data, error } = await sb!.rpc('claim_daily_point')
-  if (error) return { awarded: false, points: DAILY_POINTS, balance: 0 }   // not set up yet, or offline: stay quiet
+  if (error) return null   // offline or not set up: stay quiet, and let the next visit try again
   return data as { awarded: boolean; points: number; balance: number }
 }
 /** The signed-in student's reward requests, newest first. */

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ArrowRight, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { claimDailyPoint, ghanaDay } from '../lib/api'
 import { points } from '../lib/format'
@@ -18,12 +18,17 @@ export default function DailyPoint() {
   const { user, profile } = useSession()
   const [won, setWon] = useState<{ points: number; balance: number } | null>(null)
   const eligible = !!user && profile?.kyc_status === 'verified' && profile.role !== 'admin'
+  const asking = useRef(false)
 
   const check = useCallback(async () => {
-    if (!eligible || !user || seen(user.id)) return
-    markSeen(user.id)   // one try per day per device; the server decides whether a point is due
-    const r = await claimDailyPoint()
-    if (r.awarded) { setWon({ points: r.points, balance: r.balance }); window.dispatchEvent(new Event(POINTS_EVENT)) }
+    if (!eligible || !user || seen(user.id) || asking.current) return
+    asking.current = true
+    try {
+      const r = await claimDailyPoint()
+      if (!r) return                 // no answer: don't remember the day, so the next visit tries again
+      markSeen(user.id)              // the server answered; it alone decides whether a point is due
+      if (r.awarded) { setWon({ points: r.points, balance: r.balance }); window.dispatchEvent(new Event(POINTS_EVENT)) }
+    } finally { asking.current = false }
   }, [eligible, user])
 
   useEffect(() => {

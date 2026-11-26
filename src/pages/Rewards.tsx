@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Check, Gift } from 'lucide-react'
+import { ArrowRight, Check, Gift, Info, ShieldCheck } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { Empty, Modal, PageLoader, Spinner, useToast } from '../components/ui'
@@ -18,6 +18,7 @@ export default function Rewards() {
   const bal = useAsync(() => (user ? myPoints() : Promise.resolve(null)), [user?.id])
   const [cat, setCat] = useState<RewardCategory | 'all'>('all')
   const [pick, setPick] = useState<RewardItem | null>(null)
+  const [how, setHow] = useState(false)
   const all = items.data ?? []
   const cats = (['all', ...Object.keys(REWARD_CATEGORIES)] as (RewardCategory | 'all')[]).filter((c) => c === 'all' || all.some((i) => i.category === c))
   const list = useMemo(() => all.filter((i) => cat === 'all' || i.category === cat), [all, cat])
@@ -33,6 +34,7 @@ export default function Rewards() {
           <div className="eyebrow">Rewards</div>
           <h1 className="mt-5 text-[clamp(2.6rem,6vw,4.75rem)] font-semibold leading-[1] tracking-[-0.045em]">Spend your <span className="em">points.</span></h1>
           <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Earn points on some gigs. Swap them for airtime, data and more.</p>
+          <button type="button" onClick={() => setHow(true)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline-offset-4 hover:underline"><Info className="h-4 w-4 text-brand-700" />How rewards work</button>
         </div>
         {user ? (
           <div className="w-full md:w-[22rem]">
@@ -91,6 +93,7 @@ export default function Rewards() {
           </div>
         )}
       </div>
+      <HowRewards open={how} onClose={() => setHow(false)} />
       <RedeemSheet item={pick} balance={balance} verified={verified} phone={profile?.momo_number || profile?.phone || ''} onClose={() => setPick(null)} onDone={() => { setPick(null); bal.reload(); items.reload() }} />
     </div>
   )
@@ -138,6 +141,37 @@ function RedeemSheet({ item, balance, verified, phone: defPhone, onClose, onDone
           <button className="btn-brand w-full" disabled={busy}>{busy && <Spinner />}Confirm · {points(item.points_cost)}</button>
         </form>
       ))}
+    </Modal>
+  )
+}
+
+const HOW: [string, string][] = [
+  ['Earn points', 'Some gigs pay in Gigotter points. They’re added when your work is approved.'],
+  ['Pick a reward', 'Swap your points for airtime, data, vouchers or Gigotter merch.'],
+  ['We send it to you', 'Gigotter buys the reward and sends it to you. We’ll email you when it’s on its way.'],
+]
+
+/** What rewards are, and that the brands shown aren't partners. */
+function HowRewards({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose}>
+      <div className="pr-10">
+        <span className="grid h-11 w-11 place-items-center rounded-full bg-brand-50 text-brand-700"><Gift className="h-5 w-5" /></span>
+        <h3 className="mt-4 text-xl font-semibold">How rewards work</h3>
+      </div>
+      <ol className="mt-5 space-y-4">
+        {HOW.map(([t, d], i) => (
+          <li key={t} className="flex gap-3">
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand-700 text-xs font-semibold text-white">{i + 1}</span>
+            <div><div className="font-medium">{t}</div><p className="mt-0.5 text-sm text-ink-muted">{d}</p></div>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-6 rounded-2xl border border-line bg-paper p-4">
+        <div className="flex items-center gap-2 text-sm font-medium"><ShieldCheck className="h-4 w-4 text-brand-700" />About the brands you see</div>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">Gigotter buys every reward with its own money. We’re not partnered with, sponsored by or endorsed by MTN, Melcom or any other brand shown here. Brand names and logos belong to their owners and are shown only so you know what you’re getting.</p>
+      </div>
+      <button type="button" className="btn-brand mt-6 w-full" onClick={onClose}>Got it</button>
     </Modal>
   )
 }

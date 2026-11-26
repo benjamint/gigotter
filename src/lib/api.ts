@@ -1007,6 +1007,12 @@ export const admin = {
     fail(error); return data as { sent: number; remaining: number }
   },
   /** Every points movement (for balances and totals). Empty if migration 0018 hasn't been run. */
+  /** One member's points history, newest first (admin view). */
+  async studentPoints(id: string): Promise<PointsEntry[]> {
+    if (DEMO) return demoStore().pointsLedger.filter((e) => e.student_id === id).sort((a, b) => b.created_at.localeCompare(a.created_at))
+    const { data, error } = await sb!.from('points_ledger').select('*').eq('student_id', id).order('created_at', { ascending: false })
+    fail(error); return data ?? []
+  },
   async pointsLedger(): Promise<PointsEntry[]> {
     if (DEMO) return [...demoStore().pointsLedger]
     const { data, error } = await sb!.from('points_ledger').select('*')

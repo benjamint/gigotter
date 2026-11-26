@@ -5,7 +5,7 @@ import { Link, Navigate, useSearchParams } from 'react-router'
 import { CountUp, Empty, KycPill, Modal, PageLoader, Spinner, SubPill, useToast } from '../../components/ui'
 import { admin, deleteListing, deleteTestimonial, fileUrl, listListings, listTestimonials, saveTestimonial } from '../../lib/api'
 import Photo from '../../components/Photo'
-import { ago, coverFor, money, payLine, spotsLeft, timeLeft, plural } from '../../lib/format'
+import { ago, coverFor, money, payLine, points, spotsLeft, timeLeft, plural } from '../../lib/format'
 import { useAsync, useSession } from '../../lib/session'
 import { GENDERS, POINTS, WORK_STATUSES, type KycStatus, type Listing, type Payment, type Profile, type Submission } from '../../lib/types'
 import { accountOf, ageOf } from '../../lib/audience'
@@ -163,6 +163,36 @@ function Overview({ d, go }: { d: any; go: (t: Tab) => void }) {
 }
 
 // ═════════════ students / KYC ═════════════
+/** A verified member's points: balance, where they came from, and what was spent. */
+function PointsPanel({ id }: { id: string }) {
+  const led = useAsync(() => admin.studentPoints(id), [id])
+  if (led.error) return null
+  const e = led.data ?? []
+  const sum = (...k: string[]) => e.filter((x) => k.includes(x.kind)).reduce((a, x) => a + x.delta, 0)
+  const balance = e.reduce((a, x) => a + x.delta, 0)
+  const daily = e.filter((x) => x.kind === 'daily')
+  const rows: [string, string][] = [
+    ['From gigs', points(sum('earned', 'reversed'))],
+    ['Daily logins', `${points(sum('daily'))}${daily.length ? ` · last ${ago(daily[0].created_at)}` : ''}`],
+    ['Welcome bonus', points(sum('welcome'))],
+    ['Spent on rewards', points(-sum('redeemed', 'refund'))],
+    ...(sum('adjust') ? [['Adjustments', points(sum('adjust'))] as [string, string]] : []),
+  ]
+  return (
+    <div className="mt-5 grid gap-4 rounded-2xl bg-[#FDF3D3] p-4 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-8">
+      <div>
+        <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-muted"><Gift className="h-3.5 w-3.5" />Points balance</div>
+        <div className="mt-1 font-display text-4xl font-semibold leading-none tracking-tight tabular-nums">{led.loading ? '…' : points(balance)}</div>
+      </div>
+      {!led.loading && (
+        <div className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+          {rows.map(([k, v]) => <div key={k} className="flex justify-between gap-3 border-b border-ink/10 py-1"><span className="text-ink-muted">{k}</span><span className="text-right font-semibold tabular-nums">{v}</span></div>)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Students({ profiles, reload }: { profiles: Profile[]; reload: () => void }) {
   const [f, setF] = useState<KycStatus | 'all'>('pending')
   const [t, setT] = useState<'all' | 'student' | 'general'>('all')
@@ -243,6 +273,7 @@ function KycReview({ p, onClose, onDone, onEmailed }: { p: Profile | null; onClo
     <Modal open={!!p} onClose={onClose} wide>
       <div className="flex flex-wrap items-center gap-3"><h2 className="text-2xl font-semibold">{p.full_name}</h2><KycPill s={p.kyc_status} /><span className={`chip ${general ? 'bg-[#e8eedd] text-[#46602c]' : 'bg-brand-50 text-brand-700'}`}>{general ? 'Non-student' : 'Student'}</span></div>
       <p className="text-sm text-ink-muted">{p.email} · {p.phone}</p>
+      {p.kyc_status === 'verified' && <PointsPanel id={p.id} />}
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {(general ? [['Selfie', img.selfie], ['Ghana Card', img.id]] as const : [['Selfie', img.selfie], ['ID card', img.id], ['Student card', img.student]] as const).map(([k, u]) => (
           <div key={k}><div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-muted">{k}</div>

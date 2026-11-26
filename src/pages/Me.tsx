@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Copy, Gift, Receipt, ShieldAlert, Sparkles } from 'lucide-react'
+import { useEffect } from 'react'
 import { Link, Navigate } from 'react-router'
+import { POINTS_EVENT } from '../components/DailyPoint'
 import { CountUp, Empty, KycPill, PageLoader, Progress, SubPill, useToast } from '../components/ui'
 import { myApplications, myClaims, myPayments, myPoints, myRedemptions, updateMyProfile } from '../lib/api'
 import Photo from '../components/Photo'
@@ -21,9 +23,9 @@ function RewardsTile({ kyc, data, name, code }: { kyc: KycStatus; data: { balanc
   const head = state === 'has' ? (welcomeOnly ? '🎁 Your welcome bonus is on your card' : 'Your points are ready to spend')
     : state === 'empty' ? 'Your card is ready for more' : state === 'review' ? 'Verification in review' : 'Activate your Otter Card'
   const note = state === 'has' ? 'Swap your points for airtime, vouchers and Gigotter merch in Rewards.'
-    : state === 'empty' ? 'Earn points on quick gigs, then spend them in Rewards.'
+    : state === 'empty' ? 'Get 1 point every day you log in, and more on points gigs. Spend them in Rewards.'
     : state === 'review' ? `Hang tight, usually under 24 hours. Your ${WELCOME_POINTS} welcome points arrive as soon as you’re approved.`
-    : `Get verified and we’ll add ${WELCOME_POINTS} welcome points to your card.`
+    : `Get verified and we’ll add ${WELCOME_POINTS} welcome points to your card, plus 1 point every day you log in.`
   return (
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className="mt-6 grid items-center gap-6 rounded-[32px] bg-white p-4 shadow-[0_20px_50px_-36px_rgba(16,41,31,.45)] ring-1 ring-line sm:p-6 md:grid-cols-[minmax(0,30rem),1fr] md:gap-10">
@@ -45,6 +47,8 @@ export default function Me() {
   const pays = useAsync(() => (user ? myPayments() : Promise.resolve([])), [user?.id])
   const apps = useAsync(() => (user ? myApplications() : Promise.resolve([])), [user?.id])
   const pts = useAsync(() => (user ? Promise.all([myPoints(), myRedemptions()]) : Promise.resolve(null)), [user?.id])
+  // refresh the card when today's login point lands
+  useEffect(() => { const on = () => pts.reload(); window.addEventListener(POINTS_EVENT, on); return () => window.removeEventListener(POINTS_EVENT, on) }, [pts.reload])
   if (loading) return <PageLoader />
   if (!user) return <Navigate to="/login?next=/me" replace />
   if (!profile || l2) return <PageLoader />

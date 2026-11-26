@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { AccountType, AdminInvite, AdminInviteInfo, Application, Insights, ApplicationStatus, Claim, ClientRequest, KycStatus, Listing, ListingFile, Payment, PointsEntry, QrCode, QrStat, PayoutItem, Profile, Redemption, RewardItem, Submission, SubmissionStatus, Testimonial } from './types'
-import { POINTS, WELCOME_POINTS } from './types'
+import { DAILY_POINTS, POINTS, WELCOME_POINTS } from './types'
 import { seedListings } from './seed'
 import { photoRuleOf, schemaOf, subTitle, validateAnswers } from './forms'
 import { accountOf, audienceAllows, audienceMessage, audienceOf } from './audience'
@@ -690,6 +690,22 @@ export async function myPoints(): Promise<{ balance: number; entries: PointsEntr
   entries = [...entries].sort((a, b) => b.created_at.localeCompare(a.created_at))
   return { balance: balanceOf(entries), entries }
 }
+/** Today's date in Ghana (same as UTC), YYYY-MM-DD. */
+export const ghanaDay = () => new Date().toISOString().slice(0, 10)
+/** Give the signed-in member today's login point, once a day (verified members only). */
+export async function claimDailyPoint(): Promise<{ awarded: boolean; points: number; balance: number }> {
+  if (DEMO) {
+    const u = demoUser(), d = demoStore(), p = u && d.profiles.find((x) => x.id === u.id)
+    if (!u || !p || p.role === 'admin' || p.kyc_status !== 'verified') return { awarded: false, points: DAILY_POINTS, balance: 0 }
+    const mine = d.pointsLedger.filter((e) => e.student_id === u.id)
+    const awarded = !mine.some((e) => e.kind === 'daily' && e.created_at.slice(0, 10) === ghanaDay())
+    if (awarded) { d.pointsLedger.push(ledgerEntry({ student_id: u.id, delta: DAILY_POINTS, kind: 'daily', note: 'Daily login point' })); save() }
+    return { awarded, points: DAILY_POINTS, balance: balanceOf(d.pointsLedger.filter((e) => e.student_id === u.id)) }
+  }
+  const { data, error } = await sb!.rpc('claim_daily_point')
+  if (error) return { awarded: false, points: DAILY_POINTS, balance: 0 }   // not set up yet, or offline: stay quiet
+  return data as { awarded: boolean; points: number; balance: number }
+}
 /** The signed-in student's reward requests, newest first. */
 export async function myRedemptions(): Promise<Redemption[]> {
   const u = await auth.user(); if (!u) return []
@@ -957,6 +973,22 @@ export const admin = {
     fail(error)
   },
   /** Already-verified members whose welcome points haven't been emailed about yet (migration 0019). */
+  /** Verified members not yet emailed about the daily login point. */
+  async dailyPointsEmailsPending(): Promise<number> {
+    if (DEMO) { const d = db() as DemoDB & { dailyEmailed?: string[] }; return d.profiles.filter((p) => p.role !== 'admin' && p.kyc_status === 'verified' && p.email && !(d.dailyEmailed ?? []).includes(p.id)).length }
+    const { data, error } = await sb!.rpc('admin_daily_points_emails_pending')
+    fail(error); return data as number
+  },
+  async sendDailyPointsEmails(limit = 20): Promise<{ sent: number; remaining: number }> {
+    if (DEMO) {
+      const d = db() as DemoDB & { dailyEmailed?: string[] }; d.dailyEmailed ??= []
+      const waiting = d.profiles.filter((p) => p.role !== 'admin' && p.kyc_status === 'verified' && p.email && !d.dailyEmailed!.includes(p.id))
+      waiting.slice(0, limit).forEach((p) => d.dailyEmailed!.push(p.id)); save()
+      return { sent: Math.min(limit, waiting.length), remaining: Math.max(0, waiting.length - limit) }
+    }
+    const { data, error } = await sb!.rpc('admin_send_daily_points_emails', { p_limit: limit })
+    fail(error); return data as { sent: number; remaining: number }
+  },
   async welcomeEmailsPending(): Promise<number> {
     if (DEMO) return demoStore().pointsLedger.filter((e) => e.kind === 'welcome' && !e.emailed_at).length
     const { data, error } = await sb!.from('points_ledger').select('id, student_id').eq('kind', 'welcome').is('emailed_at', null)

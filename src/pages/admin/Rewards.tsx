@@ -5,7 +5,7 @@ import { FileDrop } from '../../components/Upload'
 import { admin, uploadCover } from '../../lib/api'
 import { ago, points } from '../../lib/format'
 import { useAsync } from '../../lib/session'
-import { REWARD_CATEGORIES, WELCOME_POINTS, type Profile, type Redemption, type RewardCategory, type RewardItem } from '../../lib/types'
+import { DAILY_POINTS, REWARD_CATEGORIES, WELCOME_POINTS, type Profile, type Redemption, type RewardCategory, type RewardItem } from '../../lib/types'
 
 /** Admin: reward items, reward requests to send, and points balances. */
 export default function Rewards({ profiles }: { profiles: Profile[] }) {
@@ -33,6 +33,7 @@ export default function Rewards({ profiles }: { profiles: Profile[] }) {
       </div>
 
       <WelcomeCard />
+      <DailyCard />
 
       <section>
         <h2 className="text-xl font-semibold">Reward requests</h2>
@@ -105,6 +106,32 @@ function WelcomeCard() {
         </div>
       </div>
       {n > 0 && <button className="btn-brand btn-sm shrink-0" disabled={busy} onClick={send}>{busy ? <Spinner /> : <Mail className="h-4 w-4" />}Send next {Math.min(20, n)} emails</button>}
+    </div>
+  )
+}
+
+function DailyCard() {
+  const toast = useToast()
+  const pending = useAsync(() => admin.dailyPointsEmailsPending(), [])
+  const [busy, setBusy] = useState(false)
+  const send = async () => {
+    setBusy(true)
+    try { const r = await admin.sendDailyPointsEmails(20); toast(`Sent ${r.sent} email${r.sent === 1 ? '' : 's'}. ${r.remaining} still to go`); pending.reload() }
+    catch (e: any) { toast(e.message, 'err') } finally { setBusy(false) }
+  }
+  const n = pending.data ?? 0
+  return (
+    <div className="card flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#F9C93A]/30 text-ink"><Coins className="h-5 w-5" /></span>
+        <div>
+          <div className="font-semibold">Daily login point: {points(DAILY_POINTS)} a day</div>
+          <div className="text-sm text-ink-muted">Verified members get it once a day when they open Gigotter, with a pop-up telling them.</div>
+          {pending.error ? <div className="mt-1 text-sm text-ink-soft">Run migration <b>0021_daily_points.sql</b> to turn this on.</div>
+            : n > 0 && <div className="mt-1 text-sm font-medium text-ink">{n} verified member{n === 1 ? ' hasn’t' : 's haven’t'} been emailed about it yet.</div>}
+        </div>
+      </div>
+      {!pending.error && n > 0 && <button className="btn-brand btn-sm shrink-0" disabled={busy} onClick={send}>{busy ? <Spinner /> : <Mail className="h-4 w-4" />}Email the next {Math.min(20, n)}</button>}
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ComponentType } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router'
 import { DEMO, auth, resetDemo } from '../lib/api'
 import { useSession } from '../lib/session'
+import DailyPoint from './DailyPoint'
 import { forgetInvite, pendingInvite } from '../pages/AdminInvite'
 
 export function Logo({ className = '', light = false }: { className?: string; light?: boolean }) {
@@ -74,6 +75,7 @@ export default function Layout() {
         </div>
       )}
       <ScrollProgress />
+      <DailyPoint />
       {/* floating frosted pill header; hides while reading down, returns on scroll up */}
       <header className={`sticky top-0 z-40 pt-3 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] ${hide ? '-translate-y-[120%]' : 'translate-y-0'}`}>
         <div className="container-x">

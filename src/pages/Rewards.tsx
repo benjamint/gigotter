@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Check, Gift, Info, ShieldCheck } from 'lucide-react'
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { POINTS_EVENT } from '../components/DailyPoint'
 import { Link } from 'react-router'
 import { Empty, Modal, PageLoader, Spinner, useToast } from '../components/ui'
 import { listRewardItems, myPoints, redeemItem } from '../lib/api'
@@ -16,6 +17,7 @@ export default function Rewards() {
   const { user, profile } = useSession()
   const items = useAsync(() => listRewardItems(), [])
   const bal = useAsync(() => (user ? myPoints() : Promise.resolve(null)), [user?.id])
+  useEffect(() => { const on = () => bal.reload(); window.addEventListener(POINTS_EVENT, on); return () => window.removeEventListener(POINTS_EVENT, on) }, [bal.reload])
   const [cat, setCat] = useState<RewardCategory | 'all'>('all')
   const [pick, setPick] = useState<RewardItem | null>(null)
   const [how, setHow] = useState(false)
@@ -33,7 +35,7 @@ export default function Rewards() {
         <div>
           <div className="eyebrow">Rewards</div>
           <h1 className="mt-5 text-[clamp(2.6rem,6vw,4.75rem)] font-semibold leading-[1] tracking-[-0.045em]">Spend your <span className="em">points.</span></h1>
-          <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Earn points on some gigs. Swap them for airtime, data and more.</p>
+          <p className="mt-4 max-w-xl text-lg text-ink-muted md:text-xl">Get a point every day you log in, and more on some gigs. Swap them for airtime, data and more.</p>
           <button type="button" onClick={() => setHow(true)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-ink underline-offset-4 hover:underline"><Info className="h-4 w-4 text-brand-700" />How rewards work</button>
         </div>
         {user ? (
@@ -46,7 +48,7 @@ export default function Rewards() {
         ) : (
           <div className="rounded-3xl bg-[#F9C93A]/30 p-6 md:max-w-xs">
             <div className="font-semibold">Join to start earning points</div>
-            <p className="mt-1 text-sm text-ink-muted">Sign up, get verified, and take points gigs.</p>
+            <p className="mt-1 text-sm text-ink-muted">Sign up, get verified, then earn points every day you log in and on points gigs.</p>
             <div className="mt-3 flex gap-2"><Link to="/signup" className="btn-primary btn-sm">Sign up</Link><Link to="/login?next=/rewards" className="btn-ghost btn-sm">Log in</Link></div>
           </div>
         )}
@@ -146,7 +148,7 @@ function RedeemSheet({ item, balance, verified, phone: defPhone, onClose, onDone
 }
 
 const HOW: [string, string][] = [
-  ['Earn points', 'Some gigs pay in Gigotter points. They’re added when your work is approved.'],
+  ['Earn points', 'Get 1 point every day you log in. Some gigs pay in points too, added when your work is approved.'],
   ['Pick a reward', 'Swap your points for airtime, data, vouchers or Gigotter merch.'],
   ['We send it to you', 'Gigotter buys the reward and sends it to you. We’ll email you when it’s on its way.'],
 ]

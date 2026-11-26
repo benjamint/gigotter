@@ -224,9 +224,11 @@ export interface Redemption {
   delivery_note: string | null; status: RedemptionStatus; admin_note: string | null; handled_at: string | null; created_at: string
   student?: Pick<Profile, 'id' | 'full_name' | 'email' | 'phone' | 'school'>
 }
-export type PointsKind = 'earned' | 'reversed' | 'redeemed' | 'refund' | 'adjust' | 'welcome'
+export type PointsKind = 'earned' | 'reversed' | 'redeemed' | 'refund' | 'adjust' | 'welcome' | 'daily'
 /** Points every member gets once, when they're verified (migration 0019). */
 export const WELCOME_POINTS = 10
+/** Points a verified member gets once a day for logging in (migration 0021). */
+export const DAILY_POINTS = 1
 export interface PointsEntry {
   id: string; student_id: string; delta: number; kind: PointsKind; submission_id: string | null
   redemption_id: string | null; note: string | null; created_at: string; emailed_at?: string | null
